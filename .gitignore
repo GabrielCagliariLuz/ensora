@@ -1,0 +1,19 @@
+# IDEs e Sistema Operacional
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Frontend (Node / Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+frontend/npm-debug.log*
+
+# Backend (Java / Maven)
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/*.jar
+backend/*.war
