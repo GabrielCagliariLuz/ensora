@@ -8,7 +8,8 @@ Editado no IntelliJ. Regras gerais e arquitetura: `../CLAUDE.md` e
 - Java 21, Spring Boot 4.1.1, Maven Wrapper (Maven 3.10.0).
 - Spring Web MVC, Spring Data JPA, Bean Validation, Flyway, driver
   PostgreSQL, Lombok, DevTools.
-- Spring Security (stateless, CORS) configurado; JWT: a configurar.
+- Spring Security (stateless, CORS) e JWT (HS256, via
+  `oauth2-resource-server`) configurados.
 - Banco: PostgreSQL local em desenvolvimento; Neon em produção.
 
 ## Comandos
@@ -61,6 +62,10 @@ com.ensora/habito/
   `jdbc:postgresql://localhost:5432/ensora`.
 - CORS: `CORS_ORIGEM` (origem exata do front, sem valor padrão). Em
   desenvolvimento: `http://localhost:5173`.
+- JWT: `JWT_SEGREDO` (texto com no mínimo 32 bytes, sem valor padrão; a
+  app não sobe sem ele). Trocar o valor invalida os tokens já emitidos.
+- Cadastro: `REGISTRATION_ENABLED` (padrão `false`). Ligue (`true`) só
+  para criar a conta e desligue depois; em produção fica desligada.
 
 ## Testes
 
