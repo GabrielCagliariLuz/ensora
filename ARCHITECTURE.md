@@ -251,7 +251,8 @@ A cor de urgência é aplicada somente a entregas, nunca a eventos.
 
 ## 9. Modelo de dados (MVP)
 
-Todas as tabelas têm `id` como chave primária. Todas as tabelas de
+Todas as tabelas têm `id` como chave primária, do tipo `BIGINT`
+identity (`GENERATED ALWAYS AS IDENTITY`). Todas as tabelas de
 domínio têm `usuario_id` (FK para `usuario`), e o filtro por dono é
 feito no `Service`.
 
@@ -672,6 +673,7 @@ Princípios:
 | 31  | Backend organizado por funcionalidade, com Controller → Service → Repository em cada módulo                                                                                                  |
 | 32  | PostgreSQL local em desenvolvimento e Neon em produção                                                                                                                                       |
 | 33  | Testes: JUnit (Services unitários, sem banco) no backend; Vitest no frontend                                                                                                                 |
+| 34  | `id` de todas as tabelas em `BIGINT GENERATED ALWAYS AS IDENTITY`; `UUID` descartado (a fila offline só marca/desmarca, não cria registros no cliente)                                       |
 
 ## 17. Pontos ainda em aberto
 
@@ -692,10 +694,11 @@ Princípios:
     da semana ou só um indicador por semana.
 9.  Offline: onde persistir o cache e a fila (ex.: IndexedDB), quando
     reenviar a fila e como avisar falhas de envio.
-10. Tipo do `id` das tabelas (`BIGINT` identity ou `UUID`).
+10. ~~Tipo do `id` das tabelas (`BIGINT` identity ou `UUID`).~~
+    Resolvido: `BIGINT` identity (decisão 34).
 11. Escrever a migração Flyway V2 com as restrições da seção 9.
-12. Renomear o pacote do backend de `com.example.backend` para
-    `com.ensora`.
+12. ~~Renomear o pacote do backend de `com.example.backend` para
+    `com.ensora`.~~ Resolvido (issue #3).
 13. Bibliotecas do frontend ainda indefinidas (ícones, rotas, PWA).
 
 ## 18. Ordem de implementação
