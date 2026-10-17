@@ -410,16 +410,21 @@ habito/
 ## 11. Autenticação
 
 - Conta com **e-mail e senha**. E-mail normalizado em minúsculas com
-  índice único; senha com BCrypt (mínimo de 8 caracteres). Erro de
-  login genérico, sem revelar se o e-mail existe. Limite simples de
-  tentativas de login por IP.
+  índice único; senha com BCrypt (mínimo de 4 caracteres, máximo de 72,
+  que é o limite do BCrypt; ver decisão 40). Erro de login genérico,
+  sem revelar se o e-mail existe. Limite de 5 falhas de login por IP em
+  15 minutos (resposta 429), guardado em memória.
 - **Access token (JWT, ~15 min)** devolvido no corpo da resposta e
   mantido **somente em memória** no frontend. Enviado no header
-  `Authorization`.
-- **Refresh token opaco (~30 dias)** em cookie
-  `HttpOnly; Secure; SameSite=Strict; Path=/auth`. O banco guarda só o
-  hash (`refresh_token`: `usuario_id`, `token_hash`, `expira_em`,
-  `revogado_em`).
+  `Authorization`. Assinado com HS256 (segredo em `JWT_SEGREDO`); o
+  `sub` é o id do usuário. O cliente **não** deve enviar `Authorization`
+  às rotas `/auth/*`: com token inválido ou expirado, o Spring responde
+  401 mesmo nas rotas públicas.
+- **Refresh token opaco (~30 dias)** em cookie `refresh_token`
+  `HttpOnly; Secure; SameSite=Strict; Path=/auth`. São 32 bytes
+  aleatórios; o banco guarda só o hash SHA-256 em hexadecimal
+  (`refresh_token`: `usuario_id`, `token_hash`, `expira_em`,
+  `revogado_em`), e o valor em claro só existe no cookie.
 - `POST /auth/refresh` rotaciona o refresh token a cada uso. Reuso de
   um token já usado revoga todas as sessões do usuário. O logout revoga
   o token no servidor.
@@ -636,6 +641,26 @@ Princípios:
 - endpoints de leitura podem entregar dados agregados para a tela;
 - operações de escrita seguem REST.
 
+### Contratos de autenticação
+
+`POST /auth/registrar` (só com `REGISTRATION_ENABLED=true`):
+
+```json
+// requisição
+{ "email": "pessoa@exemplo.com", "senha": "1234" }
+// resposta 201
+{ "id": 1, "email": "pessoa@exemplo.com" }
+```
+
+`POST /auth/login`:
+
+```json
+// requisição
+{ "email": "pessoa@exemplo.com", "senha": "1234" }
+// resposta 200 (o refresh token vai no cabeçalho Set-Cookie, não no corpo)
+{ "tokenAcesso": "<jwt>", "expiraEmSegundos": 900 }
+```
+
 ### Formato de erro
 
 Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
@@ -656,8 +681,10 @@ Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
 | 400    | `VALIDACAO`           | corpo ou parâmetro inválido (traz `campos`) |
 | 400    | `REQUISICAO_INVALIDA` | JSON malformado ou ausente                  |
 | 401    | `NAO_AUTENTICADO`     | sem token válido                            |
-| 403    | `ACESSO_NEGADO`       | autenticado sem permissão                   |
+| 403    | `ACESSO_NEGADO`       | sem permissão ou cadastro desabilitado      |
 | 404    | `NAO_ENCONTRADO`      | recurso ou rota inexistente                 |
+| 409    | `CONFLITO`            | conflito de dados (ex.: e-mail já cadastrado) |
+| 429    | `LIMITE_EXCEDIDO`     | muitas falhas de login do mesmo IP          |
 | 500    | `ERRO_INTERNO`        | falha inesperada (detalhe só no log)        |
 
 `campos` só aparece no 400 de `VALIDACAO`. Exceção: a rejeição de CORS
@@ -705,6 +732,10 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 34  | `id` de todas as tabelas em `BIGINT GENERATED ALWAYS AS IDENTITY`; `UUID` descartado (a fila offline só marca/desmarca, não cria registros no cliente)                                       |
 | 35  | Entidades JPA guardam FKs como `Long` (ex.: `usuarioId`), sem `@ManyToOne`; o Service filtra por `usuario_id` e busca o relacionado por id quando precisar                                   |
 | 36  | Formato único de erro (`ErroResposta`, via `ManipuladorDeErros`); API stateless com CSRF desabilitado, pois o access token vai no header `Authorization` e não em cookie de sessão          |
+| 37  | Access token JWT assinado com HS256 via `spring-boot-starter-oauth2-resource-server` (o Spring valida o `Bearer`); `sub` = id do usuário, validade de 15 min, segredo em `JWT_SEGREDO` (mínimo de 32 bytes, sem valor padrão) |
+| 38  | Refresh token opaco de 32 bytes aleatórios; o banco guarda só o SHA-256 em hexadecimal (hash rápido, pois o token já é aleatório e a busca é pelo hash); o valor em claro só existe no cookie |
+| 39  | Limite de login: 5 falhas por IP em 15 min, em memória e em código próprio, resposta 429; zera ao reiniciar a API e vale para uma instância |
+| 40  | Senha com mínimo de 4 caracteres, revendo os 8 anteriores; mitigada pelo cadastro desligado em produção, pelo limite por IP e pelo uso pessoal; o máximo de 72 é o limite do BCrypt |
 
 ## 17. Pontos ainda em aberto
 
