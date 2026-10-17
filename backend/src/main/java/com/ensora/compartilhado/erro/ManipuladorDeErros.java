@@ -50,13 +50,29 @@ public class ManipuladorDeErros {
 
 	@ExceptionHandler(AuthenticationException.class)
 	public ResponseEntity<ErroResposta> aoNaoAutenticar(AuthenticationException ex, HttpServletRequest requisicao) {
-		return resposta(HttpStatus.UNAUTHORIZED, "NAO_AUTENTICADO", "Autenticação necessária",
-				requisicao, null);
+		// Exceção própria traz a mensagem escolhida pelo Service; as do Spring Security usam o texto padrão.
+		String mensagem = ex instanceof NaoAutenticadoException ? ex.getMessage() : "Autenticação necessária";
+		return resposta(HttpStatus.UNAUTHORIZED, "NAO_AUTENTICADO", mensagem, requisicao, null);
+	}
+
+	@ExceptionHandler(LimiteExcedidoException.class)
+	public ResponseEntity<ErroResposta> aoExcederLimite(LimiteExcedidoException ex, HttpServletRequest requisicao) {
+		return resposta(HttpStatus.TOO_MANY_REQUESTS, "LIMITE_EXCEDIDO", ex.getMessage(), requisicao, null);
 	}
 
 	@ExceptionHandler(AccessDeniedException.class)
 	public ResponseEntity<ErroResposta> aoNegarAcesso(AccessDeniedException ex, HttpServletRequest requisicao) {
 		return resposta(HttpStatus.FORBIDDEN, "ACESSO_NEGADO", "Acesso negado", requisicao, null);
+	}
+
+	@ExceptionHandler(AcessoNegadoException.class)
+	public ResponseEntity<ErroResposta> aoNegarPorRegra(AcessoNegadoException ex, HttpServletRequest requisicao) {
+		return resposta(HttpStatus.FORBIDDEN, "ACESSO_NEGADO", ex.getMessage(), requisicao, null);
+	}
+
+	@ExceptionHandler(ConflitoException.class)
+	public ResponseEntity<ErroResposta> aoConflitar(ConflitoException ex, HttpServletRequest requisicao) {
+		return resposta(HttpStatus.CONFLICT, "CONFLITO", ex.getMessage(), requisicao, null);
 	}
 
 	@ExceptionHandler({ RecursoNaoEncontradoException.class, NoResourceFoundException.class })
