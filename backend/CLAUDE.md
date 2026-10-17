@@ -8,7 +8,7 @@ Editado no IntelliJ. Regras gerais e arquitetura: `../CLAUDE.md` e
 - Java 21, Spring Boot 4.1.1, Maven Wrapper (Maven 3.10.0).
 - Spring Web MVC, Spring Data JPA, Bean Validation, Flyway, driver
   PostgreSQL, Lombok, DevTools.
-- Spring Security + JWT: a configurar.
+- Spring Security (stateless, CORS) configurado; JWT: a configurar.
 - Banco: PostgreSQL local em desenvolvimento; Neon em produção.
 
 ## Comandos
@@ -45,6 +45,9 @@ com.ensora/habito/
 - Todo acesso a dados de domínio filtra por `usuario_id` no Service.
 - Entidades guardam FK como `Long` (ex.: `usuarioId`), nunca `@ManyToOne`.
   Para dados do relacionado, o Service busca pelo id.
+- Erros saem sempre pelo `ManipuladorDeErros` (`compartilhado/erro`): o
+  Service lança exceção (ex.: `RecursoNaoEncontradoException`) e o
+  Controller nunca monta JSON de erro.
 
 ## Banco e Flyway
 
@@ -56,6 +59,8 @@ com.ensora/habito/
   valor padrão: sem elas a app não sobe. No IntelliJ, defina em
   Run Configuration → Environment variables. Exemplo de `DB_URL`:
   `jdbc:postgresql://localhost:5432/ensora`.
+- CORS: `CORS_ORIGEM` (origem exata do front, sem valor padrão). Em
+  desenvolvimento: `http://localhost:5173`.
 
 ## Testes
 
