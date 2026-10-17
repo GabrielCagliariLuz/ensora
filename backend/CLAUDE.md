@@ -23,8 +23,7 @@ No Windows, use `mvnw.cmd`.
 
 ## Estrutura
 
-Pacote base `com.ensora` (hoje ainda `com.example.backend`; renomear).
-Uma pasta por funcionalidade, cada uma com suas camadas:
+Pacote base `com.ensora`. Uma pasta por funcionalidade, cada uma com suas camadas:
 
 ```text
 com.ensora/habito/
@@ -49,9 +48,12 @@ com.ensora/habito/
 
 - Migrações em `src/main/resources/db/migration/V{n}__descricao.sql`.
 - `spring.jpa.hibernate.ddl-auto=validate`: o schema vem só do Flyway.
-  Configuração ainda a fazer em `application.properties`.
 - Nunca edite uma migração já aplicada; crie a próxima versão.
 - Credenciais do banco por variável de ambiente, nunca no repositório.
+  O `application.properties` lê `DB_URL`, `DB_USER` e `DB_PASSWORD`, sem
+  valor padrão: sem elas a app não sobe. No IntelliJ, defina em
+  Run Configuration → Environment variables. Exemplo de `DB_URL`:
+  `jdbc:postgresql://localhost:5432/ensora`.
 
 ## Testes
 
