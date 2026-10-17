@@ -258,11 +258,11 @@ feito no `Service`.
 
 ### usuario
 
-| Coluna       | Tipo        | Regras           |
-| ------------ | ----------- | ---------------- |
-| `email`      | texto       | minúsculo, único |
-| `senha_hash` | texto       | BCrypt           |
-| `criado_em`  | TIMESTAMPTZ | default `now()`  |
+| Coluna       | Tipo        | Regras                                          |
+| ------------ | ----------- | ----------------------------------------------- |
+| `email`      | texto       | único; `CHECK (email = lower(email))` no banco  |
+| `senha_hash` | texto       | BCrypt                                          |
+| `criado_em`  | TIMESTAMPTZ | default `now()`                                 |
 
 ### refresh_token
 
@@ -674,6 +674,7 @@ Princípios:
 | 32  | PostgreSQL local em desenvolvimento e Neon em produção                                                                                                                                       |
 | 33  | Testes: JUnit (Services unitários, sem banco) no backend; Vitest no frontend                                                                                                                 |
 | 34  | `id` de todas as tabelas em `BIGINT GENERATED ALWAYS AS IDENTITY`; `UUID` descartado (a fila offline só marca/desmarca, não cria registros no cliente)                                       |
+| 35  | Entidades JPA guardam FKs como `Long` (ex.: `usuarioId`), sem `@ManyToOne`; o Service filtra por `usuario_id` e busca o relacionado por id quando precisar                                   |
 
 ## 17. Pontos ainda em aberto
 

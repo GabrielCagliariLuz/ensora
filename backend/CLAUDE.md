@@ -43,6 +43,8 @@ com.ensora/habito/
   (prefira `record`).
 - Validação de entrada com Bean Validation nos DTOs de request.
 - Todo acesso a dados de domínio filtra por `usuario_id` no Service.
+- Entidades guardam FK como `Long` (ex.: `usuarioId`), nunca `@ManyToOne`.
+  Para dados do relacionado, o Service busca pelo id.
 
 ## Banco e Flyway
 
