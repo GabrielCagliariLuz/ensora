@@ -636,6 +636,35 @@ Princípios:
 - endpoints de leitura podem entregar dados agregados para a tela;
 - operações de escrita seguem REST.
 
+### Formato de erro
+
+Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
+`ManipuladorDeErros`:
+
+```json
+{
+  "status": 400,
+  "erro": "VALIDACAO",
+  "mensagem": "Dados inválidos",
+  "caminho": "/habitos",
+  "campos": [{ "campo": "nome", "mensagem": "não pode estar em branco" }]
+}
+```
+
+| Status | `erro`                | Quando                                      |
+| ------ | --------------------- | ------------------------------------------- |
+| 400    | `VALIDACAO`           | corpo ou parâmetro inválido (traz `campos`) |
+| 400    | `REQUISICAO_INVALIDA` | JSON malformado ou ausente                  |
+| 401    | `NAO_AUTENTICADO`     | sem token válido                            |
+| 403    | `ACESSO_NEGADO`       | autenticado sem permissão                   |
+| 404    | `NAO_ENCONTRADO`      | recurso ou rota inexistente                 |
+| 500    | `ERRO_INTERNO`        | falha inesperada (detalhe só no log)        |
+
+`campos` só aparece no 400 de `VALIDACAO`. Exceção: a rejeição de CORS
+(preflight de origem não permitida) é feita pelo filtro de CORS antes
+do `ManipuladorDeErros` e devolve `403` com texto puro; o navegador já
+bloqueia a chamada, então o front não depende desse corpo.
+
 ## 16. Decisões atuais
 
 | #   | Decisão                                                                                                                                                                                      |
@@ -675,6 +704,7 @@ Princípios:
 | 33  | Testes: JUnit (Services unitários, sem banco) no backend; Vitest no frontend                                                                                                                 |
 | 34  | `id` de todas as tabelas em `BIGINT GENERATED ALWAYS AS IDENTITY`; `UUID` descartado (a fila offline só marca/desmarca, não cria registros no cliente)                                       |
 | 35  | Entidades JPA guardam FKs como `Long` (ex.: `usuarioId`), sem `@ManyToOne`; o Service filtra por `usuario_id` e busca o relacionado por id quando precisar                                   |
+| 36  | Formato único de erro (`ErroResposta`, via `ManipuladorDeErros`); API stateless com CSRF desabilitado, pois o access token vai no header `Authorization` e não em cookie de sessão          |
 
 ## 17. Pontos ainda em aberto
 
