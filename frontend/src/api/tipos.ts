@@ -1,3 +1,8 @@
+export interface LoginRequest {
+  email: string
+  senha: string
+}
+
 export interface LoginResponse {
   tokenAcesso: string
   expiraEmSegundos: number
