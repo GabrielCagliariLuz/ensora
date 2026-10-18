@@ -427,7 +427,12 @@ habito/
   `revogado_em`), e o valor em claro só existe no cookie.
 - `POST /auth/refresh` rotaciona o refresh token a cada uso. Reuso de
   um token já usado revoga todas as sessões do usuário. O logout revoga
-  o token no servidor.
+  o token no servidor. Um token só vale uma vez: se um já revogado
+  aparecer de novo (inclusive um revogado pelo logout), todas as sessões
+  ativas do usuário são revogadas e a resposta é 401.
+- Por isso o cliente deve manter **uma única renovação em andamento por
+  vez** (por exemplo, duas abas abrindo juntas disparando duas chamadas
+  com o mesmo token fariam a segunda ser tratada como reuso).
 - Ao abrir ou recarregar o PWA, o frontend chama `/auth/refresh` para
   obter o access token. O renovo automático após 401 fica no cliente
   HTTP em `api/`.
@@ -661,6 +666,20 @@ Princípios:
 { "tokenAcesso": "<jwt>", "expiraEmSegundos": 900 }
 ```
 
+`POST /auth/refresh` (sem corpo; usa o cookie `refresh_token`):
+
+```json
+// resposta 200: mesmo formato do login, com um novo Set-Cookie
+{ "tokenAcesso": "<jwt>", "expiraEmSegundos": 900 }
+// sem cookie, token desconhecido, expirado ou revogado: 401 "Sessão inválida"
+```
+
+`POST /auth/logout` (sem corpo; usa o cookie `refresh_token`): responde
+`204` e um `Set-Cookie` com `Max-Age=0` (mesmos `Path`, `Secure`,
+`HttpOnly` e `SameSite` do cookie original, para o navegador apagá-lo).
+É idempotente: sem cookie ou com token já revogado, também responde 204.
+Revoga só o token desta sessão.
+
 ### Formato de erro
 
 Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
@@ -736,6 +755,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 38  | Refresh token opaco de 32 bytes aleatórios; o banco guarda só o SHA-256 em hexadecimal (hash rápido, pois o token já é aleatório e a busca é pelo hash); o valor em claro só existe no cookie |
 | 39  | Limite de login: 5 falhas por IP em 15 min, em memória e em código próprio, resposta 429; zera ao reiniciar a API e vale para uma instância |
 | 40  | Senha com mínimo de 4 caracteres, revendo os 8 anteriores; mitigada pelo cadastro desligado em produção, pelo limite por IP e pelo uso pessoal; o máximo de 72 é o limite do BCrypt |
+| 41  | Refresh token rotativo com detecção de reuso: cada token vale uma vez; token já revogado apresentado de novo revoga todas as sessões do usuário. A troca usa `UPDATE ... WHERE revogado_em IS NULL` (o banco decide quem ganha numa corrida) e `@Transactional(noRollbackFor)` para a revogação geral ser gravada mesmo com a resposta 401. Logout idempotente que revoga só o token da sessão |
 
 ## 17. Pontos ainda em aberto
 

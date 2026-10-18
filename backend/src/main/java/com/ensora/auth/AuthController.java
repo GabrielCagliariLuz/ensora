@@ -10,11 +10,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Duration;
 
 @RestController
 @RequestMapping("/auth")
@@ -37,22 +40,45 @@ public class AuthController {
 	@PostMapping("/login")
 	public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest requisicao,
 			HttpServletRequest http) {
-		SessaoCriada sessao = authService.login(requisicao, http.getRemoteAddr());
+		return respostaDeSessao(authService.login(requisicao, http.getRemoteAddr()));
+	}
 
-		// O refresh token só viaja neste cookie: HttpOnly (o JavaScript não lê), Secure, SameSite=Strict e restrito a /auth.
-		ResponseCookie cookie = ResponseCookie.from(NOME_COOKIE_REFRESH, sessao.refreshToken().valor())
+	@PostMapping("/refresh")
+	public ResponseEntity<LoginResponse> refresh(
+			@CookieValue(name = NOME_COOKIE_REFRESH, required = false) String refreshToken) {
+		return respostaDeSessao(authService.refresh(refreshToken));
+	}
+
+	@PostMapping("/logout")
+	public ResponseEntity<Void> logout(
+			@CookieValue(name = NOME_COOKIE_REFRESH, required = false) String refreshToken) {
+		authService.logout(refreshToken);
+		return ResponseEntity.noContent()
+				.header(HttpHeaders.SET_COOKIE, cookieRefresh("", Duration.ZERO).toString())
+				.build();
+	}
+
+	private ResponseEntity<LoginResponse> respostaDeSessao(SessaoCriada sessao) {
+		LoginResponse corpo = new LoginResponse(sessao.tokenAcesso().valor(),
+				sessao.tokenAcesso().expiraEmSegundos());
+		return ResponseEntity.ok()
+				.header(HttpHeaders.SET_COOKIE,
+						cookieRefresh(sessao.refreshToken().valor(), sessao.refreshToken().validade()).toString())
+				.body(corpo);
+	}
+
+	/**
+	 * O refresh token só viaja neste cookie: HttpOnly (o JavaScript não lê), Secure, SameSite=Strict e restrito
+	 * a /auth. Para apagar o cookie, o navegador exige os mesmos atributos de caminho; por isso um método só.
+	 */
+	private ResponseCookie cookieRefresh(String valor, Duration validade) {
+		return ResponseCookie.from(NOME_COOKIE_REFRESH, valor)
 				.httpOnly(true)
 				.secure(true)
 				.sameSite("Strict")
 				.path("/auth")
-				.maxAge(sessao.refreshToken().validade())
+				.maxAge(validade)
 				.build();
-
-		LoginResponse corpo = new LoginResponse(sessao.tokenAcesso().valor(),
-				sessao.tokenAcesso().expiraEmSegundos());
-		return ResponseEntity.ok()
-				.header(HttpHeaders.SET_COOKIE, cookie.toString())
-				.body(corpo);
 	}
 
 }

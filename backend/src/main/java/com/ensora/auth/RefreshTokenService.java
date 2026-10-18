@@ -1,7 +1,9 @@
 package com.ensora.auth;
 
+import com.ensora.compartilhado.erro.NaoAutenticadoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -9,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.HexFormat;
 
@@ -16,6 +19,7 @@ import java.util.HexFormat;
 public class RefreshTokenService {
 
 	private static final int TAMANHO_DO_TOKEN_EM_BYTES = 32;
+	private static final String MENSAGEM_SESSAO_INVALIDA = "Sessão inválida";
 
 	private final RefreshTokenRepository refreshTokens;
 	private final Clock relogio;
@@ -42,6 +46,45 @@ public class RefreshTokenService {
 		refreshTokens.save(registro);
 
 		return new RefreshTokenEmitido(token, validade);
+	}
+
+	/**
+	 * Troca um refresh token por outro: o recebido é revogado e um novo é criado. Um token só vale uma vez;
+	 * se um já usado aparecer de novo, todas as sessões do usuário são revogadas.
+	 * <p>
+	 * {@code noRollbackFor}: no caso de reuso o método grava (revoga tudo) e depois lança a exceção de 401.
+	 * Sem isso, a exceção desfaria a transação e a revogação geral seria perdida.
+	 */
+	@Transactional(noRollbackFor = NaoAutenticadoException.class)
+	public RotacaoRefresh rotacionar(String tokenEmClaro) {
+		Instant agora = relogio.instant();
+		RefreshToken atual = refreshTokens.findByTokenHash(hash(tokenEmClaro))
+				.orElseThrow(() -> new NaoAutenticadoException(MENSAGEM_SESSAO_INVALIDA));
+
+		if (atual.getRevogadoEm() != null) {
+			throw revogarTudoPorReuso(atual.getUsuarioId(), agora);
+		}
+		if (!atual.getExpiraEm().isAfter(agora)) {
+			throw new NaoAutenticadoException(MENSAGEM_SESSAO_INVALIDA);
+		}
+		// O UPDATE condicional decide no banco quem ganha se duas requisições chegarem com o mesmo token.
+		if (refreshTokens.revogarSeAtivo(atual.getId(), agora) == 0) {
+			throw revogarTudoPorReuso(atual.getUsuarioId(), agora);
+		}
+
+		return new RotacaoRefresh(atual.getUsuarioId(), criar(atual.getUsuarioId()));
+	}
+
+	/** Revoga o token desta sessão. Token desconhecido ou já revogado é ignorado (logout é idempotente). */
+	@Transactional
+	public void revogar(String tokenEmClaro) {
+		refreshTokens.findByTokenHash(hash(tokenEmClaro))
+				.ifPresent(token -> refreshTokens.revogarSeAtivo(token.getId(), relogio.instant()));
+	}
+
+	private NaoAutenticadoException revogarTudoPorReuso(Long usuarioId, Instant agora) {
+		refreshTokens.revogarTodosDoUsuario(usuarioId, agora);
+		return new NaoAutenticadoException(MENSAGEM_SESSAO_INVALIDA);
 	}
 
 	/**

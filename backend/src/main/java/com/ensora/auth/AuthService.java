@@ -17,6 +17,7 @@ import java.util.Locale;
 public class AuthService {
 
 	private static final String MENSAGEM_LOGIN_INVALIDO = "E-mail ou senha inválidos";
+	private static final String MENSAGEM_SESSAO_INVALIDA = "Sessão inválida";
 
 	private final UsuarioRepository usuarios;
 	private final PasswordEncoder codificadorDeSenha;
@@ -77,6 +78,23 @@ public class AuthService {
 		TokenAcesso tokenAcesso = tokenAcessoService.gerar(usuario.getId());
 		RefreshTokenEmitido refreshToken = refreshTokenService.criar(usuario.getId());
 		return new SessaoCriada(tokenAcesso, refreshToken);
+	}
+
+	public SessaoCriada refresh(String refreshToken) {
+		if (refreshToken == null || refreshToken.isBlank()) {
+			throw new NaoAutenticadoException(MENSAGEM_SESSAO_INVALIDA);
+		}
+		RotacaoRefresh rotacao = refreshTokenService.rotacionar(refreshToken);
+		TokenAcesso tokenAcesso = tokenAcessoService.gerar(rotacao.usuarioId());
+		return new SessaoCriada(tokenAcesso, rotacao.novoRefreshToken());
+	}
+
+	public void logout(String refreshToken) {
+		// Sem cookie não há o que revogar: o logout continua sendo bem-sucedido.
+		if (refreshToken == null || refreshToken.isBlank()) {
+			return;
+		}
+		refreshTokenService.revogar(refreshToken);
 	}
 
 	private String normalizar(String email) {
