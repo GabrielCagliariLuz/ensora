@@ -14,7 +14,7 @@ interface OpcoesRequisicao {
 
 let aoSessaoExpirar: (() => void) | null = null
 
-// A #11 registra aqui, em app/, a limpeza do cache e o redirecionamento
+// app/rotas.tsx registra aqui a limpeza do cache e o redirecionamento
 // para /login. O cliente não conhece o router.
 export function definirAoSessaoExpirar(funcao: (() => void) | null): void {
   aoSessaoExpirar = funcao

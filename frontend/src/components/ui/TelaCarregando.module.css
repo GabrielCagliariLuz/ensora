@@ -1,0 +1,46 @@
+.tela {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.anel {
+  width: 44px;
+  height: 44px;
+  animation: girar 1.4s linear infinite;
+}
+
+.status {
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Altura reservada para o aviso não empurrar o anel quando aparecer. */
+.aviso {
+  max-width: 26ch;
+  min-height: calc(var(--leading-legenda) * 2);
+  margin: 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anel {
+    animation-duration: 4s;
+  }
+}

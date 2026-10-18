@@ -1,0 +1,69 @@
+.tela {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.icone {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--ember-surface);
+  color: var(--ember);
+}
+
+.titulo {
+  margin: 0;
+  font-size: var(--text-subtitulo);
+  line-height: var(--leading-subtitulo);
+  font-weight: var(--weight-semibold);
+  text-wrap: balance;
+}
+
+.texto {
+  max-width: 30ch;
+  margin: 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.botao {
+  height: 44px;
+  padding-inline: var(--space-5);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.botao:hover,
+.botao:disabled {
+  background: var(--ink-hover);
+}
+
+.botao:disabled {
+  cursor: progress;
+}
+
+.botao:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao {
+    transition: none;
+  }
+}
