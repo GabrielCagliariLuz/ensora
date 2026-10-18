@@ -1,0 +1,39 @@
+.secao {
+  margin-top: var(--space-5);
+}
+
+.botaoSair {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding-inline: var(--space-4);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.botaoSair:hover,
+.botaoSair:disabled {
+  background: var(--hover-surface);
+}
+
+.botaoSair:disabled {
+  cursor: progress;
+}
+
+.botaoSair:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botaoSair {
+    transition: none;
+  }
+}
