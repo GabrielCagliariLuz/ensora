@@ -7,6 +7,7 @@ Editado no VS Code. Regras gerais e arquitetura: `../CLAUDE.md` e
 
 - React 19.2, TypeScript ~6.0, Vite 8.3, ESLint 10.
 - CSS Modules, sem Tailwind e sem biblioteca de componentes pronta.
+- Ícones: lucide-react.
 - TanStack Query: decidido, ainda não instalado.
 - Vitest: a configurar.
 - PWA (service worker, cache e fila offline): a configurar.
@@ -32,6 +33,7 @@ components/
 features/     uma pasta por funcionalidade (auth, inicio, habitos, calendario, insights)
 api/          cliente HTTP e tipos das respostas
 lib/          datas e utilitários
+styles/       tokens globais (tokens.css, importado por index.css)
 ```
 
 ## Regras
@@ -42,8 +44,13 @@ lib/          datas e utilitários
 - Cada componente tem seu `Componente.module.css` ao lado.
 - Cores, fontes e espaçamentos vêm de variáveis CSS globais (`:root`).
   Nada de valor solto de cor ou fonte nos módulos.
-- Paleta: paper, canvas, ink, rule, ash, ember, moss, indigo. Fontes:
-  IBM Plex Mono e IBM Plex Sans.
+- Tokens em `src/styles/tokens.css`. Cores: canvas, card, hover-surface,
+  hairline, rule, ink, ink-hover, graphite, ash, paper, moss (+ surface,
+  border) e ember (+ surface, border). Sem tema escuro. Fontes: IBM Plex
+  Sans (interface) e IBM Plex Mono (números e rótulos), via Google Fonts.
+- Ícones: importar sempre por ícone (`import { Plus } from 'lucide-react'`),
+  nunca o pacote inteiro. Usar `strokeWidth={1.5}` e o tamanho pela prop
+  `size`. A cor vem do texto do pai (`currentColor`), sem cor solta.
 - Nomes de domínio em português (`ListaHabitos`, `useHabitos`); termos
   técnicos de layout seguem o documento (`AppShell`, `BottomNav`).
 - Token de acesso só em memória. Nunca em localStorage ou
