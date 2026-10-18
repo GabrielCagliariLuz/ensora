@@ -8,7 +8,8 @@ Editado no VS Code. Regras gerais e arquitetura: `../CLAUDE.md` e
 - React 19.2, TypeScript ~6.0, Vite 8.3, ESLint 10.
 - CSS Modules, sem Tailwind e sem biblioteca de componentes pronta.
 - Ícones: lucide-react.
-- TanStack Query: decidido, ainda não instalado.
+- TanStack Query (`QueryClient` em `app/queryClient.ts`) e React Router
+  (`react-router`, `createBrowserRouter`).
 - Vitest: a configurar.
 - PWA (service worker, cache e fila offline): a configurar.
 
@@ -53,5 +54,9 @@ styles/       tokens globais (tokens.css, importado por index.css)
   `size`. A cor vem do texto do pai (`currentColor`), sem cor solta.
 - Nomes de domínio em português (`ListaHabitos`, `useHabitos`); termos
   técnicos de layout seguem o documento (`AppShell`, `BottomNav`).
+- Rótulos de navegação e títulos de seção seguem o Figma, em inglês
+  (Today, Insights, Calendar, Settings; títulos em mono maiúsculo). As
+  URLs ficam em português (`/calendario`, `/ajustes`). Telas de
+  referência em `../docs/telas/`.
 - Token de acesso só em memória. Nunca em localStorage ou
   sessionStorage.

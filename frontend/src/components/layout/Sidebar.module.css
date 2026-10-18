@@ -1,0 +1,153 @@
+.sidebar {
+  display: none;
+}
+
+.marca {
+  margin-bottom: var(--space-5);
+  padding: var(--space-3);
+  color: var(--hairline);
+}
+
+.nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-menu);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transition:
+    background var(--transicao-rapida),
+    color var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.item svg {
+  flex-shrink: 0;
+}
+
+.rotulo,
+.rotuloOculto {
+  white-space: nowrap;
+  transition: opacity var(--transicao-rapida);
+}
+
+.rotuloOculto {
+  opacity: 0;
+}
+
+.item:active {
+  transform: scale(0.97);
+}
+
+.item:focus-visible {
+  outline: var(--border-width-strong) solid var(--hairline);
+  outline-offset: 2px;
+}
+
+.ativo {
+  background: var(--graphite);
+  color: var(--hairline);
+  font-weight: var(--weight-bold);
+}
+
+.rodape {
+  margin-top: auto;
+}
+
+.alternar {
+  position: fixed;
+  top: var(--space-6);
+  left: var(--largura-atual);
+  z-index: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  padding: 0;
+  border: var(--border-width) solid var(--rule);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--graphite);
+  cursor: pointer;
+  transform: translateX(-50%);
+  transition:
+    left var(--transicao-media),
+    background var(--transicao-rapida),
+    color var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.alternar:active {
+  transform: translateX(-50%) scale(0.92);
+}
+
+.alternar:focus-visible {
+  outline: var(--border-width-strong) solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .item:hover {
+    background: var(--ink);
+    color: var(--hairline);
+  }
+
+  .ativo:hover {
+    background: var(--graphite);
+  }
+
+  .alternar:hover {
+    background: var(--hover-surface);
+    color: var(--ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .rotulo,
+  .rotuloOculto,
+  .sidebar,
+  .alternar {
+    transition: none;
+  }
+
+  .item:active {
+    transform: none;
+  }
+
+  .alternar:active {
+    transform: translateX(-50%);
+  }
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    width: var(--largura-atual);
+    padding: var(--space-5) var(--space-3);
+    overflow: hidden;
+    background: var(--ink-hover);
+    transition: width var(--transicao-media);
+  }
+
+  .alternar {
+    display: flex;
+  }
+}

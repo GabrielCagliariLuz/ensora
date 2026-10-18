@@ -1,0 +1,11 @@
+.cabecalho {
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--border-width) solid var(--rule);
+}
+
+@media (min-width: 768px) {
+  .cabecalho {
+    display: none;
+  }
+}

@@ -1,0 +1,16 @@
+.titulo {
+  margin: 0 0 var(--space-1);
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-titulo);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.legenda {
+  margin: 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
