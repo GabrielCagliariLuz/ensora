@@ -10,7 +10,8 @@ Editado no VS Code. Regras gerais e arquitetura: `../CLAUDE.md` e
 - Ícones: lucide-react.
 - TanStack Query (`QueryClient` em `app/queryClient.ts`) e React Router
   (`react-router`, `createBrowserRouter`).
-- Vitest: a configurar.
+- Vitest (ambiente `node`; testes `*.test.ts` ao lado do código, importando
+  `describe/it/expect/vi` de `vitest`).
 - PWA (service worker, cache e fila offline): a configurar.
 
 ## Comandos
@@ -21,7 +22,8 @@ npm run dev       # servidor de desenvolvimento
 npm run build     # checa tipos (tsc -b) e gera o build
 npm run lint      # ESLint
 npm run preview   # serve o build localmente
-npm test          # a configurar (Vitest)
+npm test          # roda os testes uma vez (Vitest)
+npm run test:watch  # Vitest em modo observação
 ```
 
 ## Estrutura de `src/`
@@ -60,3 +62,10 @@ styles/       tokens globais (tokens.css, importado por index.css)
   referência em `../docs/telas/`.
 - Token de acesso só em memória. Nunca em localStorage ou
   sessionStorage.
+- Toda chamada à API passa por `requisitar` (`api/cliente.ts`). Em 401 ele
+  renova a sessão (uma renovação por vez, pois o refresh token é rotativo)
+  e repete a requisição uma vez. `/auth/*` não recebe `Authorization` nem
+  dispara renovação. A base vem de `VITE_API_URL` (ver `.env.example`).
+- Sessão perdida (refresh recusado): o cliente limpa o token e chama o
+  callback de `definirAoSessaoExpirar`, registrado em `app/`. `api/` não
+  conhece o router. Falha de rede vira `ErroApi` com `status: 0`.
