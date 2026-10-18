@@ -1,0 +1,65 @@
+:root {
+  /* Cores */
+  --canvas: #F7F5F0;
+  --card: #FFFFFF;
+  --hover-surface: #EFECE3;
+  --hairline: #E8E4DA;
+  --rule: #D6D1C3;
+  --ink: #17160F;
+  --ink-hover: #2E2C24;
+  --graphite: #6E6B60;
+  --ash: #A19D8F;
+  --paper: #FFFFFF;
+  --moss: #4B6B3F;
+  --moss-surface: #EDF3E7;
+  --moss-border: #C9DABD;
+  --ember: #A8402F;
+  --ember-surface: #FBEEEA;
+  --ember-border: #F0D0C6;
+
+  /* Fontes */
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Pesos */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Tipografia: tamanho / line-height */
+  --text-display: 40px;
+  --leading-display: 44px;
+  --text-h1: 24px;
+  --text-titulo: 22px;
+  --leading-titulo: 28px;
+  --text-subtitulo: 17px;
+  --leading-subtitulo: 22px;
+  --text-corpo: 15px;
+  --leading-corpo: 22px;
+  --text-botao: 14px;
+  --text-legenda: 13px;
+  --leading-legenda: 18px;
+  --text-rotulo: 11px;
+  --tracking-h1: -0.01em;
+
+  /* Espaçamento (base 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Raios */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 28px;
+
+  /* Bordas */
+  --border-width: 1px;
+  --border-width-strong: 1.5px;
+}

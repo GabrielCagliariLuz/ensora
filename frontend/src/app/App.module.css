@@ -1,0 +1,45 @@
+.pagina {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4);
+}
+
+.titulo {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-h1);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-h1);
+}
+
+.legenda {
+  margin: 0 0 var(--space-5);
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.card {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: var(--space-4);
+  background: var(--card);
+  border: var(--border-width) solid var(--hairline);
+  border-radius: var(--radius-lg);
+}
+
+.rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+}
+
+.numero {
+  font-family: var(--font-mono);
+  font-size: var(--text-display);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-display);
+}
