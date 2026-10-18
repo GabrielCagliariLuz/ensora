@@ -49,6 +49,11 @@ com.ensora/habito/
 - Erros saem sempre pelo `ManipuladorDeErros` (`compartilhado/erro`): o
   Service lança exceção (ex.: `RecursoNaoEncontradoException`) e o
   Controller nunca monta JSON de erro.
+- Método transacional que grava e depois lança exceção precisa de
+  `@Transactional(noRollbackFor = ...)`, senão o que foi gravado é
+  desfeito (ex.: `RefreshTokenService.rotacionar` revoga as sessões e
+  só então responde 401). Teste unitário com Repository simulado não
+  pega isso; foi conferido à mão no banco.
 
 ## Banco e Flyway
 
