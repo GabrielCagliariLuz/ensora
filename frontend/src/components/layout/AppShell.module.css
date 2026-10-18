@@ -1,0 +1,28 @@
+.shell {
+  --largura-atual: var(--largura-sidebar);
+
+  min-height: 100vh;
+}
+
+.colapsada {
+  --largura-atual: var(--largura-sidebar-colapsada);
+}
+
+.conteudo {
+  padding: var(--space-5) var(--space-4)
+    calc(var(--altura-bottomnav) + env(safe-area-inset-bottom) + var(--space-4));
+}
+
+@media (min-width: 768px) {
+  .conteudo {
+    margin-left: var(--largura-atual);
+    padding: var(--space-6);
+    transition: margin-left var(--transicao-media);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conteudo {
+    transition: none;
+  }
+}

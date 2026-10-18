@@ -1,0 +1,32 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-logo);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.08em;
+}
+
+.anel {
+  flex-shrink: 0;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.texto,
+.textoOculto {
+  white-space: nowrap;
+  transition: opacity var(--transicao-rapida);
+}
+
+.textoOculto {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .texto,
+  .textoOculto {
+    transition: none;
+  }
+}

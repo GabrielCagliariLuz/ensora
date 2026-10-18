@@ -1,25 +1,25 @@
 :root {
   /* Cores */
-  --canvas: #F7F5F0;
-  --card: #FFFFFF;
-  --hover-surface: #EFECE3;
-  --hairline: #E8E4DA;
-  --rule: #D6D1C3;
-  --ink: #17160F;
-  --ink-hover: #2E2C24;
-  --graphite: #6E6B60;
-  --ash: #A19D8F;
-  --paper: #FFFFFF;
-  --moss: #4B6B3F;
-  --moss-surface: #EDF3E7;
-  --moss-border: #C9DABD;
-  --ember: #A8402F;
-  --ember-surface: #FBEEEA;
-  --ember-border: #F0D0C6;
+  --canvas: #f7f5f0;
+  --card: #ffffff;
+  --hover-surface: #efece3;
+  --hairline: #e8e4da;
+  --rule: #d6d1c3;
+  --ink: #17160f;
+  --ink-hover: #2e2c24;
+  --graphite: #6e6b60;
+  --ash: #a19d8f;
+  --paper: #ffffff;
+  --moss: #4b6b3f;
+  --moss-surface: #edf3e7;
+  --moss-border: #c9dabd;
+  --ember: #a8402f;
+  --ember-surface: #fbeeea;
+  --ember-border: #f0d0c6;
 
   /* Fontes */
-  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   /* Pesos */
   --weight-regular: 400;
@@ -38,6 +38,8 @@
   --text-corpo: 15px;
   --leading-corpo: 22px;
   --text-botao: 14px;
+  --text-menu: 16px;
+  --text-logo: 20px;
   --text-legenda: 13px;
   --leading-legenda: 18px;
   --text-rotulo: 11px;
@@ -58,6 +60,15 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-pill: 28px;
+
+  /* Layout */
+  --largura-sidebar: 240px;
+  --largura-sidebar-colapsada: 72px;
+  --altura-bottomnav: 64px;
+
+  /* Movimento */
+  --transicao-rapida: 150ms ease;
+  --transicao-media: 200ms ease;
 
   /* Bordas */
   --border-width: 1px;
