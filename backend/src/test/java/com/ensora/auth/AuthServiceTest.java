@@ -198,4 +198,40 @@ class AuthServiceTest {
 		assertThat(sessao.tokenAcesso().valor()).isEqualTo("jwt");
 	}
 
+	@Test
+	void refreshDevolveNovoAccessTokenENovoRefreshToken() {
+		RefreshTokenEmitido novo = new RefreshTokenEmitido("refresh-novo", Duration.ofDays(30));
+		when(refreshTokenService.rotacionar("refresh-antigo")).thenReturn(new RotacaoRefresh(7L, novo));
+		when(tokenAcessoService.gerar(7L)).thenReturn(new TokenAcesso("jwt-novo", 900));
+
+		SessaoCriada sessao = servico(true).refresh("refresh-antigo");
+
+		assertThat(sessao.tokenAcesso().valor()).isEqualTo("jwt-novo");
+		assertThat(sessao.refreshToken().valor()).isEqualTo("refresh-novo");
+	}
+
+	@Test
+	void refreshSemTokenLancaNaoAutenticadoSemConsultarOBanco() {
+		assertThatThrownBy(() -> servico(true).refresh(null))
+				.isInstanceOf(NaoAutenticadoException.class)
+				.hasMessage("Sessão inválida");
+		assertThatThrownBy(() -> servico(true).refresh("  "))
+				.isInstanceOf(NaoAutenticadoException.class);
+		verifyNoInteractions(refreshTokenService, tokenAcessoService);
+	}
+
+	@Test
+	void logoutRevogaOTokenRecebido() {
+		servico(true).logout("refresh-atual");
+
+		verify(refreshTokenService).revogar("refresh-atual");
+	}
+
+	@Test
+	void logoutSemTokenNaoFazNadaENaoFalha() {
+		servico(true).logout(null);
+
+		verifyNoInteractions(refreshTokenService);
+	}
+
 }

@@ -9,6 +9,7 @@ import com.ensora.compartilhado.erro.NaoAutenticadoException;
 import com.ensora.compartilhado.seguranca.ConfiguracaoCors;
 import com.ensora.compartilhado.seguranca.ConfiguracaoJwt;
 import com.ensora.compartilhado.seguranca.ConfiguracaoSeguranca;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -22,6 +23,8 @@ import java.time.Duration;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -136,6 +139,61 @@ class AuthControllerTest {
 						.content("{\"email\": \"a@b.com\", \"senha\": \"\"}"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.campos[0].campo").value("senha"));
+	}
+
+	@Test
+	void refreshComCookieDevolveNovoAccessTokenENovoCookie() throws Exception {
+		SessaoCriada sessao = new SessaoCriada(new TokenAcesso("jwt-novo", 900),
+				new RefreshTokenEmitido("refresh-novo", Duration.ofDays(30)));
+		when(authService.refresh("refresh-antigo")).thenReturn(sessao);
+
+		mvc.perform(post("/auth/refresh").cookie(new Cookie("refresh_token", "refresh-antigo")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.tokenAcesso").value("jwt-novo"))
+				.andExpect(header().string("Set-Cookie", containsString("refresh_token=refresh-novo")))
+				.andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
+				.andExpect(header().string("Set-Cookie", containsString("Secure")))
+				.andExpect(header().string("Set-Cookie", containsString("SameSite=Strict")))
+				.andExpect(header().string("Set-Cookie", containsString("Path=/auth")));
+	}
+
+	@Test
+	void refreshSemCookieDevolve401() throws Exception {
+		when(authService.refresh(isNull())).thenThrow(new NaoAutenticadoException("Sessão inválida"));
+
+		mvc.perform(post("/auth/refresh"))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.erro").value("NAO_AUTENTICADO"))
+				.andExpect(jsonPath("$.mensagem").value("Sessão inválida"));
+	}
+
+	@Test
+	void refreshComSessaoInvalidaDevolve401SemCookieNovo() throws Exception {
+		when(authService.refresh("revogado")).thenThrow(new NaoAutenticadoException("Sessão inválida"));
+
+		mvc.perform(post("/auth/refresh").cookie(new Cookie("refresh_token", "revogado")))
+				.andExpect(status().isUnauthorized())
+				.andExpect(header().doesNotExist("Set-Cookie"));
+	}
+
+	@Test
+	void logoutDevolve204ELimpaOCookieComOsMesmosAtributos() throws Exception {
+		mvc.perform(post("/auth/logout").cookie(new Cookie("refresh_token", "atual")))
+				.andExpect(status().isNoContent())
+				.andExpect(header().string("Set-Cookie", containsString("Max-Age=0")))
+				.andExpect(header().string("Set-Cookie", containsString("Path=/auth")))
+				.andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
+				.andExpect(header().string("Set-Cookie", containsString("Secure")))
+				.andExpect(header().string("Set-Cookie", containsString("SameSite=Strict")));
+		verify(authService).logout("atual");
+	}
+
+	@Test
+	void logoutSemCookieTambemDevolve204() throws Exception {
+		mvc.perform(post("/auth/logout"))
+				.andExpect(status().isNoContent())
+				.andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
+		verify(authService).logout(isNull());
 	}
 
 	@Test
