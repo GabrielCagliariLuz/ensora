@@ -1,0 +1,32 @@
+/* Só o que todo diálogo compartilha. Posição, tamanho e raio ficam em cada
+   variante (BottomSheet, ModalConfirmacao). */
+.dialogo {
+  padding: 0;
+  border: 0;
+  background: var(--card);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+/* display: flex só aberto, para não sobrescrever o display: none do fechado. */
+.dialogo[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialogo::backdrop {
+  background: var(--overlay);
+  animation: aparecer var(--transicao-media);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogo::backdrop {
+    animation: none;
+  }
+}
