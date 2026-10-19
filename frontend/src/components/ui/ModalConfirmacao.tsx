@@ -16,6 +16,8 @@ interface ModalConfirmacaoProps {
   aoCancelar: () => void
   // Ação em andamento: trava os botões, o Esc e o clique no fundo.
   carregando?: boolean
+  // Falha da ação: aparece sob a descrição e o modal continua aberto.
+  erro?: string
 }
 
 // Sempre centralizado, no mobile e no desktop. Não conhece o domínio: o texto
@@ -30,6 +32,7 @@ export default function ModalConfirmacao({
   aoConfirmar,
   aoCancelar,
   carregando = false,
+  erro,
 }: ModalConfirmacaoProps) {
   const idTitulo = useId()
 
@@ -50,6 +53,11 @@ export default function ModalConfirmacao({
           {titulo}
         </h2>
         <div className={styles.descricao}>{descricao}</div>
+        {erro && (
+          <p className={styles.erro} role="alert">
+            {erro}
+          </p>
+        )}
         <div className={styles.acoes}>
           <button
             className={styles.cancelar}
