@@ -66,6 +66,10 @@
   --largura-sidebar-colapsada: 72px;
   --altura-bottomnav: 64px;
 
+  /* Camadas (bottom sheet e modal) */
+  --overlay: rgba(23, 22, 15, 0.4);
+  --sombra-camada: 0 12px 40px rgba(23, 22, 15, 0.18);
+
   /* Movimento */
   --transicao-rapida: 150ms ease;
   --transicao-media: 200ms ease;
