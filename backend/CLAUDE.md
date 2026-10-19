@@ -46,6 +46,10 @@ com.ensora/habito/
 - Todo acesso a dados de domínio filtra por `usuario_id` no Service. O
   Controller recebe `@UsuarioLogado Long usuarioId` e o repassa ao
   Service; nunca converte o token à mão.
+- Recurso de outro usuário (ou excluído) é 404, nunca 403: o filtro por
+  dono mora na consulta do Repository (ex.:
+  `findByIdAndUsuarioIdAndExcluidoEmIsNull`) e o Service lança
+  `RecursoNaoEncontradoException` quando ela volta vazia.
 - Regra de validação que o Bean Validation não expressa (ex.: "semanal
   exige meta"): o Service lança `ValidacaoException(campo, mensagem)`.
 - A segunda-feira de uma data vem de `Semana.segundaFeiraDe`

@@ -1,6 +1,7 @@
 package com.ensora.habito;
 
 import com.ensora.compartilhado.data.Semana;
+import com.ensora.compartilhado.erro.RecursoNaoEncontradoException;
 import com.ensora.compartilhado.erro.ValidacaoException;
 import com.ensora.habito.dto.HabitoRequest;
 import com.ensora.habito.dto.HabitoResponse;
@@ -13,6 +14,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class HabitoService {
@@ -61,6 +63,37 @@ public class HabitoService {
 		return HabitoResponse.de(habito, requisicao.vezesPorSemana());
 	}
 
+	@Transactional
+	public HabitoResponse atualizar(Long usuarioId, Long id, HabitoRequest requisicao) {
+		Habito habito = buscarDoUsuario(usuarioId, id);
+		if (requisicao.tipo() != habito.getTipo()) {
+			throw new ValidacaoException("tipo", "não pode ser alterado");
+		}
+
+		boolean semanal = habito.getTipo() == TipoHabito.SEMANAL;
+		if (semanal) {
+			validarSemanal(requisicao);
+		} else {
+			validarDiario(requisicao);
+		}
+
+		// O hábito foi carregado nesta transação: o JPA grava a mudança do nome sozinho, ao final.
+		habito.setNome(requisicao.nome().trim());
+		if (!semanal) {
+			return HabitoResponse.de(habito, null);
+		}
+
+		atualizarMeta(habito.getId(), requisicao);
+		return HabitoResponse.de(habito, requisicao.vezesPorSemana());
+	}
+
+	/** Exclusão lógica: só preenche excluido_em. O hábito, as metas e os registros ficam para os Insights. */
+	@Transactional
+	public void excluir(Long usuarioId, Long id) {
+		Habito habito = buscarDoUsuario(usuarioId, id);
+		habito.setExcluidoEm(relogio.instant());
+	}
+
 	@Transactional(readOnly = true)
 	public List<HabitoResponse> listar(Long usuarioId) {
 		List<Habito> lista = habitos.findByUsuarioIdAndExcluidoEmIsNullOrderByCriadoEmAscIdAsc(usuarioId);
@@ -79,6 +112,37 @@ public class HabitoService {
 		return lista.stream()
 				.map(habito -> HabitoResponse.de(habito, metaMaisRecente.get(habito.getId())))
 				.toList();
+	}
+
+	// Hábito de outro usuário, inexistente ou excluído dão o mesmo 404: não revela se o id existe para outra pessoa.
+	private Habito buscarDoUsuario(Long usuarioId, Long id) {
+		return habitos.findByIdAndUsuarioIdAndExcluidoEmIsNull(id, usuarioId)
+				.orElseThrow(() -> new RecursoNaoEncontradoException("Hábito não encontrado"));
+	}
+
+	// A meta nova vale da semana seguinte (seção 5.2); a semana em andamento mantém a meta antiga.
+	private void atualizarMeta(Long habitoId, HabitoRequest requisicao) {
+		LocalDate proximaSegunda = Semana.segundaFeiraDe(requisicao.data()).plusWeeks(1);
+
+		Optional<HabitoMeta> vigenciaFutura = metas.findByHabitoIdAndVigenteDesde(habitoId, proximaSegunda);
+		if (vigenciaFutura.isPresent()) {
+			HabitoMeta futura = vigenciaFutura.get();
+			futura.setVezesPorSemana(requisicao.vezesPorSemana());
+			metas.save(futura);
+			return;
+		}
+
+		Optional<HabitoMeta> vigente = metas
+				.findFirstByHabitoIdAndVigenteDesdeLessThanEqualOrderByVigenteDesdeDesc(habitoId, proximaSegunda);
+		if (vigente.isPresent() && vigente.get().getVezesPorSemana().equals(requisicao.vezesPorSemana())) {
+			return; // a meta não mudou: não cria vigência repetida
+		}
+
+		HabitoMeta nova = new HabitoMeta();
+		nova.setHabitoId(habitoId);
+		nova.setVezesPorSemana(requisicao.vezesPorSemana());
+		nova.setVigenteDesde(proximaSegunda);
+		metas.save(nova);
 	}
 
 	private void validarSemanal(HabitoRequest requisicao) {

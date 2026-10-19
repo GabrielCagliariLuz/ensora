@@ -1,5 +1,6 @@
 package com.ensora.habito;
 
+import com.ensora.compartilhado.erro.RecursoNaoEncontradoException;
 import com.ensora.compartilhado.erro.ValidacaoException;
 import com.ensora.habito.dto.HabitoRequest;
 import com.ensora.habito.dto.HabitoResponse;
@@ -15,6 +16,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -205,6 +207,155 @@ class HabitoServiceTest {
 		assertThat(lista).containsExactly(
 				new HabitoResponse(1L, "Beber água", TipoHabito.DIARIO, null),
 				new HabitoResponse(2L, "Academia", TipoHabito.SEMANAL, 5));
+	}
+
+	// ---- edição ----
+
+	private void acharHabito(Habito habito) {
+		when(habitos.findByIdAndUsuarioIdAndExcluidoEmIsNull(habito.getId(), USUARIO)).thenReturn(Optional.of(habito));
+	}
+
+	@Test
+	void atualizarTrocaONomeEApagaOsEspacosDasPontas() {
+		Habito diario = habito(10L, "Beber agua", TipoHabito.DIARIO);
+		acharHabito(diario);
+
+		HabitoResponse resposta = servico().atualizar(USUARIO, 10L,
+				new HabitoRequest("  Beber água  ", TipoHabito.DIARIO, null, HOJE));
+
+		assertThat(resposta.nome()).isEqualTo("Beber água");
+		assertThat(diario.getNome()).isEqualTo("Beber água");
+		verifyNoInteractions(metas);
+	}
+
+	@Test
+	void atualizarComTipoDiferenteDoGravadoLancaValidacaoNoCampoTipoENaoAlteraNada() {
+		Habito diario = habito(10L, "Beber água", TipoHabito.DIARIO);
+		acharHabito(diario);
+
+		assertValidacao(() -> servico().atualizar(USUARIO, 10L,
+				new HabitoRequest("Outro nome", TipoHabito.SEMANAL, 3, HOJE)), "tipo");
+
+		assertThat(diario.getNome()).isEqualTo("Beber água");
+		assertThat(diario.getTipo()).isEqualTo(TipoHabito.DIARIO);
+		verifyNoInteractions(metas);
+	}
+
+	@Test
+	void atualizarHabitoQueOFiltroNaoAchaLancaNaoEncontradoSemGravar() {
+		// De outro usuário, excluído ou inexistente: o Repository devolve vazio nos três casos.
+		when(habitos.findByIdAndUsuarioIdAndExcluidoEmIsNull(10L, USUARIO)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> servico().atualizar(USUARIO, 10L,
+				new HabitoRequest("Qualquer", TipoHabito.DIARIO, null, HOJE)))
+				.isInstanceOf(RecursoNaoEncontradoException.class);
+
+		verify(habitos).findByIdAndUsuarioIdAndExcluidoEmIsNull(10L, USUARIO);
+		verify(habitos, never()).save(any());
+		verifyNoInteractions(metas);
+	}
+
+	@Test
+	void atualizarHabitoDiarioComMetaLancaValidacaoENaoMudaONome() {
+		Habito diario = habito(10L, "Beber água", TipoHabito.DIARIO);
+		acharHabito(diario);
+
+		assertValidacao(() -> servico().atualizar(USUARIO, 10L,
+				new HabitoRequest("Novo nome", TipoHabito.DIARIO, 3, HOJE)), "vezesPorSemana");
+
+		assertThat(diario.getNome()).isEqualTo("Beber água");
+	}
+
+	@Test
+	void atualizarHabitoSemanalSemMetaOuSemDataLancaValidacao() {
+		acharHabito(habito(10L, "Academia", TipoHabito.SEMANAL));
+
+		assertValidacao(() -> servico().atualizar(USUARIO, 10L,
+				new HabitoRequest("Academia", TipoHabito.SEMANAL, null, HOJE)), "vezesPorSemana");
+		assertValidacao(() -> servico().atualizar(USUARIO, 10L,
+				new HabitoRequest("Academia", TipoHabito.SEMANAL, 3, null)), "data");
+	}
+
+	@ParameterizedTest(name = "hoje {0}: a meta nova começa na segunda {1}")
+	@CsvSource({
+			"2026-10-19, 2026-10-26",
+			"2026-10-21, 2026-10-26",
+			"2026-10-25, 2026-10-26"
+	})
+	void atualizarMetaCriaAVigenciaNaProximaSegundaFeira(LocalDate hoje, LocalDate proximaSegunda) {
+		acharHabito(habito(10L, "Academia", TipoHabito.SEMANAL));
+		when(metas.findByHabitoIdAndVigenteDesde(10L, proximaSegunda)).thenReturn(Optional.empty());
+		when(metas.findFirstByHabitoIdAndVigenteDesdeLessThanEqualOrderByVigenteDesdeDesc(10L, proximaSegunda))
+				.thenReturn(Optional.of(meta(10L, 3, LocalDate.of(2026, 10, 19))));
+
+		HabitoResponse resposta = servico(hoje).atualizar(USUARIO, 10L,
+				new HabitoRequest("Academia", TipoHabito.SEMANAL, 5, hoje));
+
+		assertThat(resposta.vezesPorSemana()).isEqualTo(5);
+		ArgumentCaptor<HabitoMeta> nova = ArgumentCaptor.forClass(HabitoMeta.class);
+		verify(metas).save(nova.capture());
+		assertThat(nova.getValue().getHabitoId()).isEqualTo(10L);
+		assertThat(nova.getValue().getVezesPorSemana()).isEqualTo(5);
+		assertThat(nova.getValue().getVigenteDesde()).isEqualTo(proximaSegunda);
+	}
+
+	@Test
+	void atualizarMetaSubstituiAVigenciaFuturaQueJaExisteEmVezDeCriarOutra() {
+		acharHabito(habito(10L, "Academia", TipoHabito.SEMANAL));
+		HabitoMeta futura = meta(10L, 5, LocalDate.of(2026, 10, 26));
+		when(metas.findByHabitoIdAndVigenteDesde(10L, LocalDate.of(2026, 10, 26))).thenReturn(Optional.of(futura));
+
+		HabitoResponse resposta = servico().atualizar(USUARIO, 10L,
+				new HabitoRequest("Academia", TipoHabito.SEMANAL, 4, HOJE));
+
+		assertThat(resposta.vezesPorSemana()).isEqualTo(4);
+		ArgumentCaptor<HabitoMeta> salva = ArgumentCaptor.forClass(HabitoMeta.class);
+		verify(metas).save(salva.capture());
+		assertThat(salva.getValue()).isSameAs(futura);
+		assertThat(futura.getVezesPorSemana()).isEqualTo(4);
+		assertThat(futura.getVigenteDesde()).isEqualTo(LocalDate.of(2026, 10, 26));
+	}
+
+	@Test
+	void atualizarComMetaIgualAQueJaVaiValerNaoCriaVigenciaRepetida() {
+		acharHabito(habito(10L, "Academia", TipoHabito.SEMANAL));
+		LocalDate proximaSegunda = LocalDate.of(2026, 10, 26);
+		when(metas.findByHabitoIdAndVigenteDesde(10L, proximaSegunda)).thenReturn(Optional.empty());
+		when(metas.findFirstByHabitoIdAndVigenteDesdeLessThanEqualOrderByVigenteDesdeDesc(10L, proximaSegunda))
+				.thenReturn(Optional.of(meta(10L, 3, LocalDate.of(2026, 10, 19))));
+
+		HabitoResponse resposta = servico().atualizar(USUARIO, 10L,
+				new HabitoRequest("Academia (novo nome)", TipoHabito.SEMANAL, 3, HOJE));
+
+		assertThat(resposta.vezesPorSemana()).isEqualTo(3);
+		assertThat(resposta.nome()).isEqualTo("Academia (novo nome)");
+		verify(metas, never()).save(any());
+	}
+
+	// ---- exclusão ----
+
+	@Test
+	void excluirPreencheExcluidoEmComOInstanteAtualENaoApagaNada() {
+		Habito diario = habito(10L, "Beber água", TipoHabito.DIARIO);
+		acharHabito(diario);
+
+		servico().excluir(USUARIO, 10L);
+
+		assertThat(diario.getExcluidoEm()).isEqualTo(HOJE.atTime(12, 0).toInstant(ZoneOffset.UTC));
+		verify(habitos, never()).delete(any());
+		verify(habitos, never()).deleteById(any());
+		verifyNoInteractions(metas);
+	}
+
+	@Test
+	void excluirHabitoQueOFiltroNaoAchaLancaNaoEncontradoESoConsultaPeloUsuarioRecebido() {
+		when(habitos.findByIdAndUsuarioIdAndExcluidoEmIsNull(10L, USUARIO)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> servico().excluir(USUARIO, 10L))
+				.isInstanceOf(RecursoNaoEncontradoException.class);
+
+		verify(habitos).findByIdAndUsuarioIdAndExcluidoEmIsNull(10L, USUARIO);
+		verify(habitos, never()).delete(any());
 	}
 
 }

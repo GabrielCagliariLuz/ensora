@@ -715,6 +715,26 @@ semanal, `vezesPorSemana` é a meta **mais recente** (a configurada). A meta
 da semana em andamento, usada no contador `1/3` da Home, vem do
 `GET /inicio`, que recebe a data.
 
+`PUT /habitos/{id}` (exige token) usa o **mesmo corpo** do `POST`, porque
+criar e editar usam o mesmo formulário; responde `200` com o hábito no
+mesmo formato. O front manda o `tipo` que o hábito já tem:
+
+- `tipo` diferente do gravado: `400` no campo `tipo` (o tipo é imutável).
+- `nome`: troca o nome do hábito.
+- Hábito semanal: a meta nova vale a partir da **próxima segunda-feira**
+  em relação à `data` enviada. Se já existe uma vigência nessa segunda,
+  ela é substituída; se o valor não muda em relação ao que já vale,
+  nenhuma vigência nova é criada. A semana em andamento mantém a meta
+  antiga.
+- Hábito diário: `vezesPorSemana` continua proibida.
+
+`DELETE /habitos/{id}` (exige token) responde `204` e só preenche
+`excluido_em`: o hábito, as metas e os registros ficam no banco para os
+Insights.
+
+Hábito de outro usuário, inexistente ou já excluído responde sempre
+`404`, nos dois endpoints.
+
 ### Formato de erro
 
 Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
@@ -733,7 +753,7 @@ Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
 | Status | `erro`                | Quando                                      |
 | ------ | --------------------- | ------------------------------------------- |
 | 400    | `VALIDACAO`           | corpo ou parâmetro inválido (traz `campos`) |
-| 400    | `REQUISICAO_INVALIDA` | JSON malformado ou ausente                  |
+| 400    | `REQUISICAO_INVALIDA` | JSON malformado ou ausente; parâmetro da URL com tipo errado (ex.: id não numérico) |
 | 401    | `NAO_AUTENTICADO`     | sem token válido                            |
 | 403    | `ACESSO_NEGADO`       | sem permissão ou cadastro desabilitado      |
 | 404    | `NAO_ENCONTRADO`      | recurso ou rota inexistente                 |
@@ -794,6 +814,8 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 42  | Banco reforçado em hábitos: `vigente_desde` sempre segunda-feira (`CHECK` com `ISODOW`), `nome` não vazio e com até 100 caracteres. `tipo` é um `CHECK` sobre texto (o enum fica só no Java, `TipoHabito`) e é imutável também no JPA (`updatable = false`) |
 | 43  | A data de "hoje" usada por operações que dependem da semana (criar hábito semanal e, depois, mudar a meta) é enviada pelo front no corpo (`data`), lida do relógio do aparelho, com limite de 2 dias do relógio do servidor. A segunda-feira da semana vem de um único lugar (`Semana.segundaFeiraDe`, em `compartilhado/data`) |
 | 44  | O Controller recebe o id do usuário logado por `@UsuarioLogado Long usuarioId` (resolvedor em `compartilhado/seguranca`, que lê o `sub` do JWT) e o repassa ao Service, que filtra por ele |
+| 45  | Alteração da meta semanal: vale a partir da próxima segunda-feira em relação à `data` enviada pelo front; substitui a vigência futura se ela já existir e não cria vigência quando o valor não muda (a meta de uma semana continua sendo a vigência mais recente com `vigente_desde` menor ou igual à segunda dela) |
+| 46  | Hábito de outro usuário, inexistente ou excluído responde sempre 404 (nunca 403), para não revelar se um id existe para outra pessoa. A exclusão é só lógica (`excluido_em`) e nunca apaga linhas de hábito, meta ou registro |
 
 ## 17. Pontos ainda em aberto
 
