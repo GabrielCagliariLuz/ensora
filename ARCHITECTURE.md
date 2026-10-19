@@ -278,24 +278,24 @@ feito no `Service`.
 
 Hábito diário e semanal ficam na mesma tabela.
 
-| Coluna        | Tipo        | Regras                          |
-| ------------- | ----------- | ------------------------------- |
-| `usuario_id`  | FK          |                                 |
-| `nome`        | texto       | obrigatório                     |
-| `tipo`        | texto       | `DIARIO` ou `SEMANAL`; imutável |
-| `criado_em`   | TIMESTAMPTZ | default `now()`                 |
-| `excluido_em` | TIMESTAMPTZ | opcional (exclusão lógica)      |
+| Coluna        | Tipo        | Regras                                     |
+| ------------- | ----------- | ------------------------------------------ |
+| `usuario_id`  | FK          |                                            |
+| `nome`        | texto       | obrigatório; não vazio; até 100 caracteres |
+| `tipo`        | texto       | `DIARIO` ou `SEMANAL`; imutável            |
+| `criado_em`   | TIMESTAMPTZ | default `now()`                            |
+| `excluido_em` | TIMESTAMPTZ | opcional (exclusão lógica)                 |
 
 ### habito_meta
 
 Só para hábito semanal. Regra de código: todo hábito semanal tem ao
 menos uma linha aqui.
 
-| Coluna             | Tipo    | Regras                   |
-| ------------------ | ------- | ------------------------ |
-| `habito_id`        | FK      |                          |
-| `vezes_por_semana` | inteiro | entre 1 e 7              |
-| `vigente_desde`    | DATE    | sempre uma segunda-feira |
+| Coluna             | Tipo    | Regras                                    |
+| ------------------ | ------- | ----------------------------------------- |
+| `habito_id`        | FK      |                                           |
+| `vezes_por_semana` | inteiro | entre 1 e 7                               |
+| `vigente_desde`    | DATE    | sempre uma segunda-feira (CHECK no banco) |
 
 Única: `(habito_id, vigente_desde)`. A meta de uma semana é a linha com
 o maior `vigente_desde` menor ou igual à segunda-feira daquela semana.
@@ -335,12 +335,20 @@ o maior `vigente_desde` menor ou igual à segunda-feira daquela semana.
 | `cor`        | texto curto | nome de uma cor da paleta    |
 | `criado_em`  | TIMESTAMPTZ | default `now()`              |
 
-### Restrições no banco (migração Flyway V2)
+### Restrições no banco (por migração Flyway)
 
-- `CHECK` de `habito.tipo` em (`DIARIO`, `SEMANAL`).
-- `CHECK` de `habito_meta.vezes_por_semana` entre 1 e 7.
-- `CHECK` de `evento.termino > evento.inicio` quando `termino` não é
-  nulo.
+- **V1 (autenticação):** `email` único e minúsculo
+  (`CHECK (email = lower(email))`) e `token_hash` único.
+- **V2 (hábitos):**
+  - `CHECK` de `habito.tipo` em (`DIARIO`, `SEMANAL`).
+  - `CHECK` de `habito.nome` não vazio, com `VARCHAR(100)`.
+  - `CHECK` de `habito_meta.vezes_por_semana` entre 1 e 7.
+  - `CHECK` de `habito_meta.vigente_desde` sempre uma segunda-feira.
+  - Únicas `(habito_id, vigente_desde)` em `habito_meta` e
+    `(habito_id, data)` em `registro_habito`.
+- **V3 (entrega) e V4 (evento):** escritas na vez de cada fase. A V4
+  traz o `CHECK` de `evento.termino > evento.inicio` quando `termino`
+  não é nulo.
 - `criado_em` com default `now()` em todas as tabelas que o têm.
 
 ## 10. Backend
@@ -756,6 +764,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 39  | Limite de login: 5 falhas por IP em 15 min, em memória e em código próprio, resposta 429; zera ao reiniciar a API e vale para uma instância |
 | 40  | Senha com mínimo de 4 caracteres, revendo os 8 anteriores; mitigada pelo cadastro desligado em produção, pelo limite por IP e pelo uso pessoal; o máximo de 72 é o limite do BCrypt |
 | 41  | Refresh token rotativo com detecção de reuso: cada token vale uma vez; token já revogado apresentado de novo revoga todas as sessões do usuário. A troca usa `UPDATE ... WHERE revogado_em IS NULL` (o banco decide quem ganha numa corrida) e `@Transactional(noRollbackFor)` para a revogação geral ser gravada mesmo com a resposta 401. Logout idempotente que revoga só o token da sessão |
+| 42  | Banco reforçado em hábitos: `vigente_desde` sempre segunda-feira (`CHECK` com `ISODOW`), `nome` não vazio e com até 100 caracteres. `tipo` é um `CHECK` sobre texto (o enum fica só no Java, `TipoHabito`) e é imutável também no JPA (`updatable = false`) |
 
 ## 17. Pontos ainda em aberto
 
@@ -778,7 +787,9 @@ bloqueia a chamada, então o front não depende desse corpo.
     reenviar a fila e como avisar falhas de envio.
 10. ~~Tipo do `id` das tabelas (`BIGINT` identity ou `UUID`).~~
     Resolvido: `BIGINT` identity (decisão 34).
-11. Escrever a migração Flyway V2 com as restrições da seção 9.
+11. ~~Escrever a migração Flyway V2 com as restrições da seção 9.~~
+    V1 e V2 prontas; as restrições de entrega (V3) e de evento (V4)
+    entram na vez de cada fase.
 12. ~~Renomear o pacote do backend de `com.example.backend` para
     `com.ensora`.~~ Resolvido (issue #3).
 13. Bibliotecas do frontend ainda indefinidas (ícones, rotas, PWA).
