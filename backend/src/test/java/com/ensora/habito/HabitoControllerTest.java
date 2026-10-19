@@ -1,6 +1,7 @@
 package com.ensora.habito;
 
 import com.ensora.compartilhado.erro.ManipuladorDeErros;
+import com.ensora.compartilhado.erro.RecursoNaoEncontradoException;
 import com.ensora.compartilhado.erro.ValidacaoException;
 import com.ensora.compartilhado.seguranca.ConfiguracaoCors;
 import com.ensora.compartilhado.seguranca.ConfiguracaoJwt;
@@ -25,12 +26,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -187,6 +191,103 @@ class HabitoControllerTest {
 	void tokenComSubjectQueNaoEhNumeroDevolve401() throws Exception {
 		mvc.perform(get("/habitos").with(usuario("abc")))
 				.andExpect(status().isUnauthorized());
+		verifyNoInteractions(habitoService);
+	}
+
+	// ---- edição e exclusão ----
+
+	@Test
+	void atualizarDevolve200ComOHabitoAtualizado() throws Exception {
+		when(habitoService.atualizar(eq(7L), eq(4L), any()))
+				.thenReturn(new HabitoResponse(4L, "Academia", TipoHabito.SEMANAL, 3));
+
+		mvc.perform(put("/habitos/4").with(usuario("7")).contentType(MediaType.APPLICATION_JSON).content(SEMANAL))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(4))
+				.andExpect(jsonPath("$.vezesPorSemana").value(3));
+	}
+
+	@Test
+	void atualizarPassaAoServiceOIdDoUsuarioDoTokenOIdDaUrlEOCorpo() throws Exception {
+		when(habitoService.atualizar(eq(7L), eq(4L), any()))
+				.thenReturn(new HabitoResponse(4L, "Academia", TipoHabito.SEMANAL, 3));
+
+		mvc.perform(put("/habitos/4").with(usuario("7")).contentType(MediaType.APPLICATION_JSON).content(SEMANAL))
+				.andExpect(status().isOk());
+
+		ArgumentCaptor<HabitoRequest> recebido = ArgumentCaptor.forClass(HabitoRequest.class);
+		verify(habitoService).atualizar(eq(7L), eq(4L), recebido.capture());
+		assertThat(recebido.getValue()).isEqualTo(
+				new HabitoRequest("Academia", TipoHabito.SEMANAL, 3, LocalDate.of(2026, 10, 21)));
+	}
+
+	@Test
+	void atualizarHabitoDeOutroUsuarioDevolve404() throws Exception {
+		when(habitoService.atualizar(eq(7L), eq(4L), any()))
+				.thenThrow(new RecursoNaoEncontradoException("Hábito não encontrado"));
+
+		mvc.perform(put("/habitos/4").with(usuario("7")).contentType(MediaType.APPLICATION_JSON).content(SEMANAL))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.erro").value("NAO_ENCONTRADO"))
+				.andExpect(jsonPath("$.mensagem").value("Hábito não encontrado"));
+	}
+
+	@Test
+	void tentarMudarOTipoDevolve400ComOCampoTipo() throws Exception {
+		when(habitoService.atualizar(eq(7L), eq(4L), any()))
+				.thenThrow(new ValidacaoException("tipo", "não pode ser alterado"));
+
+		mvc.perform(put("/habitos/4").with(usuario("7")).contentType(MediaType.APPLICATION_JSON).content(SEMANAL))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.erro").value("VALIDACAO"))
+				.andExpect(jsonPath("$.campos[0].campo").value("tipo"));
+	}
+
+	@Test
+	void atualizarComNomeEmBrancoDevolve400SemChamarOService() throws Exception {
+		mvc.perform(put("/habitos/4").with(usuario("7")).contentType(MediaType.APPLICATION_JSON)
+						.content("{\"nome\": \"\", \"tipo\": \"DIARIO\"}"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("nome"));
+		verifyNoInteractions(habitoService);
+	}
+
+	@Test
+	void atualizarSemTokenDevolve401() throws Exception {
+		mvc.perform(put("/habitos/4").contentType(MediaType.APPLICATION_JSON).content(SEMANAL))
+				.andExpect(status().isUnauthorized());
+		verifyNoInteractions(habitoService);
+	}
+
+	@Test
+	void excluirDevolve204EPassaAoServiceOUsuarioDoTokenEOIdDaUrl() throws Exception {
+		mvc.perform(delete("/habitos/4").with(usuario("7")))
+				.andExpect(status().isNoContent());
+
+		verify(habitoService).excluir(7L, 4L);
+	}
+
+	@Test
+	void excluirHabitoDeOutroUsuarioDevolve404() throws Exception {
+		doThrow(new RecursoNaoEncontradoException("Hábito não encontrado")).when(habitoService).excluir(7L, 4L);
+
+		mvc.perform(delete("/habitos/4").with(usuario("7")))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.erro").value("NAO_ENCONTRADO"));
+	}
+
+	@Test
+	void excluirSemTokenDevolve401() throws Exception {
+		mvc.perform(delete("/habitos/4"))
+				.andExpect(status().isUnauthorized());
+		verifyNoInteractions(habitoService);
+	}
+
+	@Test
+	void idQueNaoEhNumeroDevolve400() throws Exception {
+		mvc.perform(delete("/habitos/abc").with(usuario("7")))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.erro").value("REQUISICAO_INVALIDA"));
 		verifyNoInteractions(habitoService);
 	}
 

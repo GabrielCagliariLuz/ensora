@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
@@ -46,6 +47,14 @@ public class ManipuladorDeErros {
 			HttpServletRequest requisicao) {
 		return resposta(HttpStatus.BAD_REQUEST, "REQUISICAO_INVALIDA",
 				"Corpo da requisição ausente ou malformado", requisicao, null);
+	}
+
+	// Ex.: DELETE /habitos/abc, em que o id da URL não é número. É erro do cliente (400), não do servidor.
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ErroResposta> aoReceberParametroComTipoErrado(MethodArgumentTypeMismatchException ex,
+			HttpServletRequest requisicao) {
+		return resposta(HttpStatus.BAD_REQUEST, "REQUISICAO_INVALIDA",
+				"Valor inválido para o parâmetro '" + ex.getName() + "'", requisicao, null);
 	}
 
 	@ExceptionHandler(ValidacaoException.class)
