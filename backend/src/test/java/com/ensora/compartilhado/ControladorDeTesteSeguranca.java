@@ -1,6 +1,7 @@
 package com.ensora.compartilhado;
 
 import com.ensora.compartilhado.erro.RecursoNaoEncontradoException;
+import com.ensora.compartilhado.erro.ValidacaoException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.security.access.AccessDeniedException;
@@ -30,6 +31,11 @@ class ControladorDeTesteSeguranca {
 	@GetMapping("/habitos/teste-nao-encontrado")
 	void naoEncontrado() {
 		throw new RecursoNaoEncontradoException("Hábito não encontrado");
+	}
+
+	@GetMapping("/habitos/teste-regra-violada")
+	void regraViolada() {
+		throw new ValidacaoException("vezesPorSemana", "obrigatória para hábito semanal");
 	}
 
 	@GetMapping("/auth/teste")

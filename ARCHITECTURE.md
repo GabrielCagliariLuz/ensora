@@ -688,6 +688,33 @@ Princípios:
 É idempotente: sem cookie ou com token já revogado, também responde 204.
 Revoga só o token desta sessão.
 
+### Contratos de hábitos
+
+`POST /habitos` (exige token):
+
+```json
+// requisição: hábito semanal (meta e data obrigatórias)
+{ "nome": "Academia", "tipo": "SEMANAL", "vezesPorSemana": 3, "data": "2026-10-21" }
+// requisição: hábito diário (sem meta; a data é ignorada)
+{ "nome": "Beber água", "tipo": "DIARIO", "data": "2026-10-21" }
+// resposta 201 (no diário, vezesPorSemana não aparece)
+{ "id": 4, "nome": "Academia", "tipo": "SEMANAL", "vezesPorSemana": 3 }
+```
+
+- `nome`: obrigatório, não vazio, até 100 caracteres (gravado sem espaços
+  nas pontas). Nomes repetidos são permitidos.
+- `data`: o dia de hoje no fuso do usuário, lido pelo front do relógio do
+  aparelho (o usuário não digita). Define a segunda-feira da primeira
+  vigência da meta. O servidor recusa uma `data` a mais de 2 dias do
+  relógio dele; esse limite é só uma checagem, não a fonte de "hoje".
+- `vezesPorSemana`: de 1 a 7; obrigatório no semanal e proibido no diário.
+
+`GET /habitos` (exige token) devolve a lista do usuário do token, sem os
+excluídos, na ordem de criação, no mesmo formato da resposta acima. Para o
+semanal, `vezesPorSemana` é a meta **mais recente** (a configurada). A meta
+da semana em andamento, usada no contador `1/3` da Home, vem do
+`GET /inicio`, que recebe a data.
+
 ### Formato de erro
 
 Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
@@ -765,6 +792,8 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 40  | Senha com mínimo de 4 caracteres, revendo os 8 anteriores; mitigada pelo cadastro desligado em produção, pelo limite por IP e pelo uso pessoal; o máximo de 72 é o limite do BCrypt |
 | 41  | Refresh token rotativo com detecção de reuso: cada token vale uma vez; token já revogado apresentado de novo revoga todas as sessões do usuário. A troca usa `UPDATE ... WHERE revogado_em IS NULL` (o banco decide quem ganha numa corrida) e `@Transactional(noRollbackFor)` para a revogação geral ser gravada mesmo com a resposta 401. Logout idempotente que revoga só o token da sessão |
 | 42  | Banco reforçado em hábitos: `vigente_desde` sempre segunda-feira (`CHECK` com `ISODOW`), `nome` não vazio e com até 100 caracteres. `tipo` é um `CHECK` sobre texto (o enum fica só no Java, `TipoHabito`) e é imutável também no JPA (`updatable = false`) |
+| 43  | A data de "hoje" usada por operações que dependem da semana (criar hábito semanal e, depois, mudar a meta) é enviada pelo front no corpo (`data`), lida do relógio do aparelho, com limite de 2 dias do relógio do servidor. A segunda-feira da semana vem de um único lugar (`Semana.segundaFeiraDe`, em `compartilhado/data`) |
+| 44  | O Controller recebe o id do usuário logado por `@UsuarioLogado Long usuarioId` (resolvedor em `compartilhado/seguranca`, que lê o `sub` do JWT) e o repassa ao Service, que filtra por ele |
 
 ## 17. Pontos ainda em aberto
 

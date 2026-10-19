@@ -43,7 +43,13 @@ com.ensora/habito/
 - Entidade nunca sai do Controller; a API recebe e devolve DTOs
   (prefira `record`).
 - Validação de entrada com Bean Validation nos DTOs de request.
-- Todo acesso a dados de domínio filtra por `usuario_id` no Service.
+- Todo acesso a dados de domínio filtra por `usuario_id` no Service. O
+  Controller recebe `@UsuarioLogado Long usuarioId` e o repassa ao
+  Service; nunca converte o token à mão.
+- Regra de validação que o Bean Validation não expressa (ex.: "semanal
+  exige meta"): o Service lança `ValidacaoException(campo, mensagem)`.
+- A segunda-feira de uma data vem de `Semana.segundaFeiraDe`
+  (`compartilhado/data`), nunca de uma conta repetida em outro lugar.
 - Entidades guardam FK como `Long` (ex.: `usuarioId`), nunca `@ManyToOne`.
   Para dados do relacionado, o Service busca pelo id.
 - Erros saem sempre pelo `ManipuladorDeErros` (`compartilhado/erro`): o

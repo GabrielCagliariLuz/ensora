@@ -48,6 +48,12 @@ public class ManipuladorDeErros {
 				"Corpo da requisição ausente ou malformado", requisicao, null);
 	}
 
+	@ExceptionHandler(ValidacaoException.class)
+	public ResponseEntity<ErroResposta> aoViolarRegraDeValidacao(ValidacaoException ex,
+			HttpServletRequest requisicao) {
+		return validacao(List.of(new ErroCampo(ex.getCampo(), ex.getMessage())), requisicao);
+	}
+
 	@ExceptionHandler(AuthenticationException.class)
 	public ResponseEntity<ErroResposta> aoNaoAutenticar(AuthenticationException ex, HttpServletRequest requisicao) {
 		// Exceção própria traz a mensagem escolhida pelo Service; as do Spring Security usam o texto padrão.
