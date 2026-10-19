@@ -735,6 +735,19 @@ Insights.
 Hábito de outro usuário, inexistente ou já excluído responde sempre
 `404`, nos dois endpoints.
 
+`PUT /habitos/{id}/registros/{data}` marca o hábito como feito na data, e
+`DELETE /habitos/{id}/registros/{data}` desmarca. A `{data}` é
+`AAAA-MM-DD` (a do dia a que o registro se refere, no fuso do usuário).
+Os dois exigem token e respondem `204` sem corpo.
+
+- **Idempotentes:** marcar o que já está marcado e desmarcar o que não
+  está marcado também respondem `204`, sem erro e sem duplicar o registro.
+  É a base da fila offline (seção 13).
+- Hábito de outro usuário, inexistente ou excluído: `404`.
+- Marcar uma data futura (a mais de 2 dias do relógio do servidor): `400`
+  no campo `data`. Datas passadas não têm limite.
+- `data` fora do formato ou `id` não numérico: `400 REQUISICAO_INVALIDA`.
+
 ### Formato de erro
 
 Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
@@ -816,6 +829,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 44  | O Controller recebe o id do usuário logado por `@UsuarioLogado Long usuarioId` (resolvedor em `compartilhado/seguranca`, que lê o `sub` do JWT) e o repassa ao Service, que filtra por ele |
 | 45  | Alteração da meta semanal: vale a partir da próxima segunda-feira em relação à `data` enviada pelo front; substitui a vigência futura se ela já existir e não cria vigência quando o valor não muda (a meta de uma semana continua sendo a vigência mais recente com `vigente_desde` menor ou igual à segunda dela) |
 | 46  | Hábito de outro usuário, inexistente ou excluído responde sempre 404 (nunca 403), para não revelar se um id existe para outra pessoa. A exclusão é só lógica (`excluido_em`) e nunca apaga linhas de hábito, meta ou registro |
+| 47  | Marcar hábito usa `INSERT ... ON CONFLICT (habito_id, data) DO NOTHING` e desmarcar usa `DELETE`: a idempotência é decidida pelo banco, de forma atômica, sem consulta prévia e sem depender de capturar uma exceção. Data futura (além de 2 dias do relógio do servidor) é recusada; datas passadas não têm limite |
 
 ## 17. Pontos ainda em aberto
 
