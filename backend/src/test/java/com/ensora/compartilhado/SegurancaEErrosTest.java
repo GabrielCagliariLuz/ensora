@@ -107,6 +107,15 @@ class SegurancaEErrosTest {
 	}
 
 	@Test
+	void regraDeNegocioViolada_Devolve400ComOCampoEAMensagem() throws Exception {
+		mvc.perform(get("/habitos/teste-regra-violada").with(SecurityMockMvcRequestPostProcessors.user("usuario")))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.erro").value("VALIDACAO"))
+				.andExpect(jsonPath("$.campos[0].campo").value("vezesPorSemana"))
+				.andExpect(jsonPath("$.campos[0].mensagem").value("obrigatória para hábito semanal"));
+	}
+
+	@Test
 	void tokenValidoLiberaRotaProtegida() throws Exception {
 		String token = tokenAcessoService.gerar(1L).valor();
 
