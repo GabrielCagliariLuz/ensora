@@ -1,0 +1,141 @@
+.formulario {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.campo {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.rotulo {
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.entrada {
+  width: 100%;
+  height: 44px;
+  padding-inline: var(--space-3);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-corpo);
+  transition:
+    border-color var(--transicao-rapida),
+    box-shadow var(--transicao-rapida);
+}
+
+.entrada::placeholder {
+  color: var(--ash);
+}
+
+.entrada:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--hover-surface);
+}
+
+.entrada[aria-invalid='true'] {
+  border-color: var(--ember);
+}
+
+.apoio {
+  margin: 0;
+  color: var(--ash);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.dica {
+  color: var(--ember);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.alerta,
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.alerta svg,
+.aviso svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.alerta {
+  background: var(--ember-surface);
+  border: var(--border-width) solid var(--ember-border);
+  color: var(--ember);
+}
+
+/* Offline não é erro do usuário: tom neutro. */
+.aviso {
+  background: var(--hover-surface);
+  border: var(--border-width) solid var(--hairline);
+  color: var(--graphite);
+}
+
+.acoes {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.cancelar,
+.salvar {
+  flex: 1;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.cancelar {
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  color: var(--ink);
+}
+
+.cancelar:hover {
+  background: var(--hover-surface);
+}
+
+.salvar {
+  border: 0;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.salvar:hover:not(:disabled) {
+  background: var(--ink-hover);
+}
+
+.salvar:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cancelar:focus-visible,
+.salvar:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entrada,
+  .cancelar,
+  .salvar {
+    transition: none;
+  }
+}

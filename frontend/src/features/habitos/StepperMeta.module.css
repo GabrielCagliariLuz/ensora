@@ -1,0 +1,45 @@
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.valor {
+  font-size: var(--text-corpo);
+  font-variant-numeric: tabular-nums;
+}
+
+.botao {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: 50%;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.botao:hover:not(:disabled) {
+  background: var(--hover-surface);
+}
+
+.botao:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.botao:disabled {
+  color: var(--ash);
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao {
+    transition: none;
+  }
+}
