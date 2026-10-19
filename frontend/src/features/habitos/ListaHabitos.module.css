@@ -1,0 +1,60 @@
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 52px;
+}
+
+.item + .item {
+  border-top: var(--border-width) solid var(--hairline);
+}
+
+/* Nome longo quebra linha sem empurrar os botões. */
+.nome {
+  min-width: 0;
+  padding-block: var(--space-2);
+  overflow-wrap: anywhere;
+  font-size: var(--text-corpo);
+  line-height: var(--leading-corpo);
+}
+
+.acoes {
+  flex-shrink: 0;
+  display: flex;
+  gap: var(--space-1);
+}
+
+.botao {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.botao:hover {
+  background: var(--hover-surface);
+}
+
+.botao:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao {
+    transition: none;
+  }
+}

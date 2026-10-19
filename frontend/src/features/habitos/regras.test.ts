@@ -3,6 +3,7 @@ import { ErroApi } from '../../api/erro'
 import {
   errosDeCampos,
   limitarMeta,
+  mensagemErroExclusao,
   mensagemErroHabito,
   montarRequisicao,
   validarHabito,
@@ -114,6 +115,21 @@ describe('errosDeCampos', () => {
   it('devolve vazio para outros erros', () => {
     expect(errosDeCampos(new ErroApi(500, 'ERRO_INTERNO', 'x'))).toEqual({})
     expect(errosDeCampos(new Error('boom'))).toEqual({})
+  })
+})
+
+describe('mensagemErroExclusao', () => {
+  it('trata falha de rede', () => {
+    expect(mensagemErroExclusao(new ErroApi(0, 'SEM_CONEXAO', 'x'))).toBe(
+      'Sem conexão com o servidor.',
+    )
+  })
+
+  it('usa a mensagem padrão para os demais erros', () => {
+    const padrao = 'Não foi possível excluir. Tente de novo.'
+
+    expect(mensagemErroExclusao(new ErroApi(500, 'ERRO_INTERNO', 'x'))).toBe(padrao)
+    expect(mensagemErroExclusao(new Error('boom'))).toBe(padrao)
   })
 })
 

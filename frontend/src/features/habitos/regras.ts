@@ -51,6 +51,13 @@ export function errosDeCampos(erro: unknown): ErrosHabito {
   return erros
 }
 
+export function mensagemErroExclusao(erro: unknown): string {
+  if (erro instanceof ErroApi && erro.status === 0) {
+    return 'Sem conexão com o servidor.'
+  }
+  return 'Não foi possível excluir. Tente de novo.'
+}
+
 export function mensagemErroHabito(erro: unknown): string {
   if (erro instanceof ErroApi) {
     if (erro.status === 0) return 'Sem conexão com o servidor.'
