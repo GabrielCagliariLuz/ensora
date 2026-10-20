@@ -314,13 +314,16 @@ o maior `vigente_desde` menor ou igual à segunda-feira daquela semana.
 | Coluna          | Tipo        | Regras                                 |
 | --------------- | ----------- | -------------------------------------- |
 | `usuario_id`    | FK          |                                        |
-| `titulo`        | texto       | obrigatório                            |
+| `titulo`        | texto       | obrigatório, não vazio, até 150        |
 | `prazo_data`    | DATE        | obrigatório                            |
 | `prazo_horario` | TIME        | opcional; o app usa 23:59 quando vazio |
 | `concluida`     | boolean     | default `false`                        |
-| `concluida_em`  | TIMESTAMPTZ | preenchido ao concluir                 |
-| `nota`          | texto       | opcional                               |
+| `concluida_em`  | TIMESTAMPTZ | preenchido ao concluir; nulo se `concluida = false` |
+| `nota`          | texto       | opcional, até 1000                     |
 | `criado_em`     | TIMESTAMPTZ | default `now()`                        |
+
+Sem `excluido_em`: excluir uma entrega apaga a linha. Índice em
+`(usuario_id, prazo_data)` para as consultas da Home e do Calendar.
 
 ### evento
 
@@ -346,8 +349,14 @@ o maior `vigente_desde` menor ou igual à segunda-feira daquela semana.
   - `CHECK` de `habito_meta.vigente_desde` sempre uma segunda-feira.
   - Únicas `(habito_id, vigente_desde)` em `habito_meta` e
     `(habito_id, data)` em `registro_habito`.
-- **V3 (entrega) e V4 (evento):** escritas na vez de cada fase. A V4
-  traz o `CHECK` de `evento.termino > evento.inicio` quando `termino`
+- **V3 (entrega):**
+  - `CHECK` de `entrega.titulo` não vazio, com `VARCHAR(150)`; `nota` com
+    `VARCHAR(1000)`.
+  - `CHECK (concluida = (concluida_em IS NOT NULL))`: concluir preenche
+    os dois campos e desfazer limpa os dois, nunca um sem o outro.
+  - Índice `(usuario_id, prazo_data)`.
+- **V4 (evento):** escrita na vez da sua fase (a numeração é só ordem).
+  Traz o `CHECK` de `evento.termino > evento.inicio` quando `termino`
   não é nulo.
 - `criado_em` com default `now()` em todas as tabelas que o têm.
 
@@ -860,6 +869,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 46  | Hábito de outro usuário, inexistente ou excluído responde sempre 404 (nunca 403), para não revelar se um id existe para outra pessoa. A exclusão é só lógica (`excluido_em`) e nunca apaga linhas de hábito, meta ou registro |
 | 47  | Marcar hábito usa `INSERT ... ON CONFLICT (habito_id, data) DO NOTHING` e desmarcar usa `DELETE`: a idempotência é decidida pelo banco, de forma atômica, sem consulta prévia e sem depender de capturar uma exceção. Data futura (além de 2 dias do relógio do servidor) é recusada; datas passadas não têm limite |
 | 48  | O `GET /inicio` calcula a meta semanal da semana da `data` (vigência de maior `vigente_desde` menor ou igual à segunda dela), não a mais recente, e conta os registros de segunda a domingo. Faz 3 consultas independentemente do número de hábitos (hábitos, metas e registros em lote). O módulo `inicio/` só orquestra: a regra mora no `HabitoService.listarDoDia` |
+| 49  | A entrega garante no banco que `concluida` e `concluida_em` andem juntos (`CHECK (concluida = (concluida_em IS NOT NULL))`) e que o título não seja vazio. Entrega não tem exclusão lógica: excluir apaga a linha (diferente do hábito, que precisa preservar o histórico para os Insights) |
 
 ## 17. Pontos ainda em aberto
 
@@ -883,8 +893,8 @@ bloqueia a chamada, então o front não depende desse corpo.
 10. ~~Tipo do `id` das tabelas (`BIGINT` identity ou `UUID`).~~
     Resolvido: `BIGINT` identity (decisão 34).
 11. ~~Escrever a migração Flyway V2 com as restrições da seção 9.~~
-    V1 e V2 prontas; as restrições de entrega (V3) e de evento (V4)
-    entram na vez de cada fase.
+    V1, V2 e V3 (entrega) prontas; as restrições de evento (V4)
+    entram na vez da sua fase.
 12. ~~Renomear o pacote do backend de `com.example.backend` para
     `com.ensora`.~~ Resolvido (issue #3).
 13. Bibliotecas do frontend ainda indefinidas (ícones, rotas, PWA).
