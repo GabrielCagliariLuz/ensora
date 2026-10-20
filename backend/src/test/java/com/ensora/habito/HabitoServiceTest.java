@@ -40,9 +40,12 @@ class HabitoServiceTest {
 	@Mock
 	private HabitoMetaRepository metas;
 
+	@Mock
+	private RegistroHabitoRepository registros;
+
 	private HabitoService servico(LocalDate hoje) {
 		Clock relogio = Clock.fixed(hoje.atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
-		return new HabitoService(habitos, metas, relogio);
+		return new HabitoService(habitos, metas, registros, relogio);
 	}
 
 	private HabitoService servico() {
@@ -207,6 +210,123 @@ class HabitoServiceTest {
 		assertThat(lista).containsExactly(
 				new HabitoResponse(1L, "Beber água", TipoHabito.DIARIO, null),
 				new HabitoResponse(2L, "Academia", TipoHabito.SEMANAL, 5));
+	}
+
+	// ---- Home do dia ----
+
+	private static final LocalDate SEGUNDA = LocalDate.of(2026, 10, 19);
+
+	private RegistroHabito registro(Long habitoId, LocalDate data) {
+		RegistroHabito registro = new RegistroHabito();
+		registro.setHabitoId(habitoId);
+		registro.setData(data);
+		return registro;
+	}
+
+	private void habitosDoUsuario(Habito... lista) {
+		when(habitos.findByUsuarioIdAndExcluidoEmIsNullOrderByCriadoEmAscIdAsc(USUARIO)).thenReturn(List.of(lista));
+	}
+
+	@Test
+	void listarDoDiaMarcaFeitoSoNoDiarioComRegistroNaData() {
+		habitosDoUsuario(habito(1L, "Ler", TipoHabito.DIARIO), habito(2L, "Beber água", TipoHabito.DIARIO));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(1L, 2L))).thenReturn(List.of());
+		when(registros.findByHabitoIdInAndDataBetween(List.of(1L, 2L), SEGUNDA, SEGUNDA.plusDays(6)))
+				.thenReturn(List.of(registro(1L, HOJE), registro(2L, HOJE.minusDays(1))));
+
+		List<HabitoDoDia> lista = servico().listarDoDia(USUARIO, HOJE);
+
+		assertThat(lista).containsExactly(
+				new HabitoDoDia(1L, "Ler", TipoHabito.DIARIO, true, null, null),
+				new HabitoDoDia(2L, "Beber água", TipoHabito.DIARIO, false, null, null));
+	}
+
+	@Test
+	void listarDoDiaContaOsRegistrosDaSemanaDoSemanalDeSegundaADomingo() {
+		habitosDoUsuario(habito(2L, "Academia", TipoHabito.SEMANAL));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(2L)))
+				.thenReturn(List.of(meta(2L, 3, SEGUNDA)));
+		// A consulta pede a semana inteira (19/10 a 25/10): dois dias antes de hoje e um depois contam.
+		when(registros.findByHabitoIdInAndDataBetween(List.of(2L), SEGUNDA, LocalDate.of(2026, 10, 25)))
+				.thenReturn(List.of(registro(2L, SEGUNDA), registro(2L, HOJE), registro(2L, HOJE.plusDays(1))));
+
+		List<HabitoDoDia> lista = servico().listarDoDia(USUARIO, HOJE);
+
+		assertThat(lista).containsExactly(new HabitoDoDia(2L, "Academia", TipoHabito.SEMANAL, true, 3, 3));
+	}
+
+	@Test
+	void listarDoDiaSemanalSemRegistrosTemZeroFeitos() {
+		habitosDoUsuario(habito(2L, "Academia", TipoHabito.SEMANAL));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(2L)))
+				.thenReturn(List.of(meta(2L, 3, SEGUNDA)));
+		when(registros.findByHabitoIdInAndDataBetween(List.of(2L), SEGUNDA, SEGUNDA.plusDays(6)))
+				.thenReturn(List.of());
+
+		List<HabitoDoDia> lista = servico().listarDoDia(USUARIO, HOJE);
+
+		assertThat(lista).containsExactly(new HabitoDoDia(2L, "Academia", TipoHabito.SEMANAL, false, 0, 3));
+	}
+
+	@Test
+	void listarDoDiaUsaAMetaQueValiaNaSemanaEIgnoraAVigenciaFutura() {
+		habitosDoUsuario(habito(2L, "Academia", TipoHabito.SEMANAL));
+		// A meta nova (5) só vale da segunda 26/10; a semana de hoje (19/10) mantém a antiga (3).
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(2L))).thenReturn(List.of(
+				meta(2L, 5, LocalDate.of(2026, 10, 26)),
+				meta(2L, 3, SEGUNDA),
+				meta(2L, 2, LocalDate.of(2026, 10, 5))));
+		when(registros.findByHabitoIdInAndDataBetween(List.of(2L), SEGUNDA, SEGUNDA.plusDays(6)))
+				.thenReturn(List.of());
+
+		List<HabitoDoDia> lista = servico().listarDoDia(USUARIO, HOJE);
+
+		assertThat(lista.get(0).meta()).isEqualTo(3);
+	}
+
+	@Test
+	void listarDoDiaNaSemanaSeguinteUsaAMetaNova() {
+		LocalDate segundaSeguinte = LocalDate.of(2026, 10, 26);
+		habitosDoUsuario(habito(2L, "Academia", TipoHabito.SEMANAL));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(2L))).thenReturn(List.of(
+				meta(2L, 5, segundaSeguinte),
+				meta(2L, 3, SEGUNDA)));
+		when(registros.findByHabitoIdInAndDataBetween(List.of(2L), segundaSeguinte, segundaSeguinte.plusDays(6)))
+				.thenReturn(List.of());
+
+		// Hoje é domingo 25/10, e o front já olha a segunda 26/10 (dentro da tolerância de 2 dias).
+		List<HabitoDoDia> lista = servico(LocalDate.of(2026, 10, 25)).listarDoDia(USUARIO, segundaSeguinte);
+
+		assertThat(lista).containsExactly(new HabitoDoDia(2L, "Academia", TipoHabito.SEMANAL, false, 0, 5));
+	}
+
+	@Test
+	void listarDoDiaOmiteSemanalSemMetaVigenteNaSemana() {
+		habitosDoUsuario(habito(2L, "Academia", TipoHabito.SEMANAL));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(2L)))
+				.thenReturn(List.of(meta(2L, 3, LocalDate.of(2026, 10, 26))));
+		when(registros.findByHabitoIdInAndDataBetween(List.of(2L), SEGUNDA, SEGUNDA.plusDays(6)))
+				.thenReturn(List.of());
+
+		assertThat(servico().listarDoDia(USUARIO, HOJE)).isEmpty();
+	}
+
+	@Test
+	void listarDoDiaConsultaSoOsHabitosDoUsuarioESemHabitosNaoConsultaMetasNemRegistros() {
+		when(habitos.findByUsuarioIdAndExcluidoEmIsNullOrderByCriadoEmAscIdAsc(USUARIO)).thenReturn(List.of());
+
+		assertThat(servico().listarDoDia(USUARIO, HOJE)).isEmpty();
+
+		verify(habitos).findByUsuarioIdAndExcluidoEmIsNullOrderByCriadoEmAscIdAsc(USUARIO);
+		verifyNoInteractions(metas, registros);
+	}
+
+	@Test
+	void listarDoDiaComDataForaDaToleranciaLancaValidacaoNoCampoDataSemConsultar() {
+		assertThatThrownBy(() -> servico().listarDoDia(USUARIO, HOJE.minusDays(3)))
+				.isInstanceOfSatisfying(ValidacaoException.class, e -> assertThat(e.getCampo()).isEqualTo("data"));
+
+		verifyNoInteractions(habitos, metas, registros);
 	}
 
 	// ---- edição ----

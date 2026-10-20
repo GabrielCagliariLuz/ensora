@@ -748,6 +748,35 @@ Os dois exigem token e respondem `204` sem corpo.
   no campo `data`. Datas passadas não têm limite.
 - `data` fora do formato ou `id` não numérico: `400 REQUISICAO_INVALIDA`.
 
+`GET /inicio?data=AAAA-MM-DD` (exige token) carrega a Home. A `data` é o
+dia de hoje no fuso do usuário, lido pelo front do relógio do aparelho, e
+é obrigatória. O servidor recusa uma `data` a mais de 2 dias do relógio
+dele (`400` no campo `data`); `data` ausente ou fora do formato dá
+`400 REQUISICAO_INVALIDA`.
+
+```json
+// resposta 200
+{
+  "data": "2026-10-21",
+  "habitos": [
+    { "id": 1, "nome": "Ler", "tipo": "DIARIO", "feito": true },
+    { "id": 4, "nome": "Academia", "tipo": "SEMANAL", "feito": false, "feitos": 1, "meta": 3 }
+  ]
+}
+```
+
+- `habitos`: os do usuário do token, sem os excluídos, na ordem de
+  criação. `feito` diz se há registro na `data`.
+- `feitos` e `meta` só existem no hábito semanal (no diário não aparecem).
+  `feitos` conta os registros de segunda a domingo da semana da `data`.
+  `meta` é a que **valia naquela semana** (a vigência de maior
+  `vigente_desde` menor ou igual à segunda dela), não a mais recente: uma
+  meta alterada nesta semana só aparece no `/inicio` da semana seguinte.
+- Hábito semanal sem meta vigente na semana da `data` (só se a `data` for
+  anterior à criação dele) não aparece.
+- O objeto na raiz é para crescer: o Upcoming (entregas e eventos) entra
+  depois como `upcoming`, sem quebrar quem já lê `habitos`.
+
 ### Formato de erro
 
 Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
@@ -830,6 +859,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 45  | Alteração da meta semanal: vale a partir da próxima segunda-feira em relação à `data` enviada pelo front; substitui a vigência futura se ela já existir e não cria vigência quando o valor não muda (a meta de uma semana continua sendo a vigência mais recente com `vigente_desde` menor ou igual à segunda dela) |
 | 46  | Hábito de outro usuário, inexistente ou excluído responde sempre 404 (nunca 403), para não revelar se um id existe para outra pessoa. A exclusão é só lógica (`excluido_em`) e nunca apaga linhas de hábito, meta ou registro |
 | 47  | Marcar hábito usa `INSERT ... ON CONFLICT (habito_id, data) DO NOTHING` e desmarcar usa `DELETE`: a idempotência é decidida pelo banco, de forma atômica, sem consulta prévia e sem depender de capturar uma exceção. Data futura (além de 2 dias do relógio do servidor) é recusada; datas passadas não têm limite |
+| 48  | O `GET /inicio` calcula a meta semanal da semana da `data` (vigência de maior `vigente_desde` menor ou igual à segunda dela), não a mais recente, e conta os registros de segunda a domingo. Faz 3 consultas independentemente do número de hábitos (hábitos, metas e registros em lote). O módulo `inicio/` só orquestra: a regra mora no `HabitoService.listarDoDia` |
 
 ## 17. Pontos ainda em aberto
 
