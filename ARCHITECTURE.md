@@ -786,6 +786,50 @@ dele (`400` no campo `data`); `data` ausente ou fora do formato dá
 - O objeto na raiz é para crescer: o Upcoming (entregas e eventos) entra
   depois como `upcoming`, sem quebrar quem já lê `habitos`.
 
+`POST /entregas` (exige token) cria uma entrega do usuário do token e
+responde `201`. `PUT /entregas/{id}` usa o **mesmo corpo** e responde `200`
+com a entrega no mesmo formato.
+
+```json
+// corpo do POST e do PUT
+{ "titulo": "Trabalho de Cálculo", "prazoData": "2026-11-05", "prazoHorario": "14:30", "nota": "Cap. 1 a 4" }
+
+// resposta
+{ "id": 3, "titulo": "Trabalho de Cálculo", "prazoData": "2026-11-05", "prazoHorario": "14:30:00",
+  "concluida": false, "nota": "Cap. 1 a 4" }
+```
+
+- `titulo`: obrigatório, não vazio, até 150 caracteres (gravado sem
+  espaços nas pontas).
+- `prazoData`: obrigatória, `AAAA-MM-DD`. Data passada é aceita (dá para
+  cadastrar algo já atrasado); não há regra de "hoje" aqui.
+- `prazoHorario`: opcional. Entra como `HH:mm` e **sai como `HH:mm:ss`**.
+  Ausente quer dizer "sem horário": o app trata como 23:59.
+- `nota`: opcional, até 1000 caracteres; texto só com espaços vale como
+  ausente.
+- `prazoHorario`, `nota` e `concluidaEm` só aparecem na resposta quando
+  existem.
+- O `PUT` troca título, prazo e nota e **não altera a conclusão**: editar
+  uma entrega concluída a mantém concluída.
+
+`PATCH /entregas/{id}` (exige token) concluir ou desfazer, com corpo
+`{ "concluida": true }` ou `{ "concluida": false }` (obrigatório). Responde
+`200` com a entrega.
+
+- `true`: define `concluida = true` e `concluidaEm` com o instante do
+  **relógio do servidor** (UTC, ex.: `2026-10-21T15:04:05Z`).
+- `false`: define `concluida = false` e remove `concluidaEm`.
+- **Idempotente:** concluir o que já está concluído mantém o
+  `concluidaEm` original; desfazer o que não está concluído não faz nada.
+
+`DELETE /entregas/{id}` (exige token) apaga a entrega e responde `204`
+(exclusão física, decisão 49).
+
+Em todos os endpoints de entrega, a entrega de outro usuário ou
+inexistente responde `404`; `id` não numérico ou corpo malformado
+(inclusive horário fora do formato) é `400 REQUISICAO_INVALIDA`; campo
+inválido é `400 VALIDACAO` com o campo em `campos`.
+
 ### Formato de erro
 
 Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
@@ -870,6 +914,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 47  | Marcar hábito usa `INSERT ... ON CONFLICT (habito_id, data) DO NOTHING` e desmarcar usa `DELETE`: a idempotência é decidida pelo banco, de forma atômica, sem consulta prévia e sem depender de capturar uma exceção. Data futura (além de 2 dias do relógio do servidor) é recusada; datas passadas não têm limite |
 | 48  | O `GET /inicio` calcula a meta semanal da semana da `data` (vigência de maior `vigente_desde` menor ou igual à segunda dela), não a mais recente, e conta os registros de segunda a domingo. Faz 3 consultas independentemente do número de hábitos (hábitos, metas e registros em lote). O módulo `inicio/` só orquestra: a regra mora no `HabitoService.listarDoDia` |
 | 49  | A entrega garante no banco que `concluida` e `concluida_em` andem juntos (`CHECK (concluida = (concluida_em IS NOT NULL))`) e que o título não seja vazio. Entrega não tem exclusão lógica: excluir apaga a linha (diferente do hábito, que precisa preservar o histórico para os Insights) |
+| 50  | Concluir entrega é `PATCH /entregas/{id}` com o estado desejado (`concluida: true` ou `false`), idempotente: concluir de novo mantém o `concluida_em` original e desfazer o que não está concluído não faz nada. `concluida_em` vem do relógio do servidor, nunca do cliente. O `PUT` da entrega não altera a conclusão |
 
 ## 17. Pontos ainda em aberto
 
