@@ -69,10 +69,15 @@
   /* Camadas (bottom sheet e modal) */
   --overlay: rgba(23, 22, 15, 0.4);
   --sombra-camada: 0 12px 40px rgba(23, 22, 15, 0.18);
+  --sombra-card: 1px 1px 4px 0 var(--rule);
+  --sombra-card-hover:
+    0 0 0 1px var(--rule), 1px 6px 16px 0 rgba(0, 0, 0, 0.1);
+  --sombra-card-feito: 1px 1px 4px 0 var(--hairline);
 
   /* Movimento */
   --transicao-rapida: 150ms ease;
   --transicao-media: 200ms ease;
+  --transicao-suave: 300ms ease;
 
   /* Bordas */
   --border-width: 1px;

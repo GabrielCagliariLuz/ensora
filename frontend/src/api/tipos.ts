@@ -27,6 +27,23 @@ export interface HabitoRequest {
   data: string
 }
 
+// Hábito na resposta de GET /inicio. feitos e meta só existem no semanal:
+// feitos conta de segunda a domingo da semana da data, e meta é a que valia
+// naquela semana.
+export interface HabitoNaHome {
+  id: number
+  nome: string
+  tipo: TipoHabito
+  feito: boolean
+  feitos?: number
+  meta?: number
+}
+
+export interface Inicio {
+  data: string
+  habitos: HabitoNaHome[]
+}
+
 export interface CampoInvalido {
   campo: string
   mensagem: string

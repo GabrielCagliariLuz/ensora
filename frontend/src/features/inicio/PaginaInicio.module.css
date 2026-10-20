@@ -1,0 +1,62 @@
+/* Mobile e tablet: coluna única. A partir de 1024px, duas colunas (Today e,
+   depois, Upcoming): com a sidebar de 240px, abaixo disso o conteúdo é
+   estreito demais para duas. */
+.pagina {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.hoje {
+  min-width: 0;
+}
+
+.estado {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.estado p {
+  margin: 0;
+}
+
+.botao {
+  height: 40px;
+  padding-inline: var(--space-4);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.botao:hover {
+  background: var(--hover-surface);
+}
+
+.botao:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (min-width: 1024px) {
+  .pagina {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 880px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao {
+    transition: none;
+  }
+}

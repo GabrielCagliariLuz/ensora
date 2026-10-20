@@ -1,0 +1,105 @@
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--sombra-card);
+  cursor: pointer;
+  transition: box-shadow var(--transicao-suave);
+}
+
+.somenteLeitura {
+  cursor: default;
+}
+
+/* Estados do cartão: normal, hover e concluído. O hover só existe no cartão
+   interativo e ainda não concluído; o concluído não reage ao mouse. */
+.item:not(.somenteLeitura):not(:has(.entrada:checked)):hover {
+  box-shadow: var(--sombra-card-hover);
+}
+
+.item:has(.entrada:checked) {
+  box-shadow: var(--sombra-card-feito);
+}
+
+.item:has(.entrada:focus-visible) {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* O contador fica ao lado do nome; nome longo quebra linha sem empurrar a caixa. */
+.texto {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--space-2);
+}
+
+.nome {
+  overflow-wrap: anywhere;
+  font-size: var(--text-corpo);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-corpo);
+}
+
+.feito {
+  color: var(--graphite);
+  text-decoration: line-through;
+}
+
+.progresso {
+  color: var(--graphite);
+  font-family: var(--font-sans);
+  font-size: var(--text-legenda);
+  font-variant-numeric: tabular-nums;
+}
+
+.entrada {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.caixa {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: var(--border-width-strong) solid var(--ink);
+  border-radius: 4px;
+  color: var(--paper);
+  transition:
+    background var(--transicao-rapida),
+    border-color var(--transicao-rapida);
+}
+
+.caixa svg {
+  opacity: 0;
+}
+
+.entrada:checked ~ .caixa {
+  background: var(--graphite);
+  border-color: var(--graphite);
+}
+
+.entrada:checked ~ .caixa svg {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .caixa {
+    transition: none;
+  }
+}
