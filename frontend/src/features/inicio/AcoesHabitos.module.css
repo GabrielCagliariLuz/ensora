@@ -1,0 +1,49 @@
+.acoes {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.novo,
+.editar {
+  flex: 1;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.novo {
+  border: 0;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.novo:hover {
+  background: var(--ink-hover);
+}
+
+.editar {
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  color: var(--ink);
+}
+
+.editar:hover {
+  background: var(--hover-surface);
+}
+
+.novo:focus-visible,
+.editar:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .novo,
+  .editar {
+    transition: none;
+  }
+}

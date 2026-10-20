@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { excluirHabito } from '../../api/habitos'
 import { ErroApi } from '../../api/erro'
-import { chavesHabitos } from './chaves'
+import { invalidarDadosDeHabitos } from './invalidarHabitos'
 
 export function useExcluirHabito() {
   const queryClient = useQueryClient()
@@ -19,8 +19,7 @@ export function useExcluirHabito() {
       }
     },
     // A mutação fica pendente até o refetch terminar, então o hábito já saiu
-    // da lista quando o modal fecha.
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: chavesHabitos.todos }),
+    // da lista e da Home quando o modal fecha.
+    onSuccess: () => invalidarDadosDeHabitos(queryClient),
   })
 }

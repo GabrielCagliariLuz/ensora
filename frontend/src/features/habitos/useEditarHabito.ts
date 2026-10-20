@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { editarHabito } from '../../api/habitos'
 import type { HabitoRequest } from '../../api/tipos'
-import { chavesHabitos } from './chaves'
+import { invalidarDadosDeHabitos } from './invalidarHabitos'
 
 interface EdicaoHabito {
   id: number
@@ -13,7 +13,6 @@ export function useEditarHabito() {
 
   return useMutation({
     mutationFn: ({ id, corpo }: EdicaoHabito) => editarHabito(id, corpo),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: chavesHabitos.todos }),
+    onSuccess: () => invalidarDadosDeHabitos(queryClient),
   })
 }
