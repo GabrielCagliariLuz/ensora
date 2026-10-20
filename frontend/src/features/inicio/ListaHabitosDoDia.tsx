@@ -4,10 +4,14 @@ import styles from './ListaHabitosDoDia.module.css'
 
 interface ListaHabitosDoDiaProps {
   habitos: HabitoNaHome[]
+  aoAlternar: (habito: HabitoNaHome) => void
 }
 
 // Só apresentação: carregando, erro e vazio ficam com a página.
-export default function ListaHabitosDoDia({ habitos }: ListaHabitosDoDiaProps) {
+export default function ListaHabitosDoDia({
+  habitos,
+  aoAlternar,
+}: ListaHabitosDoDiaProps) {
   return (
     <ul className={styles.lista}>
       {habitos.map((habito) => (
@@ -21,6 +25,7 @@ export default function ListaHabitosDoDia({ habitos }: ListaHabitosDoDiaProps) {
                 ? { feitos: habito.feitos, meta: habito.meta }
                 : undefined
             }
+            aoAlternar={() => aoAlternar(habito)}
           />
         </li>
       ))}
