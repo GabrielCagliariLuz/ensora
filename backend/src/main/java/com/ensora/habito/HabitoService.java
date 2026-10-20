@@ -11,10 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class HabitoService {
@@ -27,11 +30,14 @@ public class HabitoService {
 
 	private final HabitoRepository habitos;
 	private final HabitoMetaRepository metas;
+	private final RegistroHabitoRepository registros;
 	private final Clock relogio;
 
-	public HabitoService(HabitoRepository habitos, HabitoMetaRepository metas, Clock relogio) {
+	public HabitoService(HabitoRepository habitos, HabitoMetaRepository metas, RegistroHabitoRepository registros,
+			Clock relogio) {
 		this.habitos = habitos;
 		this.metas = metas;
+		this.registros = registros;
 		this.relogio = relogio;
 	}
 
@@ -114,6 +120,57 @@ public class HabitoService {
 				.toList();
 	}
 
+	/**
+	 * Os hábitos do usuário na visão da Home de um dia. No semanal, a contagem é da semana da data (segunda a
+	 * domingo) e a meta é a que valia na segunda dessa semana, não a mais recente (seção 5.2).
+	 * São 3 consultas, qualquer que seja o número de hábitos.
+	 */
+	@Transactional(readOnly = true)
+	public List<HabitoDoDia> listarDoDia(Long usuarioId, LocalDate data) {
+		validarProximidadeDeHoje(data);
+
+		List<Habito> lista = habitos.findByUsuarioIdAndExcluidoEmIsNullOrderByCriadoEmAscIdAsc(usuarioId);
+		if (lista.isEmpty()) {
+			return List.of();
+		}
+
+		LocalDate segunda = Semana.segundaFeiraDe(data);
+		List<Long> ids = lista.stream().map(Habito::getId).toList();
+
+		// Metas da mais recente para a mais antiga: a primeira com vigente_desde <= segunda é a da semana.
+		Map<Long, Integer> metaDaSemana = new HashMap<>();
+		for (HabitoMeta meta : metas.findByHabitoIdInOrderByVigenteDesdeDesc(ids)) {
+			if (!meta.getVigenteDesde().isAfter(segunda)) {
+				metaDaSemana.putIfAbsent(meta.getHabitoId(), meta.getVezesPorSemana());
+			}
+		}
+
+		Map<Long, Integer> feitosNaSemana = new HashMap<>();
+		Set<Long> feitosNaData = new HashSet<>();
+		for (RegistroHabito registro : registros.findByHabitoIdInAndDataBetween(ids, segunda, segunda.plusDays(6))) {
+			feitosNaSemana.merge(registro.getHabitoId(), 1, Integer::sum);
+			if (registro.getData().equals(data)) {
+				feitosNaData.add(registro.getHabitoId());
+			}
+		}
+
+		List<HabitoDoDia> resultado = new ArrayList<>();
+		for (Habito habito : lista) {
+			boolean feito = feitosNaData.contains(habito.getId());
+			if (habito.getTipo() == TipoHabito.DIARIO) {
+				resultado.add(new HabitoDoDia(habito.getId(), habito.getNome(), habito.getTipo(), feito, null, null));
+				continue;
+			}
+			Integer meta = metaDaSemana.get(habito.getId());
+			if (meta == null) {
+				continue; // a data é anterior à criação do hábito: ele não existia nessa semana
+			}
+			resultado.add(new HabitoDoDia(habito.getId(), habito.getNome(), habito.getTipo(), feito,
+					feitosNaSemana.getOrDefault(habito.getId(), 0), meta));
+		}
+		return resultado;
+	}
+
 	// Hábito de outro usuário, inexistente ou excluído dão o mesmo 404: não revela se o id existe para outra pessoa.
 	private Habito buscarDoUsuario(Long usuarioId, Long id) {
 		return habitos.findByIdAndUsuarioIdAndExcluidoEmIsNull(id, usuarioId)
@@ -152,7 +209,11 @@ public class HabitoService {
 		if (requisicao.data() == null) {
 			throw new ValidacaoException("data", "obrigatória para hábito semanal");
 		}
-		long diferenca = Math.abs(ChronoUnit.DAYS.between(LocalDate.now(relogio), requisicao.data()));
+		validarProximidadeDeHoje(requisicao.data());
+	}
+
+	private void validarProximidadeDeHoje(LocalDate data) {
+		long diferenca = Math.abs(ChronoUnit.DAYS.between(LocalDate.now(relogio), data));
 		if (diferenca > TOLERANCIA_DA_DATA_EM_DIAS) {
 			throw new ValidacaoException("data", "muito distante da data de hoje");
 		}

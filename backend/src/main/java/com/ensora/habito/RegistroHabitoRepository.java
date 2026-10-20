@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 
 public interface RegistroHabitoRepository extends JpaRepository<RegistroHabito, Long> {
 
@@ -18,6 +20,9 @@ public interface RegistroHabitoRepository extends JpaRepository<RegistroHabito, 
 	@Query(value = "INSERT INTO registro_habito (habito_id, data) VALUES (:habitoId, :data) "
 			+ "ON CONFLICT (habito_id, data) DO NOTHING", nativeQuery = true)
 	int marcar(@Param("habitoId") Long habitoId, @Param("data") LocalDate data);
+
+	/** Registros de vários hábitos num intervalo de datas (inclusive nas duas pontas). */
+	List<RegistroHabito> findByHabitoIdInAndDataBetween(Collection<Long> habitoIds, LocalDate de, LocalDate ate);
 
 	/** Apaga o registro da data. Devolve 0 (sem erro) se não havia registro. */
 	@Modifying
