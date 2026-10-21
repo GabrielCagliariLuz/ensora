@@ -8,6 +8,7 @@ import AcoesHabitos from './AcoesHabitos'
 import CabecalhoHoje from './CabecalhoHoje'
 import ListaHabitosDoDia from './ListaHabitosDoDia'
 import { mensagemErroMarcacao } from './regras'
+import SecaoUpcoming from './SecaoUpcoming'
 import { useInicio } from './useInicio'
 import { useMarcarHabito } from './useMarcarHabito'
 import styles from './PaginaInicio.module.css'
@@ -39,7 +40,7 @@ export default function PaginaInicio() {
   return (
     <>
       <div className={styles.pagina}>
-        {/* Coluna Today. No desktop, a segunda coluna fica livre para o Upcoming. */}
+        {/* Coluna Today. */}
         <section className={styles.hoje}>
           <CabecalhoHoje data={hoje} />
 
@@ -78,6 +79,11 @@ export default function PaginaInicio() {
             aoEditar={() => setSheet('gerenciar')}
           />
         </section>
+
+        {/* Coluna Upcoming: abaixo do Today no mobile e no tablet. */}
+        {inicio.data && (
+          <SecaoUpcoming upcoming={inicio.data.upcoming} hoje={hoje} />
+        )}
       </div>
 
       <SheetHabito aberto={sheet === 'novo'} aoFechar={() => setSheet(null)} />

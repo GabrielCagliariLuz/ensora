@@ -1,10 +1,10 @@
-import type { HabitoNaHome } from '../../api/tipos'
-import ItemHabito from './ItemHabito'
-import styles from './ListaHabitosDoDia.module.css'
+import type { HabitoNaHome } from "../../api/tipos";
+import ItemHabito from "./ItemHabito";
+import styles from "./ListaHabitosDoDia.module.css";
 
 interface ListaHabitosDoDiaProps {
-  habitos: HabitoNaHome[]
-  aoAlternar: (habito: HabitoNaHome) => void
+  habitos: HabitoNaHome[];
+  aoAlternar: (habito: HabitoNaHome) => void;
 }
 
 // Só apresentação: carregando, erro e vazio ficam com a página.
@@ -30,5 +30,5 @@ export default function ListaHabitosDoDia({
         </li>
       ))}
     </ul>
-  )
+  );
 }

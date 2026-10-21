@@ -39,9 +39,17 @@ export interface HabitoNaHome {
   meta?: number
 }
 
+// Entregas e eventos dos próximos dias, no mesmo formato de /entregas e
+// /eventos. A ordem vem do servidor.
+export interface Upcoming {
+  entregas: Entrega[]
+  eventos: Evento[]
+}
+
 export interface Inicio {
   data: string
   habitos: HabitoNaHome[]
+  upcoming: Upcoming
 }
 
 // Corpo de POST e PUT /entregas. prazoHorario vai em HH:mm; sem ele a entrega

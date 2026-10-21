@@ -16,6 +16,16 @@ export function mensagemErroMarcacao(erro: unknown, nome: string): string {
   return `Não foi possível salvar "${nome}". Tente de novo.`
 }
 
+// Aviso quando concluir ou desfazer a entrega não foi salvo e ela voltou ao
+// estado anterior.
+export function mensagemErroConclusao(erro: unknown, titulo: string): string {
+  if (erro instanceof ErroApi) {
+    if (erro.status === 0) return `Sem conexão. "${titulo}" não foi atualizada.`
+    if (erro.status === 404) return `"${titulo}" não existe mais.`
+  }
+  return `Não foi possível atualizar "${titulo}". Tente de novo.`
+}
+
 export function textoProgresso({ feitos, meta }: ProgressoSemanal): string {
   return `${feitos}/${meta}`
 }

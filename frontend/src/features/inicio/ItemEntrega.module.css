@@ -1,0 +1,73 @@
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+}
+
+/* Título longo quebra linha sem empurrar o botão. */
+.texto {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.titulo {
+  overflow-wrap: anywhere;
+  font-size: var(--text-corpo);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-corpo);
+}
+
+.concluida {
+  color: var(--graphite);
+  text-decoration: line-through;
+}
+
+.prazo {
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  line-height: var(--leading-legenda);
+}
+
+/* Cor de urgência: só aqui, nas entregas, nunca nos eventos. */
+.urgente {
+  color: var(--ember);
+  font-weight: var(--weight-semibold);
+}
+
+.botao {
+  flex-shrink: 0;
+  height: 32px;
+  padding-inline: var(--space-3);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-legenda);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.desfazer {
+  color: var(--graphite);
+  font-weight: var(--weight-medium);
+}
+
+.botao:hover {
+  background: var(--hover-surface);
+}
+
+.botao:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao {
+    transition: none;
+  }
+}
