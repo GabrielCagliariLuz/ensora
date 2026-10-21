@@ -1,11 +1,13 @@
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
 import { WifiOff } from 'lucide-react'
+import type { Entrega } from '../../api/tipos'
 import BlocoAviso from '../../components/ui/BlocoAviso'
 import CampoHorario from '../../components/ui/CampoHorario'
 import CampoTexto from '../../components/ui/CampoTexto'
 import { hojeISO } from '../../lib/datas'
 import { useOnline } from '../../lib/useOnline'
+import { horaCurta } from '../calendario/agenda'
 import {
   CAMPOS_ENTREGA,
   errosDeCamposEntrega,
@@ -14,36 +16,43 @@ import {
   validarEntrega,
 } from './regras'
 import type { CampoEntrega, ErrosEntrega } from './regras'
-import { useCriarEntrega } from './useCriarEntrega'
+import { useSalvarEntrega } from './useEditarRegistro'
 import styles from './FormularioRegistro.module.css'
 
 interface FormularioEntregaProps {
+  // Com ela o formulário edita essa entrega; sem, cria uma nova.
+  existente?: Entrega
   aoConcluir: () => void
   aoCancelar: () => void
 }
 
 export default function FormularioEntrega({
+  existente,
   aoConcluir,
   aoCancelar,
 }: FormularioEntregaProps) {
   const id = useId()
   const idCampo = (campo: CampoEntrega) => `${id}-${campo}`
 
-  const [titulo, setTitulo] = useState('')
-  const [prazoData, setPrazoData] = useState(hojeISO)
-  const [prazoHorario, setPrazoHorario] = useState('')
-  const [nota, setNota] = useState('')
+  const [titulo, setTitulo] = useState(existente?.titulo ?? '')
+  const [prazoData, setPrazoData] = useState(
+    existente?.prazoData ?? hojeISO(),
+  )
+  const [prazoHorario, setPrazoHorario] = useState(
+    existente?.prazoHorario ? horaCurta(existente.prazoHorario) : '',
+  )
+  const [nota, setNota] = useState(existente?.nota ?? '')
   const [errosLocais, setErrosLocais] = useState<ErrosEntrega>({})
 
   const online = useOnline()
-  const criar = useCriarEntrega()
+  const salvar = useSalvarEntrega(existente)
 
-  const errosServidor = errosDeCamposEntrega(criar.error)
+  const errosServidor = errosDeCamposEntrega(salvar.error)
   const erroDoCampo = (campo: CampoEntrega) =>
     errosLocais[campo] ?? errosServidor[campo]
   const erroGeral =
-    criar.error !== null && Object.keys(errosServidor).length === 0
-      ? mensagemErroRegistro(criar.error)
+    salvar.error !== null && Object.keys(errosServidor).length === 0
+      ? mensagemErroRegistro(salvar.error)
       : null
 
   // Corrigir um campo apaga só o erro dele.
@@ -61,7 +70,7 @@ export default function FormularioEntrega({
     const primeiro = CAMPOS_ENTREGA.find((campo) => erros[campo])
     if (primeiro) return document.getElementById(idCampo(primeiro))?.focus()
 
-    criar.mutate(montarEntrega(valores), { onSuccess: aoConcluir })
+    salvar.mutate(montarEntrega(valores), { onSuccess: aoConcluir })
   }
 
   return (
@@ -134,9 +143,13 @@ export default function FormularioEntrega({
         <button
           className={styles.salvar}
           type="submit"
-          disabled={!online || criar.isPending}
+          disabled={!online || salvar.isPending}
         >
-          {criar.isPending ? 'Salvando…' : 'Inserir Entrega'}
+          {salvar.isPending
+            ? 'Salvando…'
+            : existente
+              ? 'Salvar'
+              : 'Inserir Entrega'}
         </button>
       </div>
     </form>

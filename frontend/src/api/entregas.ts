@@ -5,6 +5,18 @@ export function criarEntrega(corpo: EntregaRequest): Promise<Entrega> {
   return requisitar<Entrega>('/entregas', { metodo: 'POST', corpo })
 }
 
+// O PUT troca os dados da entrega e preserva a conclusão.
+export function atualizarEntrega(
+  id: number,
+  corpo: EntregaRequest,
+): Promise<Entrega> {
+  return requisitar<Entrega>(`/entregas/${id}`, { metodo: 'PUT', corpo })
+}
+
+export function excluirEntrega(id: number): Promise<void> {
+  return requisitar<void>(`/entregas/${id}`, { metodo: 'DELETE' })
+}
+
 // Concluir exige a data de hoje (AAAA-MM-DD, relógio do aparelho): o servidor
 // guarda o dia da conclusão no fuso do usuário. Idempotente: concluir de novo
 // mantém a conclusão original.

@@ -5,6 +5,7 @@ import { chavesInicio } from './chaves'
 import {
   aplicarConclusao,
   aplicarConclusaoNoCache,
+  comConclusao,
   lerEntregaDoCache,
   restaurarEntregaNoCache,
   substituirEntrega,
@@ -40,6 +41,25 @@ function entrega(resultado: Inicio, id: number): Entrega {
   if (encontrada === undefined) throw new Error(`entrega ${id} ausente`)
   return encontrada
 }
+
+describe('comConclusao', () => {
+  it('conclui com a data de hoje, sem alterar a original', () => {
+    const original = entregas()[0]
+    const concluida = comConclusao(original, true, HOJE)
+
+    expect(concluida.concluida).toBe(true)
+    expect(concluida.concluidaData).toBe(HOJE)
+    expect(original.concluida).toBe(false)
+  })
+
+  it('desfaz e limpa a data e o instante da conclusão', () => {
+    const desfeita = comConclusao(entregas()[1], false, HOJE)
+
+    expect(desfeita.concluida).toBe(false)
+    expect('concluidaData' in desfeita).toBe(false)
+    expect('concluidaEm' in desfeita).toBe(false)
+  })
+})
 
 describe('aplicarConclusao', () => {
   it('conclui a entrega com a data de hoje', () => {

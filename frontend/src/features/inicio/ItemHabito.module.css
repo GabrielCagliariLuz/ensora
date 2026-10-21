@@ -70,36 +70,8 @@
   cursor: inherit;
 }
 
-.caixa {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border: var(--border-width-strong) solid var(--ink);
-  border-radius: 4px;
-  color: var(--paper);
-  transition:
-    background var(--transicao-rapida),
-    border-color var(--transicao-rapida);
-}
-
-.caixa svg {
-  opacity: 0;
-}
-
-.entrada:checked ~ .caixa {
-  background: var(--graphite);
-  border-color: var(--graphite);
-}
-
-.entrada:checked ~ .caixa svg {
-  opacity: 1;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .item,
-  .caixa {
+  .item {
     transition: none;
   }
 }

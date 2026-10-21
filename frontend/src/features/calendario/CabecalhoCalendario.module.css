@@ -1,0 +1,100 @@
+.cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.seletor,
+.hoje,
+.novo {
+  height: 36px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-botao);
+}
+
+/* Seletor de mês: ‹ Outubro 2026 › numa caixa só. */
+.seletor {
+  display: flex;
+  align-items: center;
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+}
+
+.seta {
+  width: 32px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.seta:hover {
+  background: var(--hover-surface);
+}
+
+.mes {
+  min-width: 128px;
+  font-weight: var(--weight-medium);
+  text-align: center;
+}
+
+.hoje {
+  padding-inline: var(--space-4);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  color: var(--ink);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.hoje:hover {
+  background: var(--hover-surface);
+}
+
+.novo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline: var(--space-4);
+  border: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.novo:hover {
+  background: var(--ink-hover);
+}
+
+.seta:focus-visible,
+.hoje:focus-visible,
+.novo:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seta,
+  .hoje,
+  .novo {
+    transition: none;
+  }
+}

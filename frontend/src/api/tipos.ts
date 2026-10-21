@@ -39,6 +39,15 @@ export interface HabitoNaHome {
   meta?: number
 }
 
+// Resposta de GET /calendario: todas as entregas (concluídas incluídas) e todos
+// os eventos de `de` a `ate`, as duas pontas inclusivas, em listas planas.
+export interface Calendario {
+  de: string
+  ate: string
+  entregas: Entrega[]
+  eventos: Evento[]
+}
+
 // Entregas e eventos dos próximos dias, no mesmo formato de /entregas e
 // /eventos. A ordem vem do servidor.
 export interface Upcoming {

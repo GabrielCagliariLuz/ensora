@@ -1,12 +1,13 @@
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
 import { WifiOff } from 'lucide-react'
-import type { CategoriaEvento } from '../../api/tipos'
+import type { CategoriaEvento, Evento } from '../../api/tipos'
 import BlocoAviso from '../../components/ui/BlocoAviso'
 import CampoHorario from '../../components/ui/CampoHorario'
 import CampoTexto from '../../components/ui/CampoTexto'
 import { hojeISO } from '../../lib/datas'
 import { useOnline } from '../../lib/useOnline'
+import { horaCurta } from '../calendario/agenda'
 import {
   CAMPOS_EVENTO,
   errosDeCamposEvento,
@@ -16,15 +17,18 @@ import {
 } from './regras'
 import type { CampoEvento, ErrosEvento } from './regras'
 import SeletorCategoria from './SeletorCategoria'
-import { useCriarEvento } from './useCriarEvento'
+import { useSalvarEvento } from './useEditarRegistro'
 import styles from './FormularioRegistro.module.css'
 
 interface FormularioEventoProps {
+  // Com ele o formulário edita esse evento; sem, cria um novo.
+  existente?: Evento
   aoConcluir: () => void
   aoCancelar: () => void
 }
 
 export default function FormularioEvento({
+  existente,
   aoConcluir,
   aoCancelar,
 }: FormularioEventoProps) {
@@ -32,23 +36,29 @@ export default function FormularioEvento({
   const idCategoria = `${id}-categoria`
   const idCampo = (campo: CampoEvento) => `${id}-${campo}`
 
-  const [titulo, setTitulo] = useState('')
-  const [data, setData] = useState(hojeISO)
-  const [local, setLocal] = useState('')
-  const [inicio, setInicio] = useState('')
-  const [termino, setTermino] = useState('')
-  const [categoria, setCategoria] = useState<CategoriaEvento | null>(null)
+  const [titulo, setTitulo] = useState(existente?.titulo ?? '')
+  const [data, setData] = useState(existente?.data ?? hojeISO())
+  const [local, setLocal] = useState(existente?.local ?? '')
+  const [inicio, setInicio] = useState(
+    existente ? horaCurta(existente.inicio) : '',
+  )
+  const [termino, setTermino] = useState(
+    existente?.termino ? horaCurta(existente.termino) : '',
+  )
+  const [categoria, setCategoria] = useState<CategoriaEvento | null>(
+    existente?.categoria ?? null,
+  )
   const [errosLocais, setErrosLocais] = useState<ErrosEvento>({})
 
   const online = useOnline()
-  const criar = useCriarEvento()
+  const salvar = useSalvarEvento(existente)
 
-  const errosServidor = errosDeCamposEvento(criar.error)
+  const errosServidor = errosDeCamposEvento(salvar.error)
   const erroDoCampo = (campo: CampoEvento) =>
     errosLocais[campo] ?? errosServidor[campo]
   const erroGeral =
-    criar.error !== null && Object.keys(errosServidor).length === 0
-      ? mensagemErroRegistro(criar.error)
+    salvar.error !== null && Object.keys(errosServidor).length === 0
+      ? mensagemErroRegistro(salvar.error)
       : null
 
   // Corrigir um campo apaga só o erro dele.
@@ -66,7 +76,7 @@ export default function FormularioEvento({
     const primeiro = CAMPOS_EVENTO.find((campo) => erros[campo])
     if (primeiro) return document.getElementById(idCampo(primeiro))?.focus()
 
-    criar.mutate(montarEvento(valores), { onSuccess: aoConcluir })
+    salvar.mutate(montarEvento(valores), { onSuccess: aoConcluir })
   }
 
   return (
@@ -163,9 +173,13 @@ export default function FormularioEvento({
         <button
           className={styles.salvar}
           type="submit"
-          disabled={!online || criar.isPending}
+          disabled={!online || salvar.isPending}
         >
-          {criar.isPending ? 'Salvando…' : 'Inserir Evento'}
+          {salvar.isPending
+            ? 'Salvando…'
+            : existente
+              ? 'Salvar'
+              : 'Inserir Evento'}
         </button>
       </div>
     </form>

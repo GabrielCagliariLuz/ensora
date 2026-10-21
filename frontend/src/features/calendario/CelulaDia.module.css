@@ -1,0 +1,70 @@
+/* A altura mínima é de 120px, e a linha da grade cresce com a célula mais
+   cheia: nenhum registro fica escondido. */
+.celula {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: 120px;
+  padding: var(--space-2);
+  background: var(--card);
+}
+
+/* Linhas entre as células: bordas, não vãos. Um vão de 1px cai em fração de
+   pixel quando a tela tem zoom (125%, 150%) e a linha sai mais grossa em
+   algumas semanas; a borda sempre se ajusta ao pixel. */
+.celula:nth-child(n + 8) {
+  border-top: var(--border-width) solid var(--hairline);
+}
+
+.celula:not(:nth-child(7n + 1)) {
+  border-left: var(--border-width) solid var(--hairline);
+}
+
+.numero {
+  justify-self: start;
+  min-width: 22px;
+  padding-inline: 4px;
+  border-radius: 4px;
+  color: var(--ink);
+  font-size: var(--text-legenda);
+  font-weight: var(--weight-semibold);
+  line-height: 22px;
+  text-align: center;
+}
+
+.registros {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.foraDoMes {
+  background: color-mix(in srgb, var(--canvas) 55%, var(--card));
+}
+
+.foraDoMes .numero {
+  color: var(--ash);
+  font-weight: var(--weight-regular);
+}
+
+.foraDoMes .registros {
+  opacity: 0.7;
+}
+
+.hoje {
+  background: color-mix(in srgb, var(--hover-surface) 45%, var(--card));
+}
+
+/* Dia que vai receber o registro arrastado. */
+.alvo {
+  background: var(--hover-surface);
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.hoje .numero {
+  background: var(--ink);
+  color: var(--paper);
+}

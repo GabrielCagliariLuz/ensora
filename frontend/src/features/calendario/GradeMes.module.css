@@ -1,0 +1,42 @@
+.rolagem {
+  overflow-x: auto;
+}
+
+.cartao {
+  min-width: 720px;
+  overflow: hidden;
+  background: var(--card);
+  border: var(--border-width) solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.semana,
+.dias {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.semana {
+  border-bottom: var(--border-width) solid var(--hairline);
+}
+
+.diaDaSemana {
+  padding-block: var(--space-2);
+  background: var(--canvas);
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.diaDaSemana:not(:first-child) {
+  border-left: var(--border-width) solid var(--hairline);
+}
+
+/* Semanas com altura igual, que crescem com a célula mais cheia da linha. As
+   linhas entre as células são as bordas de CelulaDia. */
+.dias {
+  grid-auto-rows: minmax(120px, auto);
+}

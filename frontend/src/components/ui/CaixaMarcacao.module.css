@@ -1,0 +1,39 @@
+.caixa {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: var(--border-width-strong) solid var(--ink);
+  border-radius: 4px;
+  color: var(--paper);
+  transition:
+    background var(--transicao-rapida),
+    border-color var(--transicao-rapida);
+}
+
+.pequena {
+  width: 14px;
+  height: 14px;
+  border-width: var(--border-width);
+  border-radius: 3px;
+}
+
+.caixa svg {
+  opacity: 0;
+}
+
+.marcada {
+  background: var(--graphite);
+  border-color: var(--graphite);
+}
+
+.marcada svg {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caixa {
+    transition: none;
+  }
+}

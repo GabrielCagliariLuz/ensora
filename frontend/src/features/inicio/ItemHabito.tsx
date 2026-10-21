@@ -1,4 +1,4 @@
-import IconeCheck from '../../components/ui/IconeCheck'
+import CaixaMarcacao from '../../components/ui/CaixaMarcacao'
 import { textoProgresso } from './regras'
 import type { ProgressoSemanal } from './regras'
 import styles from './ItemHabito.module.css'
@@ -42,9 +42,7 @@ export default function ItemHabito({
         disabled={!interativo}
         onChange={aoAlternar}
       />
-      <span className={styles.caixa} aria-hidden="true">
-        <IconeCheck />
-      </span>
+      <CaixaMarcacao marcada={feito} />
     </label>
   )
 }

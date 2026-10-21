@@ -1,8 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { concluirEntrega, desfazerEntrega } from '../../api/entregas'
+import { invalidarDadosDeAgenda } from '../agenda/invalidarAgenda'
+import { chavesCalendario } from '../calendario/chaves'
+import {
+  lerRegistroDoCache,
+  substituirRegistroNoCache,
+} from '../calendario/mover'
 import { chavesInicio } from './chaves'
 import {
   aplicarConclusaoNoCache,
+  comConclusao,
   lerEntregaDoCache,
   restaurarEntregaNoCache,
 } from './conclusao'
@@ -20,7 +27,8 @@ export interface ConclusaoEntrega {
 const CHAVE_MUTACAO = ['concluir-entrega'] as const
 
 // Atualização otimista, no mesmo padrão de useMarcarHabito: a entrega muda no
-// clique e a API roda em seguida.
+// clique e a API roda em seguida. Vale para a Home e para o Calendar: a mesma
+// entrega é atualizada nos dois caches.
 export function useConcluirEntrega(
   aoFalhar?: (erro: unknown, conclusao: ConclusaoEntrega) => void,
 ) {
@@ -36,26 +44,38 @@ export function useConcluirEntrega(
       concluida ? concluirEntrega(id, data) : desfazerEntrega(id),
     onMutate: async ({ id, concluida, data }) => {
       // Uma busca em voo traria o estado antigo por cima da conclusão.
-      await queryClient.cancelQueries({ queryKey: chavesInicio.dia(data) })
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: chavesInicio.dia(data) }),
+        queryClient.cancelQueries({ queryKey: chavesCalendario.todos }),
+      ])
       // Guarda a entrega como estava. Reverter com a operação inversa não basta:
       // desfazer uma entrega concluída ontem e voltar atrás a marcaria como
       // concluída hoje.
       const anterior = lerEntregaDoCache(queryClient, data, id)
       aplicarConclusaoNoCache(queryClient, data, id, concluida)
-      return { anterior }
+
+      const noCalendario = lerRegistroDoCache(queryClient, 'ENTREGA', id)
+      if (noCalendario?.tipo === 'ENTREGA') {
+        substituirRegistroNoCache(queryClient, {
+          tipo: 'ENTREGA',
+          entrega: comConclusao(noCalendario.entrega, concluida, data),
+        })
+      }
+      return { anterior, noCalendario }
     },
     onError: (erro, conclusao, contexto) => {
       if (contexto?.anterior) {
         restaurarEntregaNoCache(queryClient, conclusao.data, contexto.anterior)
       }
+      if (contexto?.noCalendario) {
+        substituirRegistroNoCache(queryClient, contexto.noCalendario)
+      }
       aoFalhar?.(erro, conclusao)
     },
-    onSettled: (_dados, _erro, { data }) => {
+    onSettled: () => {
       // Só a última conclusão em andamento reconcilia com o servidor.
       if (queryClient.isMutating({ mutationKey: CHAVE_MUTACAO }) === 1) {
-        return queryClient.invalidateQueries({
-          queryKey: chavesInicio.dia(data),
-        })
+        return invalidarDadosDeAgenda(queryClient)
       }
     },
   })
