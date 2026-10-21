@@ -150,6 +150,12 @@ A exclusão não apaga o histórico; portanto, os Insights históricos podem
 continuar usando os registros do hábito mesmo depois de ele desaparecer
 das telas operacionais.
 
+Na consistência do **hábito diário** de um mês, os dias considerados vão
+de `max(1º dia do mês, dia da criação)` até
+`min(último dia do mês, hoje, dia anterior ao da exclusão)`: o dia da
+criação e o de hoje contam, o da exclusão não (decisão 58). Sem dias
+considerados (mês futuro, por exemplo), a consistência não existe.
+
 ### 7.2 Hábitos semanais
 
 O progresso semanal usa:
@@ -176,6 +182,14 @@ semanas com meta batida / semanas em que o hábito existia
 ```
 
 usando a meta vigente em cada semana.
+
+No cálculo de um mês, cada semana (segunda a domingo) pertence ao mês em
+que cai a sua **segunda-feira**, para não contar em dois meses. Ela só
+entra na conta se o hábito existiu em algum dia dela, se havia meta
+vigente e se **já terminou ou já bateu a meta**: a semana em andamento
+nunca penaliza. "Meta batida" são os registros da semana toda, em dias
+em que o hábito existia, maiores ou iguais à meta. Sem nenhuma semana
+considerada, a consistência não existe.
 
 ### 7.3 Ritmo
 
@@ -220,12 +234,18 @@ Cada célula (hábito × dia) tem um estado:
 - **Não realizado (vermelho):**
   - hábito diário: dia passado sem registro;
   - hábito semanal: somente depois que a semana **termina** sem bater a
-    meta. Quais células ficam vermelhas está em aberto (seção 17).
-- **Em aberto:** hoje, sem registro ainda.
+    meta, e então **todos os dias sem registro daquela semana** ficam
+    vermelhos (decisão 58).
+- **Em aberto:** hoje, sem registro ainda. No semanal, só se a meta da
+  semana ainda não foi batida; se já foi, hoje descansa.
 
 Enquanto a semana está em andamento, o hábito semanal nunca fica
 vermelho. O anel de consistência dele usa semanas com meta batida
 (seção 7.2).
+
+Dia em que o hábito não existia (antes da criação, a partir do dia da
+exclusão, ou semanal sem meta vigente) não tem célula: a grade fica em
+branco ali.
 
 ### 7.5 Streak
 
@@ -931,6 +951,56 @@ e no intervalo todo.
 - Considera os hábitos do usuário do token, inclusive os já excluídos nos
   dias em que existiam. Não há streak (seção 7.5).
 
+`GET /insights/consistencia?mes=AAAA-MM` (exige token) devolve, para um mês,
+a grade hábito × dia (seção 7.4) e a consistência de cada hábito (seções
+7.1 e 7.2).
+
+```json
+// resposta 200
+{
+  "mes": "2026-09",
+  "habitos": [
+    {
+      "id": 1, "nome": "Ler", "tipo": "DIARIO", "excluido": false,
+      "consistencia": 33.3,
+      "dias": [
+        { "data": "2026-09-10", "estado": "CONCLUIDO" },
+        { "data": "2026-09-17", "estado": "NAO_REALIZADO" }
+      ]
+    },
+    {
+      "id": 4, "nome": "Academia", "tipo": "SEMANAL", "excluido": false,
+      "consistencia": 50.0,
+      "semanas": [
+        { "de": "2026-09-07", "ate": "2026-09-13", "meta": 2, "feitos": 2, "batida": true,
+          "encerrada": true, "contaNaConsistencia": true }
+      ],
+      "dias": [ { "data": "2026-09-08", "estado": "CONCLUIDO" } ]
+    }
+  ]
+}
+```
+
+- `mes`: obrigatório, `AAAA-MM`. Ausente ou malformado (`2026-13`,
+  `09-2026`): `400 REQUISICAO_INVALIDA`. Qualquer mês é aceito; sem
+  hábitos, `habitos` vem vazio.
+- `habitos`: os do usuário do token que têm ao menos uma célula no mês,
+  inclusive os já excluídos nos meses em que existiam (`excluido` diz se
+  hoje estão excluídos), na ordem de criação.
+- `consistencia`: percentual de 0 a 100 com uma casa decimal; **não
+  aparece** quando não há dias ou semanas a considerar.
+- `dias`: uma célula por dia do mês em que o hábito existia, com `estado`
+  `CONCLUIDO`, `DESCANSO_FUTURO`, `NAO_REALIZADO` ou `EM_ABERTO` (seção
+  7.4). Dias em que ele não existia não aparecem: o front deixa a célula
+  em branco.
+- `semanas` (só no semanal): todas as semanas, de segunda a domingo, que
+  têm célula no mês, com `feitos`/`meta`, `batida`, `encerrada` e
+  `contaNaConsistencia` (se entrou na conta deste mês). Dá ao front o
+  resumo `feitos/meta` e a possibilidade de suavizar o vermelho depois,
+  sem mudar o backend.
+- O "hoje" é o do servidor, no fuso fixo da seção 12. Não há streak
+  (seção 7.5).
+
 `POST /entregas` (exige token) cria uma entrega do usuário do token e
 responde `201`. `PUT /entregas/{id}` usa o **mesmo corpo** e responde `200`
 com a entrega no mesmo formato.
@@ -1119,6 +1189,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 55  | O `GET /calendario` devolve todas as entregas (concluídas incluídas) e todos os eventos do intervalo `de`..`ate`, inclusive nas duas pontas, em listas planas, e só aceita intervalos de até 62 dias entre as pontas (400 no campo `ate`). Não tem a regra de "perto de hoje" dos outros endpoints, porque o Calendar navega pelo passado e pelo futuro. Reusa `EntregaService.listarNoIntervalo` e `EventoService.listarNoIntervalo`; a consulta de entregas da Home é outra, com as regras de atrasada e concluída |
 | 56  | O servidor transforma `criado_em` e `excluido_em` (instantes UTC) no dia do usuário com um fuso fixo, configurável em `ensora.fuso` (`FUSO`, padrão `America/Sao_Paulo`), em vez de gravar a data local na criação e na exclusão do hábito. Serve aos Insights, é válido enquanto o app for de uso pessoal e não exige migração nem mudança de contrato; com vários usuários, o fuso passa a ser por usuário (seção 12) |
 | 57  | O ritmo (`GET /insights/ritmo`) é a média aritmética dos ritmos diários, calculada sobre valores não arredondados e mostrada em percentual com uma casa. O hábito existe do dia da criação até o dia anterior ao da exclusão; o semanal entra com meta/7 usando a meta vigente na semana do dia; dia sem hábito existente fica sem valor e fora das médias. S1 a S4 são blocos de 7 dias a partir do primeiro dia do intervalo, e o S4 absorve os dias 29 a 31. O intervalo tem no máximo 31 dias e o front envia `ate` = hoje no mês em andamento |
+| 58  | A consistência e a grade de Insights (`GET /insights/consistencia`) seguem estas regras: o semanal numa semana encerrada sem bater a meta fica vermelho em todos os dias sem registro daquela semana (ponto aberto 8 resolvido); a semana pertence ao mês da sua segunda-feira e só entra na consistência se já terminou ou já bateu a meta (a em andamento nunca penaliza); no diário os dias considerados vão da criação até hoje, o último dia do mês ou o dia anterior à exclusão; dias em que o hábito não existia não têm célula; "hoje" é o do servidor, no fuso fixo da decisão 56. A resposta inclui o resumo de cada semana (`feitos`, `meta`, `batida`) para o front poder suavizar o vermelho sem mudar o backend |
 
 ## 17. Pontos ainda em aberto
 
@@ -1136,8 +1207,9 @@ bloqueia a chamada, então o front não depende desse corpo.
     Render; decidir quando entra recuperação de senha.
 7.  Confirmar limites atuais do Render/Neon (horas gratuitas, termos)
     antes de depender do keep-alive.
-8.  Semanal não cumprido: pintar de vermelho todos os dias não marcados
-    da semana ou só um indicador por semana.
+8.  ~~Semanal não cumprido: pintar de vermelho todos os dias não marcados
+    da semana ou só um indicador por semana.~~ Resolvido: todos os dias
+    sem registro da semana encerrada sem meta batida (decisão 58).
 9.  Offline: onde persistir o cache e a fila (ex.: IndexedDB), quando
     reenviar a fila e como avisar falhas de envio.
 10. ~~Tipo do `id` das tabelas (`BIGINT` identity ou `UUID`).~~
