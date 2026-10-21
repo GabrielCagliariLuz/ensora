@@ -41,7 +41,7 @@ public class EntregaController {
 	@PatchMapping("/{id}")
 	public EntregaResponse alterarConclusao(@UsuarioLogado Long usuarioId, @PathVariable Long id,
 			@Valid @RequestBody ConclusaoRequest requisicao) {
-		return entregaService.alterarConclusao(usuarioId, id, requisicao.concluida());
+		return entregaService.alterarConclusao(usuarioId, id, requisicao.concluida(), requisicao.data());
 	}
 
 	@DeleteMapping("/{id}")

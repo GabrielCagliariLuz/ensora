@@ -45,6 +45,10 @@ public class Entrega {
 	// Preenchido ao concluir e limpo ao desfazer; o banco exige que andem juntos com `concluida`.
 	private Instant concluidaEm;
 
+	// O dia da conclusão no fuso do usuário, enviado pelo cliente (concluida_em é UTC): a Home usa esta data para
+	// esconder a entrega concluída no dia seguinte, sem fazer conta de fuso no servidor.
+	private LocalDate concluidaData;
+
 	private String nota;
 
 	@Generated(event = EventType.INSERT)

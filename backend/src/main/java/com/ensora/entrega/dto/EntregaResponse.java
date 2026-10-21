@@ -9,11 +9,12 @@ import java.time.LocalTime;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record EntregaResponse(Long id, String titulo, LocalDate prazoData, LocalTime prazoHorario,
-		boolean concluida, Instant concluidaEm, String nota) {
+		boolean concluida, Instant concluidaEm, LocalDate concluidaData, String nota) {
 
 	public static EntregaResponse de(Entrega entrega) {
 		return new EntregaResponse(entrega.getId(), entrega.getTitulo(), entrega.getPrazoData(),
-				entrega.getPrazoHorario(), entrega.isConcluida(), entrega.getConcluidaEm(), entrega.getNota());
+				entrega.getPrazoHorario(), entrega.isConcluida(), entrega.getConcluidaEm(),
+				entrega.getConcluidaData(), entrega.getNota());
 	}
 
 }
