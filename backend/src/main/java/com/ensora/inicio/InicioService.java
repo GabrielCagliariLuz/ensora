@@ -34,7 +34,7 @@ public class InicioService {
 		LocalDate ate = data.plusDays(DIAS_DO_UPCOMING);
 		// Entrega atrasada ou concluída fica na Home até o dia seguinte; por isso a entrega olha desde ontem.
 		var entregas = entregaService.listarParaHome(usuarioId, data.minusDays(1), ate);
-		var eventos = eventoService.listarProximos(usuarioId, data, ate);
+		var eventos = eventoService.listarNoIntervalo(usuarioId, data, ate);
 
 		return new InicioResponse(data, habitos, new Upcoming(entregas, eventos));
 	}

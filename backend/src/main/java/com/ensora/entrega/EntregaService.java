@@ -65,6 +65,12 @@ public class EntregaService {
 		return EntregaResponse.de(entrega);
 	}
 
+	/** Entregas com prazo de {@code de} a {@code ate}, inclusive, concluídas ou não: é o que o Calendar mostra. */
+	@Transactional(readOnly = true)
+	public List<EntregaResponse> listarNoIntervalo(Long usuarioId, LocalDate de, LocalDate ate) {
+		return entregas.findNoIntervalo(usuarioId, de, ate).stream().map(EntregaResponse::de).toList();
+	}
+
 	/**
 	 * Entregas da Home. {@code desde} é ontem: uma entrega atrasada fica na Home só até o dia seguinte ao prazo, e uma
 	 * concluída só até o dia seguinte à conclusão; depois disso só o Calendar a mostra (seção 8).

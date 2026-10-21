@@ -54,7 +54,7 @@ class InicioServiceTest {
 				new HabitoDoDia(1L, "Ler", TipoHabito.DIARIO, true, null, null),
 				new HabitoDoDia(2L, "Academia", TipoHabito.SEMANAL, false, 1, 3)));
 		when(entregaService.listarParaHome(USUARIO, HOJE.minusDays(1), HOJE.plusDays(4))).thenReturn(List.of(entrega));
-		when(eventoService.listarProximos(USUARIO, HOJE, HOJE.plusDays(4))).thenReturn(List.of(evento));
+		when(eventoService.listarNoIntervalo(USUARIO, HOJE, HOJE.plusDays(4))).thenReturn(List.of(evento));
 
 		InicioResponse resposta = servico().carregar(USUARIO, HOJE);
 
@@ -70,13 +70,13 @@ class InicioServiceTest {
 	void carregarPedeAsEntregasDesdeOntemEOsEventosDeHojeAteQuatroDiasDepois() {
 		when(habitoService.listarDoDia(USUARIO, HOJE)).thenReturn(List.of());
 		when(entregaService.listarParaHome(USUARIO, HOJE.minusDays(1), HOJE.plusDays(4))).thenReturn(List.of());
-		when(eventoService.listarProximos(USUARIO, HOJE, HOJE.plusDays(4))).thenReturn(List.of());
+		when(eventoService.listarNoIntervalo(USUARIO, HOJE, HOJE.plusDays(4))).thenReturn(List.of());
 
 		InicioResponse resposta = servico().carregar(USUARIO, HOJE);
 
 		verify(habitoService).listarDoDia(USUARIO, HOJE);
 		verify(entregaService).listarParaHome(USUARIO, LocalDate.of(2026, 10, 20), LocalDate.of(2026, 10, 25));
-		verify(eventoService).listarProximos(USUARIO, HOJE, LocalDate.of(2026, 10, 25));
+		verify(eventoService).listarNoIntervalo(USUARIO, HOJE, LocalDate.of(2026, 10, 25));
 		assertThat(resposta.habitos()).isEmpty();
 		assertThat(resposta.upcoming().entregas()).isEmpty();
 		assertThat(resposta.upcoming().eventos()).isEmpty();

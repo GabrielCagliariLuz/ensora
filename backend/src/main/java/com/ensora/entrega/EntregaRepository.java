@@ -14,6 +14,19 @@ public interface EntregaRepository extends JpaRepository<Entrega, Long> {
 	Optional<Entrega> findByIdAndUsuarioId(Long id, Long usuarioId);
 
 	/**
+	 * Entregas com prazo no intervalo (inclusive nas duas pontas), concluídas ou não, para o Calendar. Mesma ordem da
+	 * Home: prazo, horário (sem horário por último) e id.
+	 */
+	@Query("""
+			select e from Entrega e
+			where e.usuarioId = :usuarioId
+			  and e.prazoData between :de and :ate
+			order by e.prazoData asc, e.prazoHorario asc nulls last, e.id asc
+			""")
+	List<Entrega> findNoIntervalo(@Param("usuarioId") Long usuarioId, @Param("de") LocalDate de,
+			@Param("ate") LocalDate ate);
+
+	/**
 	 * Entregas da Home: prazo entre {@code desde} e {@code ate}, que ainda não foram concluídas ou foram concluídas
 	 * de {@code desde} em diante. Ordem: prazo, horário (sem horário por último, o app o trata como 23:59) e id.
 	 */

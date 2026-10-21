@@ -200,7 +200,7 @@ class EventoServiceTest {
 	// ---- Home ----
 
 	@Test
-	void listarProximosConsultaSoOsEventosDoUsuarioNoIntervaloRecebidoEMapeiaParaResposta() {
+	void listarNoIntervaloConsultaSoOsEventosDoUsuarioNoIntervaloRecebidoEMapeiaParaResposta() {
 		LocalDate ate = DATA.plusDays(4);
 		Evento primeiro = evento();
 		Evento segundo = evento();
@@ -211,7 +211,7 @@ class EventoServiceTest {
 		when(eventos.findByUsuarioIdAndDataBetweenOrderByDataAscInicioAscIdAsc(USUARIO, DATA, ate))
 				.thenReturn(List.of(primeiro, segundo));
 
-		List<EventoResponse> lista = servico().listarProximos(USUARIO, DATA, ate);
+		List<EventoResponse> lista = servico().listarNoIntervalo(USUARIO, DATA, ate);
 
 		assertThat(lista).extracting(EventoResponse::id).containsExactly(ID, 11L);
 		assertThat(lista.get(0).categoria()).isEqualTo(CategoriaEvento.SAUDE);
@@ -220,11 +220,11 @@ class EventoServiceTest {
 	}
 
 	@Test
-	void listarProximosSemEventosDevolveListaVazia() {
+	void listarNoIntervaloSemEventosDevolveListaVazia() {
 		when(eventos.findByUsuarioIdAndDataBetweenOrderByDataAscInicioAscIdAsc(USUARIO, DATA, DATA))
 				.thenReturn(List.of());
 
-		assertThat(servico().listarProximos(USUARIO, DATA, DATA)).isEmpty();
+		assertThat(servico().listarNoIntervalo(USUARIO, DATA, DATA)).isEmpty();
 	}
 
 	// ---- excluir ----
