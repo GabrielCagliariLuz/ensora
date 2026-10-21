@@ -1,6 +1,6 @@
 import type { Entrega } from '../../api/tipos'
 import CaixaMarcacao from '../../components/ui/CaixaMarcacao'
-import { situacaoPrazo } from '../inicio/upcoming'
+import { entregaUrgente } from './cores'
 import Etiqueta from './Etiqueta'
 import styles from './EtiquetaEntrega.module.css'
 
@@ -27,7 +27,7 @@ export default function EtiquetaEntrega({
   aoComecarArrasto,
   aoTerminarArrasto,
 }: EtiquetaEntregaProps) {
-  const urgente = !entrega.concluida && situacaoPrazo(entrega, agora).urgente
+  const urgente = entregaUrgente(entrega, agora)
 
   return (
     <Etiqueta

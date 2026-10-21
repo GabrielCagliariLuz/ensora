@@ -23,12 +23,15 @@ import styles from './FormularioRegistro.module.css'
 interface FormularioEventoProps {
   // Com ele o formulário edita esse evento; sem, cria um novo.
   existente?: Evento
+  // Data preenchida num evento novo; sem ela, hoje.
+  dataInicial?: string
   aoConcluir: () => void
   aoCancelar: () => void
 }
 
 export default function FormularioEvento({
   existente,
+  dataInicial,
   aoConcluir,
   aoCancelar,
 }: FormularioEventoProps) {
@@ -37,7 +40,9 @@ export default function FormularioEvento({
   const idCampo = (campo: CampoEvento) => `${id}-${campo}`
 
   const [titulo, setTitulo] = useState(existente?.titulo ?? '')
-  const [data, setData] = useState(existente?.data ?? hojeISO())
+  const [data, setData] = useState(
+    existente?.data ?? dataInicial ?? hojeISO(),
+  )
   const [local, setLocal] = useState(existente?.local ?? '')
   const [inicio, setInicio] = useState(
     existente ? horaCurta(existente.inicio) : '',

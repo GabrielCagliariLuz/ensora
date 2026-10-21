@@ -8,9 +8,24 @@ import {
   dataPorExtenso,
   numeroDoDia,
   rotuloDia,
+  rotuloDiaCurto,
   rotuloDoMes,
   somarDias,
 } from './datas'
+
+describe('rotuloDiaCurto', () => {
+  it('mostra o dia da semana sem "-feira", o dia e o mês', () => {
+    expect(rotuloDiaCurto('2026-10-09')).toBe('Sexta 9/10')
+    expect(rotuloDiaCurto('2026-10-05')).toBe('Segunda 5/10')
+    expect(rotuloDiaCurto('2026-10-31')).toBe('Sábado 31/10')
+    expect(rotuloDiaCurto('2026-11-01')).toBe('Domingo 1/11')
+  })
+
+  it('devolve o texto original quando a data é inválida', () => {
+    expect(rotuloDiaCurto('2026-13-01')).toBe('2026-13-01')
+    expect(rotuloDiaCurto('hoje')).toBe('hoje')
+  })
+})
 
 describe('dataPorExtenso', () => {
   it('mostra o dia da semana, o dia e o mês por extenso', () => {

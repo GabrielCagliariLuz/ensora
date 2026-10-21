@@ -1,0 +1,109 @@
+/* A cor vem de --cor-linha (um token): borda, faixa e fundo são misturas dela com
+   o branco do cartão, e o texto, uma mistura com o ink. */
+.linha {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--cor-linha) 25%, var(--card));
+  border-left: 3px solid var(--cor-linha);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--cor-linha) 10%, var(--card));
+  color: color-mix(in srgb, var(--cor-linha) 55%, var(--ink));
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+  transition:
+    background var(--transicao-rapida),
+    opacity var(--transicao-media),
+    transform var(--transicao-rapida);
+}
+
+.linha:has(.corpo:active) {
+  transform: scale(0.98);
+}
+
+/* Entrega comum: preta sobre branco, com borda fina. */
+.solida {
+  border-color: color-mix(in srgb, var(--cor-linha) 30%, var(--card));
+  border-left-color: var(--cor-linha);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.esmaecida {
+  opacity: 0.55;
+}
+
+/* A caixa tem uma área de toque maior que o desenho, por ser feita para o dedo. */
+.marcador {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  padding: var(--space-2) 0 var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.entrada {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.marcador:has(.entrada:focus-visible) {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+.corpo {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.corpo:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.titulo {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: var(--weight-semibold);
+}
+
+.concluida {
+  text-decoration: line-through;
+}
+
+.horario {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .linha {
+    transition: none;
+  }
+
+  .linha:has(.corpo:active) {
+    transform: none;
+  }
+}

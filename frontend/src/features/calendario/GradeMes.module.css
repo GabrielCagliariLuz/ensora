@@ -1,9 +1,4 @@
-.rolagem {
-  overflow-x: auto;
-}
-
 .cartao {
-  min-width: 720px;
   overflow: hidden;
   background: var(--card);
   border: var(--border-width) solid var(--hairline);

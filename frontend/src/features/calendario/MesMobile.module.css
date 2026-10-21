@@ -1,0 +1,163 @@
+.cartao {
+  padding: var(--space-4);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.mes {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-legenda);
+  font-weight: var(--weight-medium);
+}
+
+.setas {
+  display: flex;
+  gap: 2px;
+}
+
+.seta {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.seta:hover {
+  background: var(--hover-surface);
+}
+
+.seta:active {
+  transform: scale(0.92);
+}
+
+.semana,
+.dias {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.semana {
+  margin-bottom: var(--space-1);
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  text-align: center;
+}
+
+.dias {
+  row-gap: 2px;
+  animation: aparecer var(--transicao-suave);
+  transition: opacity var(--transicao-suave);
+}
+
+.carregando {
+  opacity: 0.55;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Cada dia é um alvo de toque de pelo menos 44px de altura. */
+.dia {
+  display: grid;
+  grid-template-rows: 28px 8px;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.numero {
+  min-width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-legenda);
+  line-height: 1;
+  transition:
+    background var(--transicao-rapida),
+    color var(--transicao-rapida);
+}
+
+.dia:active .numero {
+  background: var(--hover-surface);
+}
+
+.foraDoMes {
+  color: var(--ash);
+}
+
+/* Hoje: número em negrito, sublinhado pelo contorno. */
+.hoje .numero {
+  box-shadow: inset 0 0 0 1px var(--rule);
+  font-weight: var(--weight-bold);
+}
+
+.selecionado .numero,
+.selecionado:active .numero {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.dia:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+.pontos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 8px;
+}
+
+.ponto {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dias {
+    animation: none;
+    transition: none;
+  }
+
+  .seta,
+  .numero {
+    transition: none;
+  }
+
+  .seta:active {
+    transform: none;
+  }
+}

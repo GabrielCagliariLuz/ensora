@@ -113,6 +113,23 @@ export function dataPorExtenso(iso: string): string {
   return `${DIAS_COMPLETOS[data.getDay()]}, ${Number(partes[3])} de ${mes.toLowerCase()}`
 }
 
+// '2026-10-09' vira 'Sexta 9/10', o rótulo do dia selecionado no Calendar
+// mobile. Data fora do formato volta como veio.
+export function rotuloDiaCurto(iso: string): string {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (partes === null || MESES_COMPLETOS[Number(partes[2]) - 1] === undefined) {
+    return iso
+  }
+
+  const data = new Date(
+    Number(partes[1]),
+    Number(partes[2]) - 1,
+    Number(partes[3]),
+  )
+  const nome = DIAS_COMPLETOS[data.getDay()].replace('-feira', '')
+  return `${nome} ${Number(partes[3])}/${Number(partes[2])}`
+}
+
 // '2026-10' vira 'Outubro 2026'. Mês fora do formato volta como veio.
 export function rotuloDoMes(mes: string): string {
   const partes = /^(\d{4})-(\d{2})$/.exec(mes)

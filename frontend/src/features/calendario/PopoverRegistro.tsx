@@ -1,16 +1,10 @@
-import { Clock, MapPin, Pencil, Tag, Trash2, X } from 'lucide-react'
+import { Pencil, Trash2, X } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
-import type { Entrega, Evento } from '../../api/tipos'
-import { dataPorExtenso } from '../../lib/datas'
-import { corDaCategoria, rotuloCategoria } from '../agenda/categorias'
-import {
-  formatarHora,
-  formatarHorarioEvento,
-  situacaoPrazo,
-} from '../inicio/upcoming'
+import type { Entrega } from '../../api/tipos'
 import type { Registro } from './agenda'
+import DetalhesRegistro from './DetalhesRegistro'
 import styles from './PopoverRegistro.module.css'
 
 const MARGEM = 8
@@ -25,10 +19,6 @@ interface PopoverRegistroProps {
   aoEditar: (registro: Registro) => void
   aoExcluir: (registro: Registro) => void
   aoFechar: () => void
-}
-
-function primeiraMaiuscula(texto: string): string {
-  return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
 // Detalhes de um evento ou de uma entrega, num cartão ancorado à etiqueta.
@@ -140,116 +130,13 @@ export default function PopoverRegistro({
           <X size={16} strokeWidth={1.5} />
         </button>
       </div>
-      {registro.tipo === 'EVENTO' ? (
-        <DetalhesEvento evento={registro.evento} />
-      ) : (
-        <DetalhesEntrega
-          entrega={registro.entrega}
-          agora={agora}
-          aoAlternar={() => aoAlternarEntrega(registro.entrega)}
-        />
-      )}
+      <DetalhesRegistro
+        registro={registro}
+        agora={agora}
+        aoAlternarEntrega={aoAlternarEntrega}
+        reservarFerramentas
+      />
     </div>,
     document.body,
-  )
-}
-
-function DetalhesEvento({ evento }: { evento: Evento }) {
-  const categoria = evento.categoria
-  return (
-    <>
-      <div className={styles.cabecalho}>
-        <span
-          className={styles.ponto}
-          style={{ background: corDaCategoria(categoria) }}
-        />
-        <h2 className={styles.titulo}>{evento.titulo}</h2>
-      </div>
-      <ul className={styles.linhas}>
-        <li>
-          <Clock size={14} strokeWidth={1.5} />
-          <span>
-            {dataPorExtenso(evento.data)} ·{' '}
-            {formatarHorarioEvento(evento.inicio, evento.termino)}
-          </span>
-        </li>
-        {evento.local && (
-          <li>
-            <MapPin size={14} strokeWidth={1.5} />
-            <span>{evento.local}</span>
-          </li>
-        )}
-        {categoria && (
-          <li>
-            <Tag size={14} strokeWidth={1.5} />
-            <span>{rotuloCategoria(categoria)}</span>
-          </li>
-        )}
-      </ul>
-    </>
-  )
-}
-
-function DetalhesEntrega({
-  entrega,
-  agora,
-  aoAlternar,
-}: {
-  entrega: Entrega
-  agora: Date
-  aoAlternar: () => void
-}) {
-  const situacao = situacaoPrazo(entrega, agora)
-  const prazo = entrega.prazoHorario
-    ? `${dataPorExtenso(entrega.prazoData)} · ${formatarHora(entrega.prazoHorario)}`
-    : dataPorExtenso(entrega.prazoData)
-
-  return (
-    <>
-      <div className={styles.cabecalho}>
-        <span
-          className={styles.ponto}
-          style={{
-            background: situacao.urgente ? 'var(--ember)' : 'var(--ink)',
-          }}
-        />
-        <h2
-          className={
-            entrega.concluida
-              ? `${styles.titulo} ${styles.concluida}`
-              : styles.titulo
-          }
-        >
-          {entrega.titulo}
-        </h2>
-      </div>
-      <ul className={styles.linhas}>
-        <li>
-          <Clock size={14} strokeWidth={1.5} />
-          <span>Prazo: {prazo}</span>
-        </li>
-      </ul>
-      <p
-        className={
-          situacao.urgente
-            ? `${styles.situacao} ${styles.urgente}`
-            : styles.situacao
-        }
-      >
-        {primeiraMaiuscula(situacao.texto)}
-      </p>
-      {entrega.nota && <p className={styles.nota}>{entrega.nota}</p>}
-      <button
-        className={
-          entrega.concluida
-            ? `${styles.acao} ${styles.desfazer}`
-            : styles.acao
-        }
-        type="button"
-        onClick={aoAlternar}
-      >
-        {entrega.concluida ? 'Desfazer' : 'Concluir'}
-      </button>
-    </>
   )
 }
