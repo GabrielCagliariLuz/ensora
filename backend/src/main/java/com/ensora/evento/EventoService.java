@@ -38,9 +38,9 @@ public class EventoService {
 		return EventoResponse.de(evento);
 	}
 
-	/** Eventos do usuário de {@code de} a {@code ate}, inclusive, para a Home. Evento passado não aparece. */
+	/** Eventos do usuário de {@code de} a {@code ate}, inclusive nas duas pontas. Serve à Home e ao Calendar. */
 	@Transactional(readOnly = true)
-	public List<EventoResponse> listarProximos(Long usuarioId, LocalDate de, LocalDate ate) {
+	public List<EventoResponse> listarNoIntervalo(Long usuarioId, LocalDate de, LocalDate ate) {
 		return eventos.findByUsuarioIdAndDataBetweenOrderByDataAscInicioAscIdAsc(usuarioId, de, ate).stream()
 				.map(EventoResponse::de)
 				.toList();

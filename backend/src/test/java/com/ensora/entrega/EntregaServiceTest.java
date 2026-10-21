@@ -283,6 +283,34 @@ class EntregaServiceTest {
 		verify(entregas).findByIdAndUsuarioId(ID, USUARIO);
 	}
 
+	// ---- Calendar ----
+
+	@Test
+	void listarNoIntervaloConsultaSoAsEntregasDoUsuarioNoIntervaloEIncluiAsConcluidas() {
+		LocalDate de = LocalDate.of(2026, 10, 25);
+		LocalDate ate = LocalDate.of(2026, 12, 5);
+		Entrega pendente = entrega();
+		Entrega concluida = entrega();
+		concluida.setId(11L);
+		concluida.setConcluida(true);
+		concluida.setConcluidaEm(AGORA);
+		concluida.setConcluidaData(HOJE);
+		when(entregas.findNoIntervalo(USUARIO, de, ate)).thenReturn(List.of(pendente, concluida));
+
+		List<EntregaResponse> lista = servico().listarNoIntervalo(USUARIO, de, ate);
+
+		assertThat(lista).extracting(EntregaResponse::id).containsExactly(ID, 11L);
+		assertThat(lista).extracting(EntregaResponse::concluida).containsExactly(false, true);
+		verify(entregas).findNoIntervalo(USUARIO, de, ate);
+	}
+
+	@Test
+	void listarNoIntervaloSemEntregasDevolveListaVazia() {
+		when(entregas.findNoIntervalo(USUARIO, HOJE, HOJE)).thenReturn(List.of());
+
+		assertThat(servico().listarNoIntervalo(USUARIO, HOJE, HOJE)).isEmpty();
+	}
+
 	// ---- Home ----
 
 	@Test
