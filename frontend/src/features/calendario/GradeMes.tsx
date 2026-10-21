@@ -89,8 +89,7 @@ export default function GradeMes({
   }
 
   return (
-    // Abaixo de 768px a grade rola na horizontal (provisório até a visão mobile).
-    <div className={styles.rolagem}>
+    <>
       <div className={styles.cartao}>
         <div className={styles.semana} aria-hidden="true">
           {DIAS_DA_SEMANA.map((dia) => (
@@ -148,6 +147,6 @@ export default function GradeMes({
           aoFechar={fechar}
         />
       )}
-    </div>
+    </>
   )
 }

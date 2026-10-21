@@ -15,22 +15,31 @@ const ABAS: { valor: Aba; rotulo: string }[] = [
 interface SheetNovoRegistroProps {
   aberto: boolean
   aoFechar: () => void
+  // Data que os formulários já trazem preenchida; sem ela, hoje.
+  dataInicial?: string
 }
 
 export default function SheetNovoRegistro({
   aberto,
   aoFechar,
+  dataInicial,
 }: SheetNovoRegistroProps) {
   return (
     <BottomSheet aberto={aberto} aoFechar={aoFechar} titulo="Novo Registro">
-      <ConteudoNovoRegistro aoFechar={aoFechar} />
+      <ConteudoNovoRegistro aoFechar={aoFechar} dataInicial={dataInicial} />
     </BottomSheet>
   )
 }
 
 // Só existe com o sheet aberto (o BottomSheet monta os filhos ao abrir), então
 // a aba e os formulários começam limpos a cada abertura.
-function ConteudoNovoRegistro({ aoFechar }: { aoFechar: () => void }) {
+function ConteudoNovoRegistro({
+  aoFechar,
+  dataInicial,
+}: {
+  aoFechar: () => void
+  dataInicial?: string
+}) {
   const idAbas = useId()
   const [aba, setAba] = useState<Aba>('EVENTO')
 
@@ -51,10 +60,18 @@ function ConteudoNovoRegistro({ aoFechar }: { aoFechar: () => void }) {
       {/* Os dois formulários ficam montados e o outro só é escondido, para
           trocar de aba não perder o que foi digitado. */}
       <div hidden={aba !== 'EVENTO'}>
-        <FormularioEvento aoConcluir={aoFechar} aoCancelar={aoFechar} />
+        <FormularioEvento
+          dataInicial={dataInicial}
+          aoConcluir={aoFechar}
+          aoCancelar={aoFechar}
+        />
       </div>
       <div hidden={aba !== 'ENTREGA'}>
-        <FormularioEntrega aoConcluir={aoFechar} aoCancelar={aoFechar} />
+        <FormularioEntrega
+          dataInicial={dataInicial}
+          aoConcluir={aoFechar}
+          aoCancelar={aoFechar}
+        />
       </div>
     </>
   )

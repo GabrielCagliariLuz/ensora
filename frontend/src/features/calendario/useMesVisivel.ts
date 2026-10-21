@@ -11,5 +11,6 @@ export function useMesVisivel(hoje: string) {
     anterior: () => setMes((atual) => somarMeses(atual, -1)),
     proximo: () => setMes((atual) => somarMeses(atual, 1)),
     irParaHoje: () => setMes(mesDoDia(hoje)),
+    irParaMes: setMes,
   }
 }

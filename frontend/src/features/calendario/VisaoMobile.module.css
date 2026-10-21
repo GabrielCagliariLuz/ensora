@@ -1,0 +1,46 @@
+.pagina {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* O botão ocupa a largura toda, como no Figma. */
+.novo {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  background: var(--ink);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--paper);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.novo:hover {
+  background: var(--ink-hover);
+}
+
+.novo:active {
+  transform: scale(0.98);
+}
+
+.novo:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .novo {
+    transition: none;
+  }
+
+  .novo:active {
+    transform: none;
+  }
+}

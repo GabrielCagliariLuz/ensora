@@ -1,0 +1,44 @@
+/* Cartões "Prazos de Hoje" e do dia selecionado: mesmo corpo, rótulos diferentes. */
+.cartao {
+  padding: var(--space-4);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.titulo {
+  margin: 0;
+  font-size: var(--text-botao);
+  font-weight: var(--weight-semibold);
+}
+
+.rotulo {
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lista {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vazio {
+  margin: 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}

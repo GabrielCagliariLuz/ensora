@@ -1,0 +1,47 @@
+.acoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.botao {
+  height: 44px;
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.botao:hover {
+  background: var(--hover-surface);
+}
+
+.botao:active {
+  transform: scale(0.97);
+}
+
+.botao:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.excluir {
+  color: var(--ember);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao {
+    transition: none;
+  }
+
+  .botao:active {
+    transform: none;
+  }
+}

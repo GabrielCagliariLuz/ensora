@@ -22,12 +22,15 @@ import styles from './FormularioRegistro.module.css'
 interface FormularioEntregaProps {
   // Com ela o formulário edita essa entrega; sem, cria uma nova.
   existente?: Entrega
+  // Data limite preenchida numa entrega nova; sem ela, hoje.
+  dataInicial?: string
   aoConcluir: () => void
   aoCancelar: () => void
 }
 
 export default function FormularioEntrega({
   existente,
+  dataInicial,
   aoConcluir,
   aoCancelar,
 }: FormularioEntregaProps) {
@@ -36,7 +39,7 @@ export default function FormularioEntrega({
 
   const [titulo, setTitulo] = useState(existente?.titulo ?? '')
   const [prazoData, setPrazoData] = useState(
-    existente?.prazoData ?? hojeISO(),
+    existente?.prazoData ?? dataInicial ?? hojeISO(),
   )
   const [prazoHorario, setPrazoHorario] = useState(
     existente?.prazoHorario ? horaCurta(existente.prazoHorario) : '',
