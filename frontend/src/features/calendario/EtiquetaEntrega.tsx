@@ -17,7 +17,7 @@ interface EtiquetaEntregaProps {
 }
 
 // Caixa de seleção e título. Pendente e urgente (atrasada, hoje ou amanhã):
-// vermelha. Pendente com tempo: neutra. Concluída: esmaecida e riscada.
+// vermelha. Pendente com tempo: preta, sobre o branco do cartão. Concluída: esmaecida e riscada.
 export default function EtiquetaEntrega({
   entrega,
   agora,
@@ -31,7 +31,8 @@ export default function EtiquetaEntrega({
 
   return (
     <Etiqueta
-      cor={urgente ? 'var(--ember)' : 'var(--cat-neutra)'}
+      cor={urgente ? 'var(--ember)' : 'var(--ink)'}
+      solida={!urgente}
       esmaecida={entrega.concluida}
       dica={entrega.titulo}
       aoAbrir={aoAbrir}

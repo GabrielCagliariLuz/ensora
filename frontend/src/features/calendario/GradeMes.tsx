@@ -17,6 +17,8 @@ interface GradeMesProps {
   agora: Date
   // Registros por dia (AAAA-MM-DD), de agruparPorDia.
   dias: Map<string, RegistrosDoDia>
+  // Os dados na tela são do mês anterior: a grade esmaece até os novos chegarem.
+  carregando?: boolean
   aoAlternarEntrega: (entrega: Entrega) => void
   aoEditar: (registro: Registro) => void
   aoExcluir: (registro: Registro) => void
@@ -39,6 +41,7 @@ export default function GradeMes({
   hoje,
   agora,
   dias,
+  carregando = false,
   aoAlternarEntrega,
   aoEditar,
   aoExcluir,
@@ -96,7 +99,13 @@ export default function GradeMes({
             </span>
           ))}
         </div>
-        <div className={styles.dias}>
+        {/* A chave refaz a grade a cada mês, e ela surge com um fade. */}
+        <div
+          key={mes}
+          className={
+            carregando ? `${styles.dias} ${styles.carregando}` : styles.dias
+          }
+        >
           {gradeDoMes(mes).map((dia) => (
             <CelulaDia
               key={dia}

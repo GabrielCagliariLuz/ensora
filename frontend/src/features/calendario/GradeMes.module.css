@@ -39,4 +39,23 @@
    linhas entre as células são as bordas de CelulaDia. */
 .dias {
   grid-auto-rows: minmax(120px, auto);
+  animation: aparecer var(--transicao-suave);
+  transition: opacity var(--transicao-suave);
+}
+
+.carregando {
+  opacity: 0.55;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dias {
+    animation: none;
+    transition: none;
+  }
 }

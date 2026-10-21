@@ -14,7 +14,7 @@ import type { Registro } from './agenda'
 import CabecalhoCalendario from './CabecalhoCalendario'
 import GradeMes from './GradeMes'
 import { intervaloDaGrade } from './grade'
-import { useCalendario } from './useCalendario'
+import { useCalendario, usePrefetchMesesVizinhos } from './useCalendario'
 import { useMesVisivel } from './useMesVisivel'
 import { useMoverRegistro } from './useMoverRegistro'
 import styles from './PaginaCalendario.module.css'
@@ -25,6 +25,7 @@ export default function PaginaCalendario() {
   const { mes, anterior, proximo, irParaHoje } = useMesVisivel(hoje)
   const { de, ate } = intervaloDaGrade(mes)
   const calendario = useCalendario(de, ate)
+  usePrefetchMesesVizinhos(mes)
 
   const [aviso, setAviso] = useState<string | null>(null)
   const [novo, setNovo] = useState(false)
@@ -91,6 +92,7 @@ export default function PaginaCalendario() {
           hoje={hoje}
           agora={agora}
           dias={dias}
+          carregando={calendario.isPlaceholderData}
           aoAlternarEntrega={alternar}
           aoEditar={setEditando}
           aoExcluir={setExcluindo}

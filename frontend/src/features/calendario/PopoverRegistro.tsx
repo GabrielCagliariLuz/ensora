@@ -100,7 +100,9 @@ export default function PopoverRegistro({
   return createPortal(
     <div
       ref={cartao}
-      className={styles.popover}
+      className={
+        posicao ? `${styles.popover} ${styles.visivel}` : styles.popover
+      }
       style={estilo}
       role="dialog"
       aria-label="Detalhes do registro"
@@ -208,7 +210,7 @@ function DetalhesEntrega({
         <span
           className={styles.ponto}
           style={{
-            background: situacao.urgente ? 'var(--ember)' : 'var(--cat-neutra)',
+            background: situacao.urgente ? 'var(--ember)' : 'var(--ink)',
           }}
         />
         <h2

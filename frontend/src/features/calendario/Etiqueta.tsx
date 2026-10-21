@@ -6,6 +6,9 @@ interface EtiquetaProps {
   // tingidos e o texto.
   cor: string
   esmaecida?: boolean
+  // Fundo branco em vez do tingido pela cor: para a etiqueta preta, que tingida
+  // ficaria cinza.
+  solida?: boolean
   // Texto completo, para o título cortado.
   dica: string
   // Abre os detalhes. Recebe o botão clicado, de onde o popover se ancora.
@@ -23,6 +26,7 @@ interface EtiquetaProps {
 export default function Etiqueta({
   cor,
   esmaecida = false,
+  solida = false,
   dica,
   aoAbrir,
   prefixo,
@@ -33,6 +37,7 @@ export default function Etiqueta({
 }: EtiquetaProps) {
   const classes = [
     styles.etiqueta,
+    solida && styles.solida,
     esmaecida && styles.esmaecida,
     arrastando && styles.arrastando,
   ]

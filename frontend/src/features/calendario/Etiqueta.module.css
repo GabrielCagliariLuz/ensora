@@ -12,7 +12,10 @@
   color: color-mix(in srgb, var(--cor-etiqueta) 55%, var(--ink));
   font-size: 11px;
   line-height: 16px;
-  transition: background var(--transicao-rapida);
+  transition:
+    background var(--transicao-rapida),
+    opacity var(--transicao-media),
+    transform var(--transicao-rapida);
 }
 
 .etiqueta:hover {
@@ -52,6 +55,24 @@
   outline-offset: 1px;
 }
 
+/* Feedback do clique: a etiqueta afunda um pouco enquanto o botão está
+   pressionado. */
+.etiqueta:has(.corpo:active) {
+  transform: scale(0.98);
+}
+
+/* Etiqueta preta: fundo branco e borda fina em ink. */
+.solida {
+  border-color: color-mix(in srgb, var(--cor-etiqueta) 30%, var(--card));
+  border-left-color: var(--cor-etiqueta);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.solida:hover {
+  background: var(--hover-surface);
+}
+
 /* A etiqueta que está sendo arrastada para outro dia. */
 .arrastando {
   opacity: 0.4;
@@ -65,5 +86,9 @@
 @media (prefers-reduced-motion: reduce) {
   .etiqueta {
     transition: none;
+  }
+
+  .etiqueta:has(.corpo:active) {
+    transform: none;
   }
 }
