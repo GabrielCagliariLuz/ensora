@@ -55,7 +55,7 @@
 | **Hábito**             | Atividade recorrente diária ou semanal. Nesta versão é somente binário: feito/não feito.                                      |
 | **Registro de hábito** | Registro de que um hábito foi feito em uma determinada data. É a base da Home e dos Insights.                                 |
 | **Entrega**            | Item com prazo (data e horário opcional) e estado concluída/não concluída.                                                    |
-| **Evento**             | Compromisso com data, horário de início, término opcional, local opcional e cor. Apenas informativo, sem estado de conclusão. |
+| **Evento**             | Compromisso com data, horário de início, término opcional, local opcional e categoria opcional. Apenas informativo, sem estado de conclusão. |
 
 Entrega e evento são **entidades separadas**. O Calendar apenas reúne as
 duas na leitura.
@@ -233,11 +233,14 @@ Campos: título, data limite (`DATE`), horário limite opcional
 ### Evento
 
 Campos: título, data (`DATE`), início (`TIME`), término opcional
-(`TIME`), local/sala opcional e cor. Sem recorrência, sem dia inteiro
-e sem estado feito/não feito.
+(`TIME`), local/sala opcional e categoria opcional. Sem recorrência,
+sem dia inteiro e sem estado feito/não feito.
 
-- A cor é escolhida pelo usuário entre as cores da paleta. Não há
-  categoria.
+- A **categoria** é escolhida pelo usuário numa lista fixa, e cada uma
+  tem uma cor fixa definida no front: `SAUDE` (verde), `TRABALHO`
+  (azul), `PESSOAL` (marrom), `ESTUDO` (vermelho, "Estudo/Faculdade") e
+  `CELEBRACAO` (amarelo, "Lazer/Celebração"). Sem categoria, o evento
+  usa a cor neutra. Só o evento tem categoria: hábito e entrega não.
 - Compromissos recorrentes (ex.: fisioterapia) são cadastrados como um
   evento por ocorrência.
 - Término, quando existe, é maior que o início; o evento não atravessa
@@ -330,13 +333,16 @@ Sem `excluido_em`: excluir uma entrega apaga a linha. Índice em
 | Coluna       | Tipo        | Regras                       |
 | ------------ | ----------- | ---------------------------- |
 | `usuario_id` | FK          |                              |
-| `titulo`     | texto       | obrigatório                  |
+| `titulo`     | texto       | obrigatório, não vazio, até 150 |
 | `data`       | DATE        | obrigatório                  |
 | `inicio`     | TIME        | obrigatório                  |
 | `termino`    | TIME        | opcional; maior que `inicio` |
-| `local`      | texto       | opcional                     |
-| `cor`        | texto curto | nome de uma cor da paleta    |
+| `local`      | texto       | opcional, até 100            |
+| `categoria`  | texto curto | opcional; `SAUDE`, `TRABALHO`, `PESSOAL`, `ESTUDO` ou `CELEBRACAO` (CHECK no banco); nulo = sem categoria |
 | `criado_em`  | TIMESTAMPTZ | default `now()`              |
+
+Sem `excluido_em`: excluir um evento apaga a linha. Índice em
+`(usuario_id, data)` para as consultas da Home e do Calendar.
 
 ### Restrições no banco (por migração Flyway)
 
@@ -355,9 +361,14 @@ Sem `excluido_em`: excluir uma entrega apaga a linha. Índice em
   - `CHECK (concluida = (concluida_em IS NOT NULL))`: concluir preenche
     os dois campos e desfazer limpa os dois, nunca um sem o outro.
   - Índice `(usuario_id, prazo_data)`.
-- **V4 (evento):** escrita na vez da sua fase (a numeração é só ordem).
-  Traz o `CHECK` de `evento.termino > evento.inicio` quando `termino`
-  não é nulo.
+- **V4 (evento):**
+  - `CHECK` de `evento.titulo` não vazio, com `VARCHAR(150)`; `local`
+    com `VARCHAR(100)`.
+  - `CHECK` de `evento.termino > evento.inicio` quando `termino` não é
+    nulo.
+  - `CHECK` de `evento.categoria` na lista (`SAUDE`, `TRABALHO`,
+    `PESSOAL`, `ESTUDO`, `CELEBRACAO`); o nulo é aceito.
+  - Índice `(usuario_id, data)`.
 - `criado_em` com default `now()` em todas as tabelas que o têm.
 
 ## 10. Backend
@@ -610,7 +621,8 @@ Desktop:
 - dias de outros meses aparecem esmaecidos, e o dia de hoje fica
   destacado com um selo escuro;
 - os registros aparecem dentro da própria célula do dia, como etiquetas:
-  - evento: horário de início e título, na cor escolhida;
+  - evento: horário de início e título, na cor da categoria (neutra
+    sem categoria);
   - entrega: caixa de seleção e título; a prova ou entrega com prazo
     crítico usa destaque vermelho; entrega concluída aparece esmaecida
     e riscada;
@@ -869,7 +881,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 2   | Spring Boot no backend                                                                                                                                                                       |
 | 3   | CSS Modules, sem Tailwind                                                                                                                                                                    |
 | 4   | Sem notificação push nesta versão                                                                                                                                                            |
-| 5   | Lista simples de hábitos, sem categorias (nem em hábitos, nem em eventos)                                                                                                                    |
+| 5   | Lista simples de hábitos, sem categorias; hábito e entrega não têm categoria (só o evento, ver decisão 51)                                                                                                                    |
 | 6   | Soft delete de hábitos, preservando histórico                                                                                                                                                |
 | 7   | Entrega e evento são entidades separadas                                                                                                                                                     |
 | 8   | Streak removida                                                                                                                                                                              |
@@ -890,7 +902,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 23  | PWA offline: instalável, shell em cache, leitura do cache local e fila de marcar/desmarcar hábito enviada ao reconectar; criar/editar exige conexão na v1 (substitui "dados somente online") |
 | 24  | Ritmo híbrido: denominador = diários + soma de meta/7                                                                                                                                        |
 | 25  | Entrega com horário opcional (23:59 quando vazio), sem disciplina/projeto; concluída some da Home um dia depois                                                                              |
-| 26  | Evento sem categoria e sem dia inteiro; cor escolhida da paleta; término opcional; local opcional                                                                                            |
+| 26  | Evento sem dia inteiro; categoria opcional no lugar da cor (decisão 51); término opcional; local opcional                                                                                            |
 | 27  | Grade de Insights: diário fica vermelho no dia; semanal só fica vermelho quando a semana termina sem bater a meta                                                                            |
 | 28  | Habits é bottom sheet; Estado diário adiado para depois da v1                                                                                                                                |
 | 29  | Nomes em português em tabelas, colunas, pacotes, endpoints e domínio do código                                                                                                               |
@@ -915,6 +927,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 48  | O `GET /inicio` calcula a meta semanal da semana da `data` (vigência de maior `vigente_desde` menor ou igual à segunda dela), não a mais recente, e conta os registros de segunda a domingo. Faz 3 consultas independentemente do número de hábitos (hábitos, metas e registros em lote). O módulo `inicio/` só orquestra: a regra mora no `HabitoService.listarDoDia` |
 | 49  | A entrega garante no banco que `concluida` e `concluida_em` andem juntos (`CHECK (concluida = (concluida_em IS NOT NULL))`) e que o título não seja vazio. Entrega não tem exclusão lógica: excluir apaga a linha (diferente do hábito, que precisa preservar o histórico para os Insights) |
 | 50  | Concluir entrega é `PATCH /entregas/{id}` com o estado desejado (`concluida: true` ou `false`), idempotente: concluir de novo mantém o `concluida_em` original e desfazer o que não está concluído não faz nada. `concluida_em` vem do relógio do servidor, nunca do cliente. O `PUT` da entrega não altera a conclusão |
+| 51  | O evento tem categoria opcional de uma lista fixa (`SAUDE`, `TRABALHO`, `PESSOAL`, `ESTUDO`, `CELEBRACAO`) no lugar da cor escolhida da paleta, porque o evento tende a se repetir e a categoria diz mais que a cor. Cada categoria tem uma cor fixa no front (verde, azul, marrom, vermelho, amarelo) e o evento sem categoria usa a cor neutra. O banco restringe a lista com CHECK (V4); rótulos e tons ficam no front. Reverte, para o evento, as decisões 5 e 26 |
 
 ## 17. Pontos ainda em aberto
 
@@ -926,7 +939,8 @@ bloqueia a chamada, então o front não depende desse corpo.
 4.  Extrair tokens de design do Figma.
 5.  Corrigir no protótipo: "Excluir Ritual?" e histórico "apagado"
     (modal de exclusão), botão "Inserir Evento" no sheet de Entrega,
-    campo de disciplina na entrega e categoria no evento.
+    campo de disciplina na entrega, e trocar o seletor de cor do
+    evento pelo de categoria (decisão 51).
 6.  Registrar o domínio próprio e configurar subdomínios na Vercel e no
     Render; decidir quando entra recuperação de senha.
 7.  Confirmar limites atuais do Render/Neon (horas gratuitas, termos)
@@ -938,8 +952,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 10. ~~Tipo do `id` das tabelas (`BIGINT` identity ou `UUID`).~~
     Resolvido: `BIGINT` identity (decisão 34).
 11. ~~Escrever a migração Flyway V2 com as restrições da seção 9.~~
-    V1, V2 e V3 (entrega) prontas; as restrições de evento (V4)
-    entram na vez da sua fase.
+    V1, V2, V3 (entrega) e V4 (evento) prontas.
 12. ~~Renomear o pacote do backend de `com.example.backend` para
     `com.ensora`.~~ Resolvido (issue #3).
 13. Bibliotecas do frontend ainda indefinidas (ícones, rotas, PWA).
