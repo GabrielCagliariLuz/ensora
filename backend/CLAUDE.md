@@ -83,6 +83,8 @@ com.ensora/habito/
   desenvolvimento: `http://localhost:5173`.
 - JWT: `JWT_SEGREDO` (texto com no mínimo 32 bytes, sem valor padrão; a
   app não sobe sem ele). Trocar o valor invalida os tokens já emitidos.
+- Fuso: `FUSO` (opcional, padrão `America/Sao_Paulo`). Transforma
+  `criado_em` e `excluido_em` no dia do usuário nos Insights.
 - Cadastro: `REGISTRATION_ENABLED` (padrão `false`). Ligue (`true`) só
   para criar a conta e desligue depois; em produção fica desligada.
 

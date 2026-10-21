@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,13 +33,15 @@ public class HabitoService {
 	private final HabitoMetaRepository metas;
 	private final RegistroHabitoRepository registros;
 	private final Clock relogio;
+	private final ZoneId fuso;
 
 	public HabitoService(HabitoRepository habitos, HabitoMetaRepository metas, RegistroHabitoRepository registros,
-			Clock relogio) {
+			Clock relogio, ZoneId fuso) {
 		this.habitos = habitos;
 		this.metas = metas;
 		this.registros = registros;
 		this.relogio = relogio;
+		this.fuso = fuso;
 	}
 
 	// Uma transação só: nunca existe hábito semanal sem a meta da primeira vigência (seção 9).
@@ -169,6 +172,52 @@ public class HabitoService {
 					feitosNaSemana.getOrDefault(habito.getId(), 0), meta));
 		}
 		return resultado;
+	}
+
+	/**
+	 * Base de dados dos Insights: os hábitos do usuário que existiram em algum dia de {@code de} a {@code ate}, inclusive
+	 * os excluídos, com metas e dias feitos. Os dias de criação e exclusão vêm do fuso do usuário. São 3 consultas,
+	 * qualquer que seja o número de hábitos.
+	 */
+	@Transactional(readOnly = true)
+	public List<HabitoHistorico> historicoParaInsights(Long usuarioId, LocalDate de, LocalDate ate) {
+		record Candidato(Habito habito, LocalDate criadoDia, LocalDate excluidoDia) {
+		}
+
+		List<Candidato> candidatos = new ArrayList<>();
+		for (Habito habito : habitos.findByUsuarioIdOrderByCriadoEmAscIdAsc(usuarioId)) {
+			LocalDate criadoDia = habito.getCriadoEm().atZone(fuso).toLocalDate();
+			LocalDate excluidoDia = habito.getExcluidoEm() == null ? null : habito.getExcluidoEm().atZone(fuso).toLocalDate();
+			// Existiu no período se foi criado até `ate` e não foi excluído antes (ou no dia) de `de`.
+			boolean existiuNoPeriodo = !criadoDia.isAfter(ate) && (excluidoDia == null || excluidoDia.isAfter(de));
+			if (existiuNoPeriodo) {
+				candidatos.add(new Candidato(habito, criadoDia, excluidoDia));
+			}
+		}
+		if (candidatos.isEmpty()) {
+			return List.of();
+		}
+
+		List<Long> ids = candidatos.stream().map(c -> c.habito().getId()).toList();
+
+		// Da vigência mais recente para a mais antiga, como o HabitoHistorico espera.
+		Map<Long, List<HabitoHistorico.MetaVigente>> metasPorHabito = new HashMap<>();
+		for (HabitoMeta meta : metas.findByHabitoIdInOrderByVigenteDesdeDesc(ids)) {
+			metasPorHabito.computeIfAbsent(meta.getHabitoId(), chave -> new ArrayList<>())
+					.add(new HabitoHistorico.MetaVigente(meta.getVigenteDesde(), meta.getVezesPorSemana()));
+		}
+
+		Map<Long, Set<LocalDate>> diasFeitosPorHabito = new HashMap<>();
+		for (RegistroHabito registro : registros.findByHabitoIdInAndDataBetween(ids, de, ate)) {
+			diasFeitosPorHabito.computeIfAbsent(registro.getHabitoId(), chave -> new HashSet<>()).add(registro.getData());
+		}
+
+		return candidatos.stream()
+				.map(c -> new HabitoHistorico(c.habito().getId(), c.habito().getNome(), c.habito().getTipo(),
+						c.criadoDia(), c.excluidoDia(),
+						metasPorHabito.getOrDefault(c.habito().getId(), List.of()),
+						diasFeitosPorHabito.getOrDefault(c.habito().getId(), Set.of())))
+				.toList();
 	}
 
 	// Hábito de outro usuário, inexistente ou excluído dão o mesmo 404: não revela se o id existe para outra pessoa.

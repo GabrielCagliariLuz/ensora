@@ -192,6 +192,23 @@ fracionário, o ritmo é exibido em **percentual**; as frações inteiras
 mostradas no protótipo (ex.: `18/23`) são ilustrativas. O ritmo semanal
 (barras S1 a S4) e o ritmo médio do mês agregam os dias do período.
 
+Detalhes do cálculo (decisão 57):
+
+- **O hábito existe** do dia da criação até o dia anterior ao da
+  exclusão: o dia da criação conta e o da exclusão não. Os dias vêm de
+  `criado_em` e `excluido_em` no fuso do servidor (seção 12). Um registro
+  feito antes da criação não conta.
+- **O semanal entra** com `meta da semana / 7`, usando a meta vigente na
+  segunda-feira da semana do dia (seção 5.2). Sem meta vigente naquela
+  semana, ele não conta.
+- **Dia sem nenhum hábito existente** não tem ritmo e fica fora das
+  médias.
+- **O ritmo de um período** (bloco semanal ou mês) é a **média aritmética
+  dos ritmos diários** que têm valor, calculada sobre os valores antes de
+  arredondar. Valores em percentual, com uma casa decimal.
+- **S1 a S4** são blocos de 7 dias a partir do primeiro dia do intervalo
+  (dias 1-7, 8-14, 15-21 e 22 até o fim), e o S4 absorve os dias 29 a 31.
+
 ### 7.4 Grade de hábitos por dia (Insights)
 
 Cada célula (hábito × dia) tem um estado:
@@ -503,6 +520,10 @@ habito/
   `concluida_em`, expiração de token).
 - Se o sistema for expandido para vários usuários, o fuso deverá
   passar a ser uma configuração por usuário.
+- **Fuso fixo no servidor:** quando o servidor precisa transformar um
+  instante (`criado_em`, `excluido_em`) no dia do usuário, usa o fuso da
+  propriedade `ensora.fuso` (variável `FUSO`, padrão `America/Sao_Paulo`).
+  Hoje isso só serve aos Insights (decisão 56).
 
 ## 13. Frontend
 
@@ -871,6 +892,45 @@ Calendar.
   do formato: `400 REQUISICAO_INVALIDA`. Não há regra de "perto de hoje":
   o intervalo pode estar no passado ou no futuro.
 
+`GET /insights/ritmo?de=AAAA-MM-DD&ate=AAAA-MM-DD` (exige token) calcula o
+ritmo do usuário (seção 7.3) em cada dia do intervalo, por bloco semanal
+e no intervalo todo.
+
+```json
+// resposta 200
+{
+  "de": "2026-10-01",
+  "ate": "2026-10-21",
+  "ritmoMedio": 72.4,
+  "semanas": [
+    { "rotulo": "S1", "de": "2026-10-01", "ate": "2026-10-07", "ritmo": 80.0 },
+    { "rotulo": "S2", "de": "2026-10-08", "ate": "2026-10-14", "ritmo": 65.7 },
+    { "rotulo": "S3", "de": "2026-10-15", "ate": "2026-10-21", "ritmo": 71.4 }
+  ],
+  "dias": [
+    { "data": "2026-10-01", "ritmo": 100.0 },
+    { "data": "2026-10-02", "ritmo": 50.0 },
+    { "data": "2026-10-03" }
+  ]
+}
+```
+
+- `de` e `ate`: obrigatórios e **inclusive nas duas pontas**. O front envia
+  o mês visível; se o mês ainda não terminou, envia `ate` = hoje, porque o
+  servidor não decide o que é "hoje" e conta todo dia do intervalo como já
+  decorrido.
+- `ritmo` (do dia ou do bloco) e `ritmoMedio` são **percentuais de 0 a
+  100 com uma casa decimal**, já limitados a 100. Quando não há valor (nenhum
+  hábito existente), o campo **não aparece**.
+- `dias` traz todos os dias do intervalo, em ordem. `semanas` traz até 4
+  blocos (S1 a S4, seção 7.3); um bloco que começaria depois de `ate` não
+  aparece e o último é cortado em `ate`.
+- `ate` antes de `de`, ou intervalo com mais de **31 dias** (contando as
+  duas pontas): `400 VALIDACAO` no campo `ate`. `de` ou `ate` ausentes ou
+  fora do formato: `400 REQUISICAO_INVALIDA`.
+- Considera os hábitos do usuário do token, inclusive os já excluídos nos
+  dias em que existiam. Não há streak (seção 7.5).
+
 `POST /entregas` (exige token) cria uma entrega do usuário do token e
 responde `201`. `PUT /entregas/{id}` usa o **mesmo corpo** e responde `200`
 com a entrega no mesmo formato.
@@ -1057,6 +1117,8 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 53  | A entrega concluída guarda o dia da conclusão no fuso do usuário (`concluida_data`, enviado pelo front no `PATCH`, ±2 dias do relógio do servidor) além do instante `concluida_em` (UTC, do servidor). A Home decide se ela ainda aparece comparando datas puras, sem conta de fuso no servidor, no mesmo padrão da decisão 43. O `CHECK` da V5 exige `concluida`, `concluida_em` e `concluida_data` juntos |
 | 54  | O Upcoming do `GET /inicio` mostra entregas com prazo de ontem a hoje + 4 dias e eventos de hoje a hoje + 4 dias. A entrega atrasada não concluída fica na Home só até o dia seguinte ao prazo (depois só no Calendar), e a concluída até o dia seguinte à conclusão; isso revisa a regra anterior da seção 8 ("atrasadas até serem concluídas"). "Atrasada" e "vence em N dias" são calculados pelo front com o relógio do aparelho |
 | 55  | O `GET /calendario` devolve todas as entregas (concluídas incluídas) e todos os eventos do intervalo `de`..`ate`, inclusive nas duas pontas, em listas planas, e só aceita intervalos de até 62 dias entre as pontas (400 no campo `ate`). Não tem a regra de "perto de hoje" dos outros endpoints, porque o Calendar navega pelo passado e pelo futuro. Reusa `EntregaService.listarNoIntervalo` e `EventoService.listarNoIntervalo`; a consulta de entregas da Home é outra, com as regras de atrasada e concluída |
+| 56  | O servidor transforma `criado_em` e `excluido_em` (instantes UTC) no dia do usuário com um fuso fixo, configurável em `ensora.fuso` (`FUSO`, padrão `America/Sao_Paulo`), em vez de gravar a data local na criação e na exclusão do hábito. Serve aos Insights, é válido enquanto o app for de uso pessoal e não exige migração nem mudança de contrato; com vários usuários, o fuso passa a ser por usuário (seção 12) |
+| 57  | O ritmo (`GET /insights/ritmo`) é a média aritmética dos ritmos diários, calculada sobre valores não arredondados e mostrada em percentual com uma casa. O hábito existe do dia da criação até o dia anterior ao da exclusão; o semanal entra com meta/7 usando a meta vigente na semana do dia; dia sem hábito existente fica sem valor e fora das médias. S1 a S4 são blocos de 7 dias a partir do primeiro dia do intervalo, e o S4 absorve os dias 29 a 31. O intervalo tem no máximo 31 dias e o front envia `ate` = hoje no mês em andamento |
 
 ## 17. Pontos ainda em aberto
 
