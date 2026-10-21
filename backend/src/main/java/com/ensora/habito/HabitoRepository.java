@@ -10,6 +10,9 @@ public interface HabitoRepository extends JpaRepository<Habito, Long> {
 	/** O hábito só é achado se for do usuário e não estiver excluído: o filtro por dono mora aqui. */
 	Optional<Habito> findByIdAndUsuarioIdAndExcluidoEmIsNull(Long id, Long usuarioId);
 
+	/** Todos os hábitos do usuário, inclusive os excluídos: os Insights históricos precisam deles. */
+	List<Habito> findByUsuarioIdOrderByCriadoEmAscIdAsc(Long usuarioId);
+
 	/** Hábitos do usuário que não foram excluídos, na ordem em que foram criados. */
 	List<Habito> findByUsuarioIdAndExcluidoEmIsNullOrderByCriadoEmAscIdAsc(Long usuarioId);
 

@@ -14,6 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +32,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class HabitoServiceTest {
 
+	private static final ZoneId SAO_PAULO = ZoneId.of("America/Sao_Paulo");
 	private static final Long USUARIO = 7L;
 	// 21/10/2026 é quarta-feira; a segunda da semana é 19/10/2026.
 	private static final LocalDate HOJE = LocalDate.of(2026, 10, 21);
@@ -45,7 +48,7 @@ class HabitoServiceTest {
 
 	private HabitoService servico(LocalDate hoje) {
 		Clock relogio = Clock.fixed(hoje.atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
-		return new HabitoService(habitos, metas, registros, relogio);
+		return new HabitoService(habitos, metas, registros, relogio, SAO_PAULO);
 	}
 
 	private HabitoService servico() {
@@ -327,6 +330,123 @@ class HabitoServiceTest {
 				.isInstanceOfSatisfying(ValidacaoException.class, e -> assertThat(e.getCampo()).isEqualTo("data"));
 
 		verifyNoInteractions(habitos, metas, registros);
+	}
+
+	// ---- Insights ----
+
+	private static final LocalDate DE_INSIGHTS = LocalDate.of(2026, 10, 1);
+	private static final LocalDate ATE_INSIGHTS = LocalDate.of(2026, 10, 31);
+
+	private Habito habitoCriadoEm(Long id, TipoHabito tipo, String criadoEmUtc, String excluidoEmUtc) {
+		Habito habito = habito(id, "H" + id, tipo);
+		habito.setCriadoEm(Instant.parse(criadoEmUtc));
+		if (excluidoEmUtc != null) {
+			habito.setExcluidoEm(Instant.parse(excluidoEmUtc));
+		}
+		return habito;
+	}
+
+	private void todosOsHabitosDoUsuario(Habito... lista) {
+		when(habitos.findByUsuarioIdOrderByCriadoEmAscIdAsc(USUARIO)).thenReturn(List.of(lista));
+	}
+
+	@Test
+	void historicoConverteCriadoEmEExcluidoEmParaODiaNoFusoDoUsuario() {
+		// 02/10 às 01:30 UTC ainda é 01/10 às 22:30 em São Paulo; 20/10 às 02:00 UTC é 19/10 às 23:00.
+		todosOsHabitosDoUsuario(habitoCriadoEm(1L, TipoHabito.DIARIO, "2026-10-02T01:30:00Z", "2026-10-20T02:00:00Z"));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(1L))).thenReturn(List.of());
+		when(registros.findByHabitoIdInAndDataBetween(List.of(1L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of());
+
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+
+		assertThat(historico).hasSize(1);
+		assertThat(historico.get(0).criadoDia()).isEqualTo(LocalDate.of(2026, 10, 1));
+		assertThat(historico.get(0).excluidoDia()).isEqualTo(LocalDate.of(2026, 10, 19));
+	}
+
+	@Test
+	void historicoTrazHabitoNaoExcluidoComExcluidoDiaNulo() {
+		todosOsHabitosDoUsuario(habitoCriadoEm(1L, TipoHabito.DIARIO, "2026-09-10T15:00:00Z", null));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(1L))).thenReturn(List.of());
+		when(registros.findByHabitoIdInAndDataBetween(List.of(1L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of());
+
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+
+		assertThat(historico.get(0).excluidoDia()).isNull();
+		assertThat(historico.get(0).nome()).isEqualTo("H1");
+		assertThat(historico.get(0).tipo()).isEqualTo(TipoHabito.DIARIO);
+	}
+
+	@Test
+	void historicoOmiteHabitoExcluidoAntesDoPeriodoOuNoPrimeiroDia() {
+		// Excluído em 30/09 e excluído em 01/10 (o dia da exclusão não conta): nenhum existiu em 01/10..31/10.
+		todosOsHabitosDoUsuario(
+				habitoCriadoEm(1L, TipoHabito.DIARIO, "2026-08-01T15:00:00Z", "2026-09-30T15:00:00Z"),
+				habitoCriadoEm(2L, TipoHabito.DIARIO, "2026-08-01T15:00:00Z", "2026-10-01T15:00:00Z"));
+
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+
+		assertThat(historico).isEmpty();
+		verifyNoInteractions(metas, registros);
+	}
+
+	@Test
+	void historicoOmiteHabitoCriadoDepoisDoPeriodoEMantemOCriadoNoUltimoDia() {
+		todosOsHabitosDoUsuario(
+				habitoCriadoEm(1L, TipoHabito.DIARIO, "2026-11-01T15:00:00Z", null),
+				habitoCriadoEm(2L, TipoHabito.DIARIO, "2026-10-31T15:00:00Z", null));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(2L))).thenReturn(List.of());
+		when(registros.findByHabitoIdInAndDataBetween(List.of(2L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of());
+
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+
+		assertThat(historico).extracting(HabitoHistorico::id).containsExactly(2L);
+	}
+
+	@Test
+	void historicoMantemHabitoExcluidoNoMeioDoPeriodo() {
+		todosOsHabitosDoUsuario(habitoCriadoEm(1L, TipoHabito.DIARIO, "2026-09-01T15:00:00Z", "2026-10-15T15:00:00Z"));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(1L))).thenReturn(List.of());
+		when(registros.findByHabitoIdInAndDataBetween(List.of(1L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of());
+
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+
+		assertThat(historico).extracting(HabitoHistorico::excluidoDia).containsExactly(LocalDate.of(2026, 10, 15));
+	}
+
+	@Test
+	void historicoAgrupaMetasEDiasFeitosPorHabitoEConsultaSoOUsuarioRecebido() {
+		todosOsHabitosDoUsuario(
+				habitoCriadoEm(1L, TipoHabito.DIARIO, "2026-09-01T15:00:00Z", null),
+				habitoCriadoEm(2L, TipoHabito.SEMANAL, "2026-09-01T15:00:00Z", null));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(1L, 2L))).thenReturn(List.of(
+				meta(2L, 5, LocalDate.of(2026, 10, 12)),
+				meta(2L, 3, LocalDate.of(2026, 8, 31))));
+		when(registros.findByHabitoIdInAndDataBetween(List.of(1L, 2L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of(
+				registro(1L, LocalDate.of(2026, 10, 2)),
+				registro(1L, LocalDate.of(2026, 10, 3)),
+				registro(2L, LocalDate.of(2026, 10, 2))));
+
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+
+		HabitoHistorico diario = historico.get(0);
+		HabitoHistorico semanal = historico.get(1);
+		assertThat(diario.metas()).isEmpty();
+		assertThat(diario.diasFeitos()).containsExactlyInAnyOrder(LocalDate.of(2026, 10, 2), LocalDate.of(2026, 10, 3));
+		assertThat(semanal.metas()).containsExactly(
+				new HabitoHistorico.MetaVigente(LocalDate.of(2026, 10, 12), 5),
+				new HabitoHistorico.MetaVigente(LocalDate.of(2026, 8, 31), 3));
+		assertThat(semanal.diasFeitos()).containsExactly(LocalDate.of(2026, 10, 2));
+		verify(habitos).findByUsuarioIdOrderByCriadoEmAscIdAsc(USUARIO);
+	}
+
+	@Test
+	void historicoSemHabitosDevolveListaVaziaSemConsultarMetasNemRegistros() {
+		when(habitos.findByUsuarioIdOrderByCriadoEmAscIdAsc(USUARIO)).thenReturn(List.of());
+
+		assertThat(servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS)).isEmpty();
+
+		verifyNoInteractions(metas, registros);
 	}
 
 	// ---- edição ----
