@@ -223,12 +223,14 @@ Campos: título, data limite (`DATE`), horário limite opcional
 
 - Sem horário, o app trata a entrega como vencendo às **23:59** da data
   limite (o banco guarda `NULL`).
-- Concluir define `concluida = true` e `concluida_em`. Desfazer limpa
-  os dois.
-- Entregas atrasadas continuam visíveis na Home, marcadas como
-  atrasadas, até serem concluídas.
+- Concluir define `concluida = true`, `concluida_em` (instante do
+  servidor) e `concluida_data` (o dia da conclusão no fuso do usuário,
+  enviado pelo front). Desfazer limpa os três.
+- Uma entrega **não concluída** e atrasada fica na Home, marcada como
+  atrasada, **só até o dia seguinte ao prazo**. Depois de um dia de
+  atraso some da Home e continua só no Calendar.
 - Uma entrega concluída continua na Home até o dia seguinte ao de
-  `concluida_em` e depois some. Continua visível no Calendar.
+  `concluida_data` e depois some. Continua visível no Calendar.
 
 ### Evento
 
@@ -322,6 +324,7 @@ o maior `vigente_desde` menor ou igual à segunda-feira daquela semana.
 | `prazo_horario` | TIME        | opcional; o app usa 23:59 quando vazio |
 | `concluida`     | boolean     | default `false`                        |
 | `concluida_em`  | TIMESTAMPTZ | preenchido ao concluir; nulo se `concluida = false` |
+| `concluida_data`| DATE        | dia da conclusão no fuso do usuário (enviado pelo front); nulo se `concluida = false` |
 | `nota`          | texto       | opcional, até 1000                     |
 | `criado_em`     | TIMESTAMPTZ | default `now()`                        |
 
@@ -369,6 +372,10 @@ Sem `excluido_em`: excluir um evento apaga a linha. Índice em
   - `CHECK` de `evento.categoria` na lista (`SAUDE`, `TRABALHO`,
     `PESSOAL`, `ESTUDO`, `CELEBRACAO`); o nulo é aceito.
   - Índice `(usuario_id, data)`.
+- **V5 (data local da conclusão):** coluna `entrega.concluida_data` e
+  `CHECK` que exige `concluida`, `concluida_em` e `concluida_data`
+  juntos: os três preenchidos ao concluir, os três nulos ao desfazer. Ela
+  substitui o `CHECK` da V3, que só cobria `concluida_em`.
 - `criado_em` com default `now()` em todas as tabelas que o têm.
 
 ## 10. Backend
@@ -560,8 +567,9 @@ Mobile:
 - lista de hábitos do dia com checkbox (semanais mostram o contador
   `feito/meta`, ex.: `1/3`);
 - botões Novo Hábito e Editar Hábitos;
-- Upcoming: entregas e prazos (com botão Concluir e "vence em N dias")
-  e eventos e compromissos (data, "em N dias", horário).
+- Upcoming: entregas e prazos (com botão Concluir e "vence em N dias";
+  atrasada só até o dia seguinte ao prazo) e eventos e compromissos
+  (data, "em N dias", horário).
 
 Desktop:
 
@@ -782,7 +790,19 @@ dele (`400` no campo `data`); `data` ausente ou fora do formato dá
   "habitos": [
     { "id": 1, "nome": "Ler", "tipo": "DIARIO", "feito": true },
     { "id": 4, "nome": "Academia", "tipo": "SEMANAL", "feito": false, "feitos": 1, "meta": 3 }
-  ]
+  ],
+  "upcoming": {
+    "entregas": [
+      { "id": 3, "titulo": "Trabalho", "prazoData": "2026-10-22", "prazoHorario": "14:30:00",
+        "concluida": false, "nota": "Cap. 1" },
+      { "id": 5, "titulo": "Lista", "prazoData": "2026-10-20", "concluida": true,
+        "concluidaEm": "2026-10-21T15:04:05Z", "concluidaData": "2026-10-21" }
+    ],
+    "eventos": [
+      { "id": 8, "titulo": "Consulta", "data": "2026-10-23", "inicio": "09:00:00",
+        "termino": "10:00:00", "local": "Clínica", "categoria": "SAUDE" }
+    ]
+  }
 }
 ```
 
@@ -795,8 +815,22 @@ dele (`400` no campo `data`); `data` ausente ou fora do formato dá
   meta alterada nesta semana só aparece no `/inicio` da semana seguinte.
 - Hábito semanal sem meta vigente na semana da `data` (só se a `data` for
   anterior à criação dele) não aparece.
-- O objeto na raiz é para crescer: o Upcoming (entregas e eventos) entra
-  depois como `upcoming`, sem quebrar quem já lê `habitos`.
+- `upcoming` traz as entregas e os eventos da Home. Os itens têm o mesmo
+  formato das respostas de `/entregas` e `/eventos`.
+  - **Entregas:** as de `prazoData` entre **ontem** e **hoje + 4 dias**
+    (inclusive) que estejam **não concluídas**, ou **concluídas com
+    `concluidaData` de ontem em diante**. Logo: a atrasada fica só até o
+    dia seguinte ao prazo; a concluída, só até o dia seguinte à
+    conclusão; o que está fora da janela não aparece (continua no
+    Calendar). Ordem: `prazoData`, `prazoHorario` (sem horário por
+    último) e `id`.
+  - **Eventos:** os de `data` entre **hoje** e **hoje + 4 dias**
+    (inclusive), por `data`, `inicio` e `id`. Evento passado não aparece.
+  - "Atrasada" e "vence em N dias" são calculados pelo front, com o
+    relógio do aparelho, a partir de `prazoData` e `prazoHorario` (23:59
+    quando ausente); o servidor não conhece a hora local.
+  - O objeto na raiz foi feito para crescer: quem lia só `habitos`
+    continua funcionando.
 
 `POST /entregas` (exige token) cria uma entrega do usuário do token e
 responde `201`. `PUT /entregas/{id}` usa o **mesmo corpo** e responde `200`
@@ -824,15 +858,27 @@ com a entrega no mesmo formato.
 - O `PUT` troca título, prazo e nota e **não altera a conclusão**: editar
   uma entrega concluída a mantém concluída.
 
-`PATCH /entregas/{id}` (exige token) concluir ou desfazer, com corpo
-`{ "concluida": true }` ou `{ "concluida": false }` (obrigatório). Responde
-`200` com a entrega.
+`PATCH /entregas/{id}` (exige token) concluir ou desfazer. Responde `200`
+com a entrega.
 
-- `true`: define `concluida = true` e `concluidaEm` com o instante do
-  **relógio do servidor** (UTC, ex.: `2026-10-21T15:04:05Z`).
-- `false`: define `concluida = false` e remove `concluidaEm`.
+```json
+{ "concluida": true, "data": "2026-10-21" }
+{ "concluida": false }
+```
+
+- `concluida`: obrigatório.
+- `true`: define `concluida = true`, `concluidaEm` com o instante do
+  **relógio do servidor** (UTC, ex.: `2026-10-21T15:04:05Z`) e
+  `concluidaData` com a `data` enviada. A `data` é obrigatória ao
+  concluir: o dia de hoje no fuso do usuário, lido pelo front do relógio
+  do aparelho. O servidor a recusa (`400` no campo `data`) se estiver a
+  mais de 2 dias do relógio dele.
+- `false`: define `concluida = false` e remove `concluidaEm` e
+  `concluidaData`. A `data`, se vier, é ignorada.
 - **Idempotente:** concluir o que já está concluído mantém o
-  `concluidaEm` original; desfazer o que não está concluído não faz nada.
+  `concluidaEm` e a `concluidaData` originais; desfazer o que não está
+  concluído não faz nada.
+- A resposta da entrega traz `concluidaData` (só quando concluída).
 
 `DELETE /entregas/{id}` (exige token) apaga a entrega e responde `204`
 (exclusão física, decisão 49).
@@ -969,6 +1015,8 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 50  | Concluir entrega é `PATCH /entregas/{id}` com o estado desejado (`concluida: true` ou `false`), idempotente: concluir de novo mantém o `concluida_em` original e desfazer o que não está concluído não faz nada. `concluida_em` vem do relógio do servidor, nunca do cliente. O `PUT` da entrega não altera a conclusão |
 | 51  | O evento tem categoria opcional de uma lista fixa (`SAUDE`, `TRABALHO`, `PESSOAL`, `ESTUDO`, `CELEBRACAO`) no lugar da cor escolhida da paleta, porque o evento tende a se repetir e a categoria diz mais que a cor. Cada categoria tem uma cor fixa no front (verde, azul, marrom, vermelho, amarelo) e o evento sem categoria usa a cor neutra. O banco restringe a lista com CHECK (V4); rótulos e tons ficam no front. Reverte, para o evento, as decisões 5 e 26 |
 | 52  | O `PUT /eventos/{id}` substitui o evento inteiro (mesmo corpo do `POST`): `termino`, `local` e `categoria` ausentes são limpos. A regra `termino > inicio` é validada no Service e devolve 400 no campo `termino`, antes do CHECK do banco, para que um erro de dado nunca vire 500. Evento é excluído de verdade e não tem regra de data próxima de hoje |
+| 53  | A entrega concluída guarda o dia da conclusão no fuso do usuário (`concluida_data`, enviado pelo front no `PATCH`, ±2 dias do relógio do servidor) além do instante `concluida_em` (UTC, do servidor). A Home decide se ela ainda aparece comparando datas puras, sem conta de fuso no servidor, no mesmo padrão da decisão 43. O `CHECK` da V5 exige `concluida`, `concluida_em` e `concluida_data` juntos |
+| 54  | O Upcoming do `GET /inicio` mostra entregas com prazo de ontem a hoje + 4 dias e eventos de hoje a hoje + 4 dias. A entrega atrasada não concluída fica na Home só até o dia seguinte ao prazo (depois só no Calendar), e a concluída até o dia seguinte à conclusão; isso revisa a regra anterior da seção 8 ("atrasadas até serem concluídas"). "Atrasada" e "vence em N dias" são calculados pelo front com o relógio do aparelho |
 
 ## 17. Pontos ainda em aberto
 
@@ -993,7 +1041,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 10. ~~Tipo do `id` das tabelas (`BIGINT` identity ou `UUID`).~~
     Resolvido: `BIGINT` identity (decisão 34).
 11. ~~Escrever a migração Flyway V2 com as restrições da seção 9.~~
-    V1, V2, V3 (entrega) e V4 (evento) prontas.
+    V1, V2, V3 (entrega), V4 (evento) e V5 (data local da conclusão) prontas.
 12. ~~Renomear o pacote do backend de `com.example.backend` para
     `com.ensora`.~~ Resolvido (issue #3).
 13. Bibliotecas do frontend ainda indefinidas (ícones, rotas, PWA).

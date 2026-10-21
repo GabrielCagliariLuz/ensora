@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -194,6 +195,36 @@ class EventoServiceTest {
 
 		verify(eventos).findByIdAndUsuarioId(ID, USUARIO);
 		verify(eventos, never()).save(any());
+	}
+
+	// ---- Home ----
+
+	@Test
+	void listarProximosConsultaSoOsEventosDoUsuarioNoIntervaloRecebidoEMapeiaParaResposta() {
+		LocalDate ate = DATA.plusDays(4);
+		Evento primeiro = evento();
+		Evento segundo = evento();
+		segundo.setId(11L);
+		segundo.setTermino(null);
+		segundo.setLocal(null);
+		segundo.setCategoria(null);
+		when(eventos.findByUsuarioIdAndDataBetweenOrderByDataAscInicioAscIdAsc(USUARIO, DATA, ate))
+				.thenReturn(List.of(primeiro, segundo));
+
+		List<EventoResponse> lista = servico().listarProximos(USUARIO, DATA, ate);
+
+		assertThat(lista).extracting(EventoResponse::id).containsExactly(ID, 11L);
+		assertThat(lista.get(0).categoria()).isEqualTo(CategoriaEvento.SAUDE);
+		assertThat(lista.get(1).categoria()).isNull();
+		verify(eventos).findByUsuarioIdAndDataBetweenOrderByDataAscInicioAscIdAsc(USUARIO, DATA, ate);
+	}
+
+	@Test
+	void listarProximosSemEventosDevolveListaVazia() {
+		when(eventos.findByUsuarioIdAndDataBetweenOrderByDataAscInicioAscIdAsc(USUARIO, DATA, DATA))
+				.thenReturn(List.of());
+
+		assertThat(servico().listarProximos(USUARIO, DATA, DATA)).isEmpty();
 	}
 
 	// ---- excluir ----

@@ -7,6 +7,9 @@ import com.ensora.evento.dto.EventoResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Service
 public class EventoService {
 
@@ -33,6 +36,14 @@ public class EventoService {
 		// O evento foi carregado nesta transação: o JPA grava a mudança sozinho, ao final.
 		preencher(evento, requisicao);
 		return EventoResponse.de(evento);
+	}
+
+	/** Eventos do usuário de {@code de} a {@code ate}, inclusive, para a Home. Evento passado não aparece. */
+	@Transactional(readOnly = true)
+	public List<EventoResponse> listarProximos(Long usuarioId, LocalDate de, LocalDate ate) {
+		return eventos.findByUsuarioIdAndDataBetweenOrderByDataAscInicioAscIdAsc(usuarioId, de, ate).stream()
+				.map(EventoResponse::de)
+				.toList();
 	}
 
 	/** Exclusão física: evento não tem histórico a preservar (seção 9). */

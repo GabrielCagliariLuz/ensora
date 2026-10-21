@@ -1,6 +1,7 @@
 package com.ensora.entrega;
 
 import com.ensora.compartilhado.erro.RecursoNaoEncontradoException;
+import com.ensora.compartilhado.erro.ValidacaoException;
 import com.ensora.entrega.dto.EntregaRequest;
 import com.ensora.entrega.dto.EntregaResponse;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,7 +32,8 @@ class EntregaServiceTest {
 	private static final Long USUARIO = 7L;
 	private static final Long ID = 10L;
 	private static final LocalDate PRAZO = LocalDate.of(2026, 11, 5);
-	private static final Instant AGORA = LocalDate.of(2026, 10, 21).atTime(12, 0).toInstant(ZoneOffset.UTC);
+	private static final LocalDate HOJE = LocalDate.of(2026, 10, 21);
+	private static final Instant AGORA = HOJE.atTime(12, 0).toInstant(ZoneOffset.UTC);
 
 	@Mock
 	private EntregaRepository entregas;
@@ -81,7 +85,8 @@ class EntregaServiceTest {
 		assertThat(gravada.isConcluida()).isFalse();
 		assertThat(gravada.getConcluidaEm()).isNull();
 		assertThat(resposta).isEqualTo(
-				new EntregaResponse(ID, "Trabalho de Cálculo", PRAZO, LocalTime.of(14, 30), false, null, "Cap. 1 a 4"));
+				new EntregaResponse(ID, "Trabalho de Cálculo", PRAZO, LocalTime.of(14, 30), false, null, null,
+						"Cap. 1 a 4"));
 	}
 
 	@Test
@@ -154,54 +159,117 @@ class EntregaServiceTest {
 	// ---- conclusão ----
 
 	@Test
-	void concluirDefineConcluidaEConcluidaEmComOInstanteDoRelogio() {
+	void concluirDefineConcluidaConcluidaEmDoRelogioEConcluidaDataEnviada() {
 		Entrega entrega = acharEntrega(entrega());
 
-		EntregaResponse resposta = servico().alterarConclusao(USUARIO, ID, true);
+		EntregaResponse resposta = servico().alterarConclusao(USUARIO, ID, true, HOJE);
 
 		assertThat(entrega.isConcluida()).isTrue();
 		assertThat(entrega.getConcluidaEm()).isEqualTo(AGORA);
+		assertThat(entrega.getConcluidaData()).isEqualTo(HOJE);
 		assertThat(resposta.concluida()).isTrue();
 		assertThat(resposta.concluidaEm()).isEqualTo(AGORA);
+		assertThat(resposta.concluidaData()).isEqualTo(HOJE);
 	}
 
 	@Test
-	void concluirDeNovoMantemAHoraOriginal() {
+	void concluirComADataDeOntemDoFusoDoUsuarioGravaEssaData() {
+		// O instante do servidor é 21/10 às 12h UTC, mas no fuso do usuário ainda pode ser 20/10: vale o que ele enviou.
+		Entrega entrega = acharEntrega(entrega());
+
+		servico().alterarConclusao(USUARIO, ID, true, HOJE.minusDays(1));
+
+		assertThat(entrega.getConcluidaData()).isEqualTo(HOJE.minusDays(1));
+	}
+
+	@Test
+	void concluirDeNovoMantemAHoraEADataOriginais() {
 		Instant antes = AGORA.minusSeconds(86_400);
 		Entrega entrega = entrega();
 		entrega.setConcluida(true);
 		entrega.setConcluidaEm(antes);
+		entrega.setConcluidaData(HOJE.minusDays(1));
 		acharEntrega(entrega);
 
-		EntregaResponse resposta = servico().alterarConclusao(USUARIO, ID, true);
+		EntregaResponse resposta = servico().alterarConclusao(USUARIO, ID, true, HOJE);
 
 		assertThat(entrega.getConcluidaEm()).isEqualTo(antes);
+		assertThat(entrega.getConcluidaData()).isEqualTo(HOJE.minusDays(1));
 		assertThat(resposta.concluidaEm()).isEqualTo(antes);
+		assertThat(resposta.concluidaData()).isEqualTo(HOJE.minusDays(1));
 	}
 
 	@Test
-	void desfazerLimpaConcluidaEConcluidaEm() {
+	void concluirSemDataLancaValidacaoNoCampoDataSemAlterarAEntrega() {
+		Entrega entrega = entrega();
+
+		assertThatThrownBy(() -> servico().alterarConclusao(USUARIO, ID, true, null))
+				.isInstanceOfSatisfying(ValidacaoException.class, e -> assertThat(e.getCampo()).isEqualTo("data"));
+
+		assertThat(entrega.isConcluida()).isFalse();
+		verifyNoInteractions(entregas);
+	}
+
+	@Test
+	void concluirComDataAMaisDeDoisDiasDoRelogioLancaValidacaoNoCampoData() {
+		assertThatThrownBy(() -> servico().alterarConclusao(USUARIO, ID, true, HOJE.plusDays(3)))
+				.isInstanceOfSatisfying(ValidacaoException.class, e -> assertThat(e.getCampo()).isEqualTo("data"));
+		assertThatThrownBy(() -> servico().alterarConclusao(USUARIO, ID, true, HOJE.minusDays(3)))
+				.isInstanceOfSatisfying(ValidacaoException.class, e -> assertThat(e.getCampo()).isEqualTo("data"));
+
+		verifyNoInteractions(entregas);
+	}
+
+	@Test
+	void concluirAceitaDataAteDoisDiasDeDiferenca() {
+		Entrega entrega = acharEntrega(entrega());
+
+		servico().alterarConclusao(USUARIO, ID, true, HOJE.plusDays(2));
+
+		assertThat(entrega.getConcluidaData()).isEqualTo(HOJE.plusDays(2));
+	}
+
+	@Test
+	void desfazerLimpaConcluidaConcluidaEmEConcluidaData() {
 		Entrega entrega = entrega();
 		entrega.setConcluida(true);
 		entrega.setConcluidaEm(AGORA.minusSeconds(60));
+		entrega.setConcluidaData(HOJE);
 		acharEntrega(entrega);
 
-		EntregaResponse resposta = servico().alterarConclusao(USUARIO, ID, false);
+		EntregaResponse resposta = servico().alterarConclusao(USUARIO, ID, false, null);
 
 		assertThat(entrega.isConcluida()).isFalse();
 		assertThat(entrega.getConcluidaEm()).isNull();
+		assertThat(entrega.getConcluidaData()).isNull();
 		assertThat(resposta.concluida()).isFalse();
 		assertThat(resposta.concluidaEm()).isNull();
+		assertThat(resposta.concluidaData()).isNull();
+	}
+
+	@Test
+	void desfazerIgnoraADataEnviada() {
+		Entrega entrega = entrega();
+		entrega.setConcluida(true);
+		entrega.setConcluidaEm(AGORA.minusSeconds(60));
+		entrega.setConcluidaData(HOJE);
+		acharEntrega(entrega);
+
+		// Mesmo uma data absurda não atrapalha: ao desfazer ela não é lida.
+		servico().alterarConclusao(USUARIO, ID, false, HOJE.plusDays(30));
+
+		assertThat(entrega.isConcluida()).isFalse();
 	}
 
 	@Test
 	void desfazerOQueNaoEstaConcluidoNaoFazNada() {
 		Entrega entrega = acharEntrega(entrega());
 
-		EntregaResponse resposta = servico().alterarConclusao(USUARIO, ID, false);
+		EntregaResponse resposta = servico().alterarConclusao(USUARIO, ID, false, null);
 
 		assertThat(entrega.isConcluida()).isFalse();
 		assertThat(entrega.getConcluidaEm()).isNull();
+		assertThat(entrega.getConcluidaData()).isNull();
 		assertThat(resposta.concluida()).isFalse();
 	}
 
@@ -209,10 +277,39 @@ class EntregaServiceTest {
 	void alterarConclusaoDeEntregaQueOFiltroNaoAchaLancaNaoEncontrado() {
 		naoAcharEntrega();
 
-		assertThatThrownBy(() -> servico().alterarConclusao(USUARIO, ID, true))
+		assertThatThrownBy(() -> servico().alterarConclusao(USUARIO, ID, true, HOJE))
 				.isInstanceOf(RecursoNaoEncontradoException.class);
 
 		verify(entregas).findByIdAndUsuarioId(ID, USUARIO);
+	}
+
+	// ---- Home ----
+
+	@Test
+	void listarParaHomeConsultaSoAsEntregasDoUsuarioNaJanelaRecebidaEMapeiaParaResposta() {
+		LocalDate ontem = HOJE.minusDays(1);
+		LocalDate ate = HOJE.plusDays(4);
+		Entrega pendente = entrega();
+		Entrega concluida = entrega();
+		concluida.setId(11L);
+		concluida.setConcluida(true);
+		concluida.setConcluidaEm(AGORA);
+		concluida.setConcluidaData(HOJE);
+		when(entregas.findParaHome(USUARIO, ontem, ate)).thenReturn(List.of(pendente, concluida));
+
+		List<EntregaResponse> lista = servico().listarParaHome(USUARIO, ontem, ate);
+
+		assertThat(lista).extracting(EntregaResponse::id).containsExactly(ID, 11L);
+		assertThat(lista.get(1).concluida()).isTrue();
+		assertThat(lista.get(1).concluidaData()).isEqualTo(HOJE);
+		verify(entregas).findParaHome(USUARIO, ontem, ate);
+	}
+
+	@Test
+	void listarParaHomeSemEntregasDevolveListaVazia() {
+		when(entregas.findParaHome(USUARIO, HOJE, HOJE)).thenReturn(List.of());
+
+		assertThat(servico().listarParaHome(USUARIO, HOJE, HOJE)).isEmpty();
 	}
 
 	// ---- excluir ----

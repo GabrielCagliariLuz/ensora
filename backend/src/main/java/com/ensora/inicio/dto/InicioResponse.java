@@ -1,5 +1,7 @@
 package com.ensora.inicio.dto;
 
+import com.ensora.entrega.dto.EntregaResponse;
+import com.ensora.evento.dto.EventoResponse;
 import com.ensora.habito.HabitoDoDia;
 import com.ensora.habito.TipoHabito;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -7,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDate;
 import java.util.List;
 
-public record InicioResponse(LocalDate data, List<HabitoNaHome> habitos) {
+public record InicioResponse(LocalDate data, List<HabitoNaHome> habitos, Upcoming upcoming) {
 
 	/** {@code feitos} e {@code meta} só aparecem no hábito semanal. */
 	@JsonInclude(JsonInclude.Include.NON_NULL)
@@ -18,6 +20,10 @@ public record InicioResponse(LocalDate data, List<HabitoNaHome> habitos) {
 					habito.meta());
 		}
 
+	}
+
+	/** Entregas e eventos dos próximos dias; os itens têm o mesmo formato dos CRUDs de entrega e de evento. */
+	public record Upcoming(List<EntregaResponse> entregas, List<EventoResponse> eventos) {
 	}
 
 }

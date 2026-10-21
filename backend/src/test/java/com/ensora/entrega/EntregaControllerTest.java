@@ -2,6 +2,7 @@ package com.ensora.entrega;
 
 import com.ensora.compartilhado.erro.ManipuladorDeErros;
 import com.ensora.compartilhado.erro.RecursoNaoEncontradoException;
+import com.ensora.compartilhado.erro.ValidacaoException;
 import com.ensora.compartilhado.seguranca.ConfiguracaoCors;
 import com.ensora.compartilhado.seguranca.ConfiguracaoJwt;
 import com.ensora.compartilhado.seguranca.ConfiguracaoSeguranca;
@@ -47,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class EntregaControllerTest {
 
 	private static final LocalDate PRAZO = LocalDate.of(2026, 11, 5);
+	private static final LocalDate HOJE = LocalDate.of(2026, 10, 21);
 	private static final String CORPO = """
 			{"titulo": "Trabalho de Cálculo", "prazoData": "2026-11-05", "prazoHorario": "14:30", "nota": "Cap. 1 a 4"}
 			""";
@@ -61,9 +63,13 @@ class EntregaControllerTest {
 		return jwt().jwt(token -> token.subject(id));
 	}
 
-	private EntregaResponse resposta(boolean concluida, Instant concluidaEm) {
+	private EntregaResponse resposta(boolean concluida, Instant concluidaEm, LocalDate concluidaData) {
 		return new EntregaResponse(3L, "Trabalho de Cálculo", PRAZO, LocalTime.of(14, 30), concluida, concluidaEm,
-				"Cap. 1 a 4");
+				concluidaData, "Cap. 1 a 4");
+	}
+
+	private EntregaResponse resposta(boolean concluida, Instant concluidaEm) {
+		return resposta(concluida, concluidaEm, null);
 	}
 
 	// ---- POST ----
@@ -99,7 +105,7 @@ class EntregaControllerTest {
 	@Test
 	void criarSoComTituloEPrazoDevolve201SemHorarioNemNota() throws Exception {
 		when(entregaService.criar(eq(7L), any()))
-				.thenReturn(new EntregaResponse(4L, "Prova", PRAZO, null, false, null, null));
+				.thenReturn(new EntregaResponse(4L, "Prova", PRAZO, null, false, null, null, null));
 
 		mvc.perform(post("/entregas").with(usuario("7")).contentType(MediaType.APPLICATION_JSON)
 						.content("{\"titulo\": \"Prova\", \"prazoData\": \"2026-11-05\"}"))
@@ -210,39 +216,62 @@ class EntregaControllerTest {
 	// ---- PATCH ----
 
 	@Test
-	void concluirDevolve200ComConcluidaEmEPassaOBooleanoAoService() throws Exception {
+	void concluirDevolve200ComConcluidaEmEConcluidaDataEPassaBooleanoEDataAoService() throws Exception {
 		Instant em = Instant.parse("2026-10-21T15:04:05Z");
-		when(entregaService.alterarConclusao(7L, 3L, true)).thenReturn(resposta(true, em));
+		when(entregaService.alterarConclusao(7L, 3L, true, HOJE)).thenReturn(resposta(true, em, HOJE));
 
 		mvc.perform(patch("/entregas/3").with(usuario("7")).contentType(MediaType.APPLICATION_JSON)
-						.content("{\"concluida\": true}"))
+						.content("{\"concluida\": true, \"data\": \"2026-10-21\"}"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.concluida").value(true))
-				.andExpect(jsonPath("$.concluidaEm").value("2026-10-21T15:04:05Z"));
+				.andExpect(jsonPath("$.concluidaEm").value("2026-10-21T15:04:05Z"))
+				.andExpect(jsonPath("$.concluidaData").value("2026-10-21"));
 
-		verify(entregaService).alterarConclusao(7L, 3L, true);
+		verify(entregaService).alterarConclusao(7L, 3L, true, HOJE);
 	}
 
 	@Test
-	void desfazerDevolve200SemConcluidaEm() throws Exception {
-		when(entregaService.alterarConclusao(7L, 3L, false)).thenReturn(resposta(false, null));
+	void desfazerDevolve200SemConcluidaEmNemConcluidaDataEPassaDataNulaAoService() throws Exception {
+		when(entregaService.alterarConclusao(7L, 3L, false, null)).thenReturn(resposta(false, null, null));
 
 		mvc.perform(patch("/entregas/3").with(usuario("7")).contentType(MediaType.APPLICATION_JSON)
 						.content("{\"concluida\": false}"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.concluida").value(false))
-				.andExpect(jsonPath("$.concluidaEm").doesNotExist());
+				.andExpect(jsonPath("$.concluidaEm").doesNotExist())
+				.andExpect(jsonPath("$.concluidaData").doesNotExist());
 
-		verify(entregaService).alterarConclusao(7L, 3L, false);
+		verify(entregaService).alterarConclusao(7L, 3L, false, null);
+	}
+
+	@Test
+	void concluirSemDataDevolve400ComOCampoDataVindoDoService() throws Exception {
+		when(entregaService.alterarConclusao(7L, 3L, true, null))
+				.thenThrow(new ValidacaoException("data", "obrigatória ao concluir"));
+
+		mvc.perform(patch("/entregas/3").with(usuario("7")).contentType(MediaType.APPLICATION_JSON)
+						.content("{\"concluida\": true}"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.erro").value("VALIDACAO"))
+				.andExpect(jsonPath("$.campos[0].campo").value("data"));
+	}
+
+	@Test
+	void dataForaDoFormatoIsoNoPatchDevolve400SemChamarOService() throws Exception {
+		mvc.perform(patch("/entregas/3").with(usuario("7")).contentType(MediaType.APPLICATION_JSON)
+						.content("{\"concluida\": true, \"data\": \"21-10-2026\"}"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.erro").value("REQUISICAO_INVALIDA"));
+		verifyNoInteractions(entregaService);
 	}
 
 	@Test
 	void alterarConclusaoDeEntregaDeOutroUsuarioDevolve404() throws Exception {
-		when(entregaService.alterarConclusao(7L, 3L, true))
+		when(entregaService.alterarConclusao(7L, 3L, true, HOJE))
 				.thenThrow(new RecursoNaoEncontradoException("Entrega não encontrada"));
 
 		mvc.perform(patch("/entregas/3").with(usuario("7")).contentType(MediaType.APPLICATION_JSON)
-						.content("{\"concluida\": true}"))
+						.content("{\"concluida\": true, \"data\": \"2026-10-21\"}"))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.erro").value("NAO_ENCONTRADO"));
 	}
