@@ -7,6 +7,7 @@ import { aplicarMarcacao, aplicarMarcacaoNoCache } from './marcacao'
 function inicio(): Inicio {
   return {
     data: '2026-10-21',
+    upcoming: { entregas: [], eventos: [] },
     habitos: [
       { id: 1, nome: 'Ler', tipo: 'DIARIO', feito: false },
       { id: 2, nome: 'Sono', tipo: 'DIARIO', feito: true },
@@ -52,6 +53,7 @@ describe('aplicarMarcacao', () => {
   it('não deixa o contador ficar abaixo de zero', () => {
     const base: Inicio = {
       data: '2026-10-21',
+      upcoming: { entregas: [], eventos: [] },
       habitos: [
         { id: 7, nome: 'Yoga', tipo: 'SEMANAL', feito: true, feitos: 0, meta: 3 },
       ],
@@ -63,6 +65,7 @@ describe('aplicarMarcacao', () => {
   it('permite ultrapassar a meta', () => {
     const base: Inicio = {
       data: '2026-10-21',
+      upcoming: { entregas: [], eventos: [] },
       habitos: [
         { id: 8, nome: 'Treino', tipo: 'SEMANAL', feito: false, feitos: 3, meta: 3 },
       ],

@@ -1,5 +1,74 @@
 import { describe, expect, it } from 'vitest'
-import { hojeISO, rotuloDia } from './datas'
+import {
+  dataCurta,
+  diaDaSemana,
+  diaDoMes,
+  diasEntre,
+  hojeISO,
+  rotuloDia,
+} from './datas'
+
+describe('diasEntre', () => {
+  it('conta os dias de calendário', () => {
+    expect(diasEntre('2026-10-21', '2026-10-24')).toBe(3)
+    expect(diasEntre('2026-10-21', '2026-10-21')).toBe(0)
+  })
+
+  it('é negativo quando a data de destino é anterior', () => {
+    expect(diasEntre('2026-10-21', '2026-10-20')).toBe(-1)
+    expect(diasEntre('2026-10-21', '2026-10-16')).toBe(-5)
+  })
+
+  it('atravessa meses e anos', () => {
+    expect(diasEntre('2026-10-30', '2026-11-02')).toBe(3)
+    expect(diasEntre('2026-12-31', '2027-01-01')).toBe(1)
+  })
+
+  it('não erra na virada do horário de verão', () => {
+    // Em fusos com horário de verão, esse intervalo tem 23 ou 25 horas.
+    expect(diasEntre('2026-03-28', '2026-03-30')).toBe(2)
+    expect(diasEntre('2026-10-24', '2026-10-26')).toBe(2)
+    expect(diasEntre('2026-11-01', '2026-11-03')).toBe(2)
+  })
+})
+
+describe('dataCurta', () => {
+  it('mostra dia e mês abreviado em minúsculas', () => {
+    expect(dataCurta('2026-10-04')).toBe('04 out')
+    expect(dataCurta('2026-09-29')).toBe('29 set')
+  })
+
+  it('devolve o texto original quando a data é inválida', () => {
+    expect(dataCurta('04/10/2026')).toBe('04/10/2026')
+  })
+})
+
+describe('diaDoMes', () => {
+  it('devolve o dia com dois dígitos', () => {
+    expect(diaDoMes('2026-10-04')).toBe('04')
+    expect(diaDoMes('2026-10-29')).toBe('29')
+  })
+
+  it('devolve vazio para data inválida', () => {
+    expect(diaDoMes('hoje')).toBe('')
+  })
+})
+
+describe('diaDaSemana', () => {
+  it('abrevia o dia da semana em maiúsculas', () => {
+    expect(diaDaSemana('2026-10-23')).toBe('SEX')
+    expect(diaDaSemana('2026-10-24')).toBe('SAB')
+    expect(diaDaSemana('2026-10-25')).toBe('DOM')
+    expect(diaDaSemana('2026-10-26')).toBe('SEG')
+    expect(diaDaSemana('2026-10-27')).toBe('TER')
+    expect(diaDaSemana('2026-10-28')).toBe('QUA')
+    expect(diaDaSemana('2026-10-29')).toBe('QUI')
+  })
+
+  it('devolve vazio para data inválida', () => {
+    expect(diaDaSemana('hoje')).toBe('')
+  })
+})
 
 describe('rotuloDia', () => {
   it('mostra dia e mês abreviado em maiúsculas', () => {

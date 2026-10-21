@@ -70,7 +70,10 @@
 @media (min-width: 1024px) {
   .pagina {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Largura limitada e centralizada na área ao lado da sidebar, para a sobra
+       de tela ficar dos dois lados e não só à direita. */
     max-width: 880px;
+    margin-inline: auto;
   }
 }
 

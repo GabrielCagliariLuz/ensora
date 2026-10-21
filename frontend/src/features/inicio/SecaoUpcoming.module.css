@@ -1,0 +1,65 @@
+.secao {
+  min-width: 0;
+}
+
+/* Mesmo estilo do título da seção Today: mono pequeno no mobile e título
+   grande no desktop. */
+.titulo {
+  margin: 0 0 var(--space-4);
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Os blocos (aviso, entregas, eventos) ficam empilhados, com espaço entre eles. */
+.blocos {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Um cartão por bloco: entregas e eventos não dividem a mesma caixa. */
+.cartao {
+  padding: var(--space-4);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.rotulo {
+  margin: 0;
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista li + li {
+  border-top: var(--border-width) solid var(--hairline);
+}
+
+.vazio {
+  margin: 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+@media (min-width: 768px) {
+  .titulo {
+    margin-bottom: var(--space-5);
+    font-size: var(--text-titulo);
+    font-weight: var(--weight-medium);
+    letter-spacing: 0.08em;
+  }
+}

@@ -34,3 +34,41 @@ export function hojeISO(agora: Date = new Date()): string {
   const dia = String(agora.getDate()).padStart(2, '0')
   return `${ano}-${mes}-${dia}`
 }
+
+function dataEmUTC(iso: string): number {
+  const [ano, mes, dia] = iso.split('-').map(Number)
+  return Date.UTC(ano, mes - 1, dia)
+}
+
+// Quantos dias de calendário há de `de` até `ate` (AAAA-MM-DD): positivo se
+// `ate` é depois. Conta em UTC para o horário de verão não gerar 23 ou 25
+// horas no meio.
+export function diasEntre(de: string, ate: string): number {
+  return Math.round((dataEmUTC(ate) - dataEmUTC(de)) / 86_400_000)
+}
+
+// '2026-10-04' vira '04 out', o formato dos cartões da Home.
+export function dataCurta(iso: string): string {
+  const rotulo = rotuloDia(iso)
+  return rotulo === iso ? iso : rotulo.toLowerCase()
+}
+
+// '2026-10-04' vira '04'.
+export function diaDoMes(iso: string): string {
+  return /^\d{4}-\d{2}-(\d{2})$/.exec(iso)?.[1] ?? ''
+}
+
+const DIAS_DA_SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB']
+
+// '2026-10-23' vira 'SEX'. Data fora do formato devolve texto vazio.
+export function diaDaSemana(iso: string): string {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (partes === null) return ''
+
+  const data = new Date(
+    Number(partes[1]),
+    Number(partes[2]) - 1,
+    Number(partes[3]),
+  )
+  return DIAS_DA_SEMANA[data.getDay()]
+}

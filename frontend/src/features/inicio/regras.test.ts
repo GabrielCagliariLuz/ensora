@@ -1,6 +1,33 @@
 import { describe, expect, it } from 'vitest'
 import { ErroApi } from '../../api/erro'
-import { mensagemErroMarcacao, textoProgresso } from './regras'
+import {
+  mensagemErroConclusao,
+  mensagemErroMarcacao,
+  textoProgresso,
+} from './regras'
+
+describe('mensagemErroConclusao', () => {
+  it('avisa quando está sem conexão', () => {
+    expect(
+      mensagemErroConclusao(new ErroApi(0, 'SEM_CONEXAO', 'x'), 'Trabalho'),
+    ).toBe('Sem conexão. "Trabalho" não foi atualizada.')
+  })
+
+  it('avisa quando a entrega não existe mais (404)', () => {
+    expect(
+      mensagemErroConclusao(new ErroApi(404, 'NAO_ENCONTRADO', 'x'), 'Trabalho'),
+    ).toBe('"Trabalho" não existe mais.')
+  })
+
+  it('usa a mensagem padrão para os demais erros', () => {
+    const padrao = 'Não foi possível atualizar "Trabalho". Tente de novo.'
+
+    expect(
+      mensagemErroConclusao(new ErroApi(500, 'ERRO_INTERNO', 'x'), 'Trabalho'),
+    ).toBe(padrao)
+    expect(mensagemErroConclusao(new Error('boom'), 'Trabalho')).toBe(padrao)
+  })
+})
 
 describe('mensagemErroMarcacao', () => {
   it('avisa quando está sem conexão', () => {
