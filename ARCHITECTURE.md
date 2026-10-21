@@ -832,6 +832,45 @@ dele (`400` no campo `data`); `data` ausente ou fora do formato dá
   - O objeto na raiz foi feito para crescer: quem lia só `habitos`
     continua funcionando.
 
+`GET /calendario?de=AAAA-MM-DD&ate=AAAA-MM-DD` (exige token) carrega as
+entregas e os eventos do usuário num intervalo de datas, para a tela
+Calendar.
+
+```json
+// resposta 200
+{
+  "de": "2026-10-25",
+  "ate": "2026-12-05",
+  "entregas": [
+    { "id": 3, "titulo": "Trabalho", "prazoData": "2026-11-05", "prazoHorario": "14:30:00",
+      "concluida": false, "nota": "Cap. 1" },
+    { "id": 5, "titulo": "Lista", "prazoData": "2026-11-05", "concluida": true,
+      "concluidaEm": "2026-11-04T15:04:05Z", "concluidaData": "2026-11-04" }
+  ],
+  "eventos": [
+    { "id": 8, "titulo": "Consulta", "data": "2026-11-05", "inicio": "09:00:00",
+      "termino": "10:00:00", "local": "Clínica", "categoria": "SAUDE" }
+  ]
+}
+```
+
+- `de` e `ate`: obrigatórios e **inclusive nas duas pontas**. O front envia
+  o intervalo visível da grade (de domingo a sábado, 35 ou 42 dias,
+  incluindo dias de meses vizinhos).
+- `entregas`: todas com `prazoData` no intervalo, **concluídas ou não**: o
+  Calendar mostra a concluída esmaecida e riscada, e as regras de "some
+  da Home" não se aplicam aqui. Ordem: `prazoData`, `prazoHorario` (sem
+  horário por último) e `id`.
+- `eventos`: todos com `data` no intervalo, por `data`, `inicio` e `id`.
+- Os itens têm o mesmo formato das respostas de `/entregas`, `/eventos` e
+  do `upcoming` do `/inicio`. As listas são planas: agrupar por dia,
+  marcar os pontos do mês e montar "Prazos de Hoje" é trabalho do front.
+- Só aparece o que é do usuário do token.
+- `ate` antes de `de`, ou intervalo com mais de **62 dias** entre as
+  pontas: `400 VALIDACAO` no campo `ate`. `de` ou `ate` ausentes ou fora
+  do formato: `400 REQUISICAO_INVALIDA`. Não há regra de "perto de hoje":
+  o intervalo pode estar no passado ou no futuro.
+
 `POST /entregas` (exige token) cria uma entrega do usuário do token e
 responde `201`. `PUT /entregas/{id}` usa o **mesmo corpo** e responde `200`
 com a entrega no mesmo formato.
@@ -1017,6 +1056,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 52  | O `PUT /eventos/{id}` substitui o evento inteiro (mesmo corpo do `POST`): `termino`, `local` e `categoria` ausentes são limpos. A regra `termino > inicio` é validada no Service e devolve 400 no campo `termino`, antes do CHECK do banco, para que um erro de dado nunca vire 500. Evento é excluído de verdade e não tem regra de data próxima de hoje |
 | 53  | A entrega concluída guarda o dia da conclusão no fuso do usuário (`concluida_data`, enviado pelo front no `PATCH`, ±2 dias do relógio do servidor) além do instante `concluida_em` (UTC, do servidor). A Home decide se ela ainda aparece comparando datas puras, sem conta de fuso no servidor, no mesmo padrão da decisão 43. O `CHECK` da V5 exige `concluida`, `concluida_em` e `concluida_data` juntos |
 | 54  | O Upcoming do `GET /inicio` mostra entregas com prazo de ontem a hoje + 4 dias e eventos de hoje a hoje + 4 dias. A entrega atrasada não concluída fica na Home só até o dia seguinte ao prazo (depois só no Calendar), e a concluída até o dia seguinte à conclusão; isso revisa a regra anterior da seção 8 ("atrasadas até serem concluídas"). "Atrasada" e "vence em N dias" são calculados pelo front com o relógio do aparelho |
+| 55  | O `GET /calendario` devolve todas as entregas (concluídas incluídas) e todos os eventos do intervalo `de`..`ate`, inclusive nas duas pontas, em listas planas, e só aceita intervalos de até 62 dias entre as pontas (400 no campo `ate`). Não tem a regra de "perto de hoje" dos outros endpoints, porque o Calendar navega pelo passado e pelo futuro. Reusa `EntregaService.listarNoIntervalo` e `EventoService.listarNoIntervalo`; a consulta de entregas da Home é outra, com as regras de atrasada e concluída |
 
 ## 17. Pontos ainda em aberto
 
