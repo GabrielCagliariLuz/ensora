@@ -44,6 +44,56 @@ export interface Inicio {
   habitos: HabitoNaHome[]
 }
 
+// Corpo de POST e PUT /entregas. prazoHorario vai em HH:mm; sem ele a entrega
+// vale até 23:59. A conclusão não entra aqui: só o PATCH a altera.
+export interface EntregaRequest {
+  titulo: string
+  prazoData: string
+  prazoHorario?: string
+  nota?: string
+}
+
+// Resposta de /entregas (e dos itens do upcoming do /inicio). Os horários
+// voltam em HH:mm:ss, e os campos opcionais só aparecem quando existem.
+export interface Entrega {
+  id: number
+  titulo: string
+  prazoData: string
+  prazoHorario?: string
+  concluida: boolean
+  concluidaEm?: string
+  concluidaData?: string
+  nota?: string
+}
+
+export type CategoriaEvento =
+  | 'SAUDE'
+  | 'TRABALHO'
+  | 'PESSOAL'
+  | 'ESTUDO'
+  | 'CELEBRACAO'
+
+// Corpo de POST e PUT /eventos. O PUT substitui o evento inteiro: o que vier
+// ausente é limpo.
+export interface EventoRequest {
+  titulo: string
+  data: string
+  inicio: string
+  termino?: string
+  local?: string
+  categoria?: CategoriaEvento
+}
+
+export interface Evento {
+  id: number
+  titulo: string
+  data: string
+  inicio: string
+  termino?: string
+  local?: string
+  categoria?: CategoriaEvento
+}
+
 export interface CampoInvalido {
   campo: string
   mensagem: string

@@ -1,0 +1,76 @@
+.campo {
+  display: grid;
+  /* Sem isto, num par de campos lado a lado, o campo mais baixo estica as
+     linhas do vizinho e empurra o input dele para baixo. */
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.rotulo {
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.opcional {
+  color: var(--ash);
+}
+
+.entrada {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding-inline: var(--space-3);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  color-scheme: light;
+  font-family: inherit;
+  font-size: var(--text-corpo);
+  transition:
+    border-color var(--transicao-rapida),
+    box-shadow var(--transicao-rapida);
+}
+
+.areaTexto {
+  height: auto;
+  min-height: 88px;
+  padding-block: var(--space-3);
+  line-height: var(--leading-corpo);
+  resize: vertical;
+}
+
+.entrada::placeholder {
+  color: var(--ash);
+}
+
+.entrada:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--hover-surface);
+}
+
+.entrada[aria-invalid='true'] {
+  border-color: var(--ember);
+}
+
+.apoio {
+  margin: 0;
+  color: var(--ash);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.dica {
+  color: var(--ember);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entrada {
+    transition: none;
+  }
+}

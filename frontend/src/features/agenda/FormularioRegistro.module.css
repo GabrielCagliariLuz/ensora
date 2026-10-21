@@ -1,0 +1,98 @@
+/* Layout compartilhado pelos formulários de evento e de entrega. */
+.formulario {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.campo {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.rotulo {
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.opcional {
+  color: var(--ash);
+}
+
+/* Pares de campos lado a lado; em tela muito estreita, um embaixo do outro.
+   Cada campo (rótulo, entrada, mensagem) ocupa as três linhas da grade e as
+   herda por subgrid: com isso o rótulo, a entrada e a dica de um campo ficam
+   alinhados com os do vizinho, mesmo se um rótulo quebrar em duas linhas ou
+   só um deles tiver dica. */
+.linha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--space-3);
+}
+
+.linha > div {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+}
+
+.acoes {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.cancelar,
+.salvar {
+  flex: 1;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.cancelar {
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  color: var(--ink);
+}
+
+.cancelar:hover {
+  background: var(--hover-surface);
+}
+
+.salvar {
+  border: 0;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.salvar:hover:not(:disabled) {
+  background: var(--ink-hover);
+}
+
+.salvar:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cancelar:focus-visible,
+.salvar:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (max-width: 359px) {
+  .linha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cancelar,
+  .salvar {
+    transition: none;
+  }
+}

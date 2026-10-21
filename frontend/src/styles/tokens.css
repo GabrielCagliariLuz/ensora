@@ -17,6 +17,14 @@
   --ember-surface: #fbeeea;
   --ember-border: #f0d0c6;
 
+  /* Categorias de evento: uma cor fixa por categoria; sem categoria, a neutra */
+  --cat-saude: var(--moss);
+  --cat-trabalho: #3f5f86;
+  --cat-pessoal: #7a5a3a;
+  --cat-estudo: var(--ember);
+  --cat-celebracao: #b58a1f;
+  --cat-neutra: var(--ash);
+
   /* Fontes */
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;

@@ -1,0 +1,27 @@
+.bloco {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.bloco svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.erro {
+  background: var(--ember-surface);
+  border: var(--border-width) solid var(--ember-border);
+  color: var(--ember);
+}
+
+/* Offline não é erro do usuário: tom neutro. */
+.aviso {
+  background: var(--hover-surface);
+  border: var(--border-width) solid var(--hairline);
+  color: var(--graphite);
+}
