@@ -6,6 +6,9 @@ import com.ensora.compartilhado.seguranca.ConfiguracaoCors;
 import com.ensora.compartilhado.seguranca.ConfiguracaoJwt;
 import com.ensora.compartilhado.seguranca.ConfiguracaoSeguranca;
 import com.ensora.compartilhado.seguranca.ConfiguracaoWeb;
+import com.ensora.habito.TipoHabito;
+import com.ensora.insights.ConsistenciaCalculadora.Estado;
+import com.ensora.insights.dto.ConsistenciaResponse;
 import com.ensora.insights.dto.RitmoResponse;
 import com.ensora.insights.dto.RitmoResponse.Dia;
 import com.ensora.insights.dto.RitmoResponse.Semana;
@@ -19,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 import static org.mockito.Mockito.verify;
@@ -123,6 +127,88 @@ class InsightsControllerTest {
 	void semTokenDevolve401() throws Exception {
 		mvc.perform(get("/insights/ritmo").param("de", "2026-10-01").param("ate", "2026-10-03"))
 				.andExpect(status().isUnauthorized());
+		verifyNoInteractions(insightsService);
+	}
+
+	// ---- consistência ----
+
+	private static final YearMonth SETEMBRO = YearMonth.of(2026, 9);
+
+	@Test
+	void consistenciaDevolve200ComGradeConsistenciaESemanasEPassaAoServiceOUsuarioDoTokenEOMes() throws Exception {
+		ConsistenciaResponse.Habito diario = new ConsistenciaResponse.Habito(1L, "Ler", TipoHabito.DIARIO, false, 33.3,
+				List.of(), List.of(
+						new ConsistenciaResponse.Dia(LocalDate.of(2026, 9, 10), Estado.CONCLUIDO),
+						new ConsistenciaResponse.Dia(LocalDate.of(2026, 9, 17), Estado.NAO_REALIZADO)));
+		ConsistenciaResponse.Habito semanal = new ConsistenciaResponse.Habito(4L, "Academia", TipoHabito.SEMANAL, true,
+				50.0,
+				List.of(new ConsistenciaResponse.Semana(LocalDate.of(2026, 9, 7), LocalDate.of(2026, 9, 13), 2, 2, true,
+						true, true)),
+				List.of(new ConsistenciaResponse.Dia(LocalDate.of(2026, 9, 8), Estado.EM_ABERTO)));
+		when(insightsService.consistencia(7L, SETEMBRO))
+				.thenReturn(new ConsistenciaResponse("2026-09", List.of(diario, semanal)));
+
+		mvc.perform(get("/insights/consistencia").param("mes", "2026-09").with(usuario("7")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.mes").value("2026-09"))
+				.andExpect(jsonPath("$.habitos[0].nome").value("Ler"))
+				.andExpect(jsonPath("$.habitos[0].tipo").value("DIARIO"))
+				.andExpect(jsonPath("$.habitos[0].excluido").value(false))
+				.andExpect(jsonPath("$.habitos[0].consistencia").value(33.3))
+				.andExpect(jsonPath("$.habitos[0].semanas").doesNotExist())
+				.andExpect(jsonPath("$.habitos[0].dias[0].data").value("2026-09-10"))
+				.andExpect(jsonPath("$.habitos[0].dias[0].estado").value("CONCLUIDO"))
+				.andExpect(jsonPath("$.habitos[0].dias[1].estado").value("NAO_REALIZADO"))
+				.andExpect(jsonPath("$.habitos[1].excluido").value(true))
+				.andExpect(jsonPath("$.habitos[1].semanas[0].de").value("2026-09-07"))
+				.andExpect(jsonPath("$.habitos[1].semanas[0].meta").value(2))
+				.andExpect(jsonPath("$.habitos[1].semanas[0].batida").value(true))
+				.andExpect(jsonPath("$.habitos[1].semanas[0].contaNaConsistencia").value(true))
+				.andExpect(jsonPath("$.habitos[1].dias[0].estado").value("EM_ABERTO"));
+
+		verify(insightsService).consistencia(7L, SETEMBRO);
+	}
+
+	@Test
+	void consistenciaAusenteNaoApareceNoJson() throws Exception {
+		ConsistenciaResponse.Habito sem = new ConsistenciaResponse.Habito(1L, "Ler", TipoHabito.DIARIO, false, null,
+				List.of(), List.of(new ConsistenciaResponse.Dia(LocalDate.of(2026, 11, 1), Estado.DESCANSO_FUTURO)));
+		when(insightsService.consistencia(7L, YearMonth.of(2026, 11)))
+				.thenReturn(new ConsistenciaResponse("2026-11", List.of(sem)));
+
+		mvc.perform(get("/insights/consistencia").param("mes", "2026-11").with(usuario("7")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.habitos[0].consistencia").doesNotExist())
+				.andExpect(jsonPath("$.habitos[0].dias[0].estado").value("DESCANSO_FUTURO"));
+	}
+
+	@Test
+	void consistenciaSemHabitosDevolveListaVazia() throws Exception {
+		when(insightsService.consistencia(7L, SETEMBRO)).thenReturn(new ConsistenciaResponse("2026-09", List.of()));
+
+		mvc.perform(get("/insights/consistencia").param("mes", "2026-09").with(usuario("7")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.habitos").isEmpty());
+	}
+
+	@Test
+	void consistenciaSemMesOuComMesForaDoFormatoDevolve400SemChamarOService() throws Exception {
+		mvc.perform(get("/insights/consistencia").with(usuario("7")))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.erro").value("REQUISICAO_INVALIDA"));
+		mvc.perform(get("/insights/consistencia").param("mes", "2026-13").with(usuario("7")))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.erro").value("REQUISICAO_INVALIDA"));
+		mvc.perform(get("/insights/consistencia").param("mes", "09-2026").with(usuario("7")))
+				.andExpect(status().isBadRequest());
+		mvc.perform(get("/insights/consistencia").param("mes", "2026-09-10").with(usuario("7")))
+				.andExpect(status().isBadRequest());
+		verifyNoInteractions(insightsService);
+	}
+
+	@Test
+	void consistenciaSemTokenDevolve401() throws Exception {
+		mvc.perform(get("/insights/consistencia").param("mes", "2026-09")).andExpect(status().isUnauthorized());
 		verifyNoInteractions(insightsService);
 	}
 
