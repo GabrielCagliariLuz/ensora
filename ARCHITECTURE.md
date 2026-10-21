@@ -842,6 +842,46 @@ inexistente responde `404`; `id` não numérico ou corpo malformado
 (inclusive horário fora do formato) é `400 REQUISICAO_INVALIDA`; campo
 inválido é `400 VALIDACAO` com o campo em `campos`.
 
+`POST /eventos` (exige token) cria um evento do usuário do token e
+responde `201`. `PUT /eventos/{id}` usa o **mesmo corpo** e responde `200`
+com o evento no mesmo formato.
+
+```json
+// corpo do POST e do PUT
+{ "titulo": "Consulta", "data": "2026-11-05", "inicio": "09:00", "termino": "10:00",
+  "local": "Clínica", "categoria": "SAUDE" }
+
+// resposta
+{ "id": 3, "titulo": "Consulta", "data": "2026-11-05", "inicio": "09:00:00", "termino": "10:00:00",
+  "local": "Clínica", "categoria": "SAUDE" }
+```
+
+- `titulo`: obrigatório, não vazio, até 150 caracteres (gravado sem
+  espaços nas pontas).
+- `data`: obrigatória, `AAAA-MM-DD`. Data passada ou distante é aceita.
+- `inicio`: obrigatório. `termino`: opcional. Entram como `HH:mm` e
+  **saem como `HH:mm:ss`**.
+- `termino`, quando existe, precisa ser **depois** de `inicio`; igual ou
+  antes dá `400 VALIDACAO` no campo `termino`. Como os dois horários são
+  do mesmo dia, isso garante que o evento não atravessa a meia-noite.
+- `local`: opcional, até 100 caracteres; texto só com espaços vale como
+  ausente.
+- `categoria`: opcional, uma de `SAUDE`, `TRABALHO`, `PESSOAL`, `ESTUDO`
+  ou `CELEBRACAO`; ausente quer dizer sem categoria (cor neutra). Valor
+  fora da lista é `400 REQUISICAO_INVALIDA`.
+- `termino`, `local` e `categoria` só aparecem na resposta quando existem.
+- **O `PUT` substitui o evento inteiro:** `termino`, `local` e `categoria`
+  ausentes no corpo são **limpos**. O front reenvia todos os campos do
+  formulário.
+
+`DELETE /eventos/{id}` (exige token) apaga o evento e responde `204`
+(exclusão física).
+
+Em todos os endpoints de evento, o evento de outro usuário ou
+inexistente responde `404`; `id` não numérico ou corpo malformado
+(inclusive hora fora do formato) é `400 REQUISICAO_INVALIDA`; campo
+inválido é `400 VALIDACAO` com o campo em `campos`.
+
 ### Formato de erro
 
 Toda falha da API sai no mesmo formato (`ErroResposta`), gerado pelo
@@ -928,6 +968,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 49  | A entrega garante no banco que `concluida` e `concluida_em` andem juntos (`CHECK (concluida = (concluida_em IS NOT NULL))`) e que o título não seja vazio. Entrega não tem exclusão lógica: excluir apaga a linha (diferente do hábito, que precisa preservar o histórico para os Insights) |
 | 50  | Concluir entrega é `PATCH /entregas/{id}` com o estado desejado (`concluida: true` ou `false`), idempotente: concluir de novo mantém o `concluida_em` original e desfazer o que não está concluído não faz nada. `concluida_em` vem do relógio do servidor, nunca do cliente. O `PUT` da entrega não altera a conclusão |
 | 51  | O evento tem categoria opcional de uma lista fixa (`SAUDE`, `TRABALHO`, `PESSOAL`, `ESTUDO`, `CELEBRACAO`) no lugar da cor escolhida da paleta, porque o evento tende a se repetir e a categoria diz mais que a cor. Cada categoria tem uma cor fixa no front (verde, azul, marrom, vermelho, amarelo) e o evento sem categoria usa a cor neutra. O banco restringe a lista com CHECK (V4); rótulos e tons ficam no front. Reverte, para o evento, as decisões 5 e 26 |
+| 52  | O `PUT /eventos/{id}` substitui o evento inteiro (mesmo corpo do `POST`): `termino`, `local` e `categoria` ausentes são limpos. A regra `termino > inicio` é validada no Service e devolve 400 no campo `termino`, antes do CHECK do banco, para que um erro de dado nunca vire 500. Evento é excluído de verdade e não tem regra de data próxima de hoje |
 
 ## 17. Pontos ainda em aberto
 
