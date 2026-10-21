@@ -1,0 +1,181 @@
+.popover {
+  position: fixed;
+  z-index: 50;
+  box-sizing: border-box;
+  width: 320px;
+  max-width: calc(100vw - 16px);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--card);
+  border: var(--border-width) solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-camada);
+}
+
+/* Entra como os modais: surge subindo um pouco. A animação só começa depois de
+   posicionado; antes disso o cartão está escondido. */
+.visivel {
+  animation: entrar var(--transicao-media);
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+}
+
+.popover:focus {
+  outline: none;
+}
+
+/* Editar, excluir e fechar, no canto do cartão. */
+.ferramentas {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  gap: 2px;
+}
+
+.ferramenta {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--graphite);
+  cursor: pointer;
+  transition:
+    background var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.ferramenta:active,
+.acao:active {
+  transform: scale(0.94);
+}
+
+.ferramenta:hover {
+  background: var(--hover-surface);
+}
+
+.ferramenta:focus-visible,
+.acao:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-right: 96px;
+}
+
+.ponto {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  margin-top: 6px;
+  border-radius: 3px;
+}
+
+.titulo {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--text-corpo);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-corpo);
+}
+
+.concluida {
+  color: var(--graphite);
+  text-decoration: line-through;
+}
+
+.linhas {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+}
+
+.linhas li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.linhas svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.situacao {
+  margin: 0;
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+}
+
+/* Cor de urgência: só nas entregas. */
+.urgente {
+  color: var(--ember);
+  font-weight: var(--weight-semibold);
+}
+
+.nota {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+}
+
+.acao {
+  justify-self: start;
+  height: 32px;
+  padding-inline: var(--space-3);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-legenda);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.desfazer {
+  color: var(--graphite);
+  font-weight: var(--weight-medium);
+}
+
+.acao:hover {
+  background: var(--hover-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visivel {
+    animation: none;
+  }
+
+  .ferramenta:active,
+  .acao:active {
+    transform: none;
+  }
+
+  .ferramenta,
+  .acao {
+    transition: none;
+  }
+}

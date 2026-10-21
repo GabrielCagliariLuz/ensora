@@ -1,0 +1,94 @@
+/* A cor vem de --cor-etiqueta (um token): a faixa, a borda e o fundo são
+   misturas dela com o branco do cartão, e o texto, uma mistura com o ink. */
+.etiqueta {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--cor-etiqueta) 25%, var(--card));
+  border-left: 3px solid var(--cor-etiqueta);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--cor-etiqueta) 10%, var(--card));
+  color: color-mix(in srgb, var(--cor-etiqueta) 55%, var(--ink));
+  font-size: 11px;
+  line-height: 16px;
+  transition:
+    background var(--transicao-rapida),
+    opacity var(--transicao-media),
+    transform var(--transicao-rapida);
+}
+
+.etiqueta:hover {
+  background: color-mix(in srgb, var(--cor-etiqueta) 18%, var(--card));
+}
+
+.prefixo {
+  flex-shrink: 0;
+  display: flex;
+  padding-left: 5px;
+}
+
+/* O botão ocupa o resto da etiqueta: clicar em qualquer ponto dela abre os
+   detalhes. */
+.corpo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px 2px 5px;
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.prefixo + .corpo {
+  padding-left: 4px;
+}
+
+.corpo:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+/* Feedback do clique: a etiqueta afunda um pouco enquanto o botão está
+   pressionado. */
+.etiqueta:has(.corpo:active) {
+  transform: scale(0.98);
+}
+
+/* Etiqueta preta: fundo branco e borda fina em ink. */
+.solida {
+  border-color: color-mix(in srgb, var(--cor-etiqueta) 30%, var(--card));
+  border-left-color: var(--cor-etiqueta);
+  background: var(--card);
+  color: var(--ink);
+}
+
+.solida:hover {
+  background: var(--hover-surface);
+}
+
+/* A etiqueta que está sendo arrastada para outro dia. */
+.arrastando {
+  opacity: 0.4;
+}
+
+/* Entrega concluída. */
+.esmaecida {
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .etiqueta {
+    transition: none;
+  }
+
+  .etiqueta:has(.corpo:active) {
+    transform: none;
+  }
+}

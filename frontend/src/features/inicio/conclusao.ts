@@ -19,9 +19,25 @@ export function substituirEntrega(inicio: Inicio, entrega: Entrega): Inicio {
   }
 }
 
+// A entrega concluída (com a data de hoje) ou desfeita, sem alterar a original.
+// Desfazer limpa também a data e o instante da conclusão, como o servidor.
+export function comConclusao(
+  entrega: Entrega,
+  concluida: boolean,
+  data: string,
+): Entrega {
+  const atualizada: Entrega = { ...entrega, concluida }
+  if (concluida) {
+    atualizada.concluidaData = data
+  } else {
+    delete atualizada.concluidaEm
+    delete atualizada.concluidaData
+  }
+  return atualizada
+}
+
 // Resultado de concluir ou desfazer uma entrega no `Inicio`. `data` é o dia da
-// conclusão (hoje). Só muda se o estado de fato muda; desfazer limpa também a
-// data e o instante da conclusão, como o servidor.
+// conclusão (hoje). Só muda se o estado de fato muda.
 export function aplicarConclusao(
   inicio: Inicio,
   id: number,
@@ -31,14 +47,7 @@ export function aplicarConclusao(
   const alvo = inicio.upcoming.entregas.find((entrega) => entrega.id === id)
   if (alvo === undefined || alvo.concluida === concluida) return inicio
 
-  const atualizada: Entrega = { ...alvo, concluida }
-  if (concluida) {
-    atualizada.concluidaData = data
-  } else {
-    delete atualizada.concluidaEm
-    delete atualizada.concluidaData
-  }
-  return substituirEntrega(inicio, atualizada)
+  return substituirEntrega(inicio, comConclusao(alvo, concluida, data))
 }
 
 export function lerEntregaDoCache(

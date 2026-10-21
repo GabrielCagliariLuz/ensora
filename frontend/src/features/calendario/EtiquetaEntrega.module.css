@@ -1,0 +1,39 @@
+.marcador {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  align-self: center;
+  cursor: pointer;
+}
+
+.marcador * {
+  cursor: pointer;
+}
+
+.entrada {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+}
+
+.marcador:has(.entrada:focus-visible) {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Título longo é cortado com reticências. */
+.titulo {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--weight-semibold);
+}
+
+.concluida {
+  text-decoration: line-through;
+}

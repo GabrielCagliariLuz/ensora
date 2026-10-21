@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { ErroApi } from '../../api/erro'
+import type { Entrega, Evento } from '../../api/tipos'
 import {
   errosDeCamposEntrega,
   errosDeCamposEvento,
   mensagemErroRegistro,
   montarEntrega,
   montarEvento,
+  requisicaoDaEntrega,
+  requisicaoDoEvento,
   validarEntrega,
   validarEvento,
 } from './regras'
@@ -231,6 +234,96 @@ describe('montarEvento', () => {
 
     expect(corpo.titulo).toBe('Consulta')
     expect('local' in corpo).toBe(false)
+  })
+})
+
+describe('requisicaoDoEvento', () => {
+  const completo: Evento = {
+    id: 1,
+    titulo: 'Consulta',
+    data: '2026-10-05',
+    inicio: '09:00:00',
+    termino: '10:30:00',
+    local: 'Clínica',
+    categoria: 'SAUDE',
+  }
+
+  it('devolve o evento como corpo de PUT, com horários sem segundos', () => {
+    expect(requisicaoDoEvento(completo)).toEqual({
+      titulo: 'Consulta',
+      data: '2026-10-05',
+      inicio: '09:00',
+      termino: '10:30',
+      local: 'Clínica',
+      categoria: 'SAUDE',
+    })
+  })
+
+  it('omite o que o evento não tem', () => {
+    const corpo = requisicaoDoEvento({
+      id: 2,
+      titulo: 'Simples',
+      data: '2026-10-05',
+      inicio: '09:00:00',
+    })
+
+    expect(corpo).toEqual({
+      titulo: 'Simples',
+      data: '2026-10-05',
+      inicio: '09:00',
+    })
+  })
+
+  it('troca só o que mudou', () => {
+    expect(requisicaoDoEvento(completo, { data: '2026-10-07' })).toEqual({
+      titulo: 'Consulta',
+      data: '2026-10-07',
+      inicio: '09:00',
+      termino: '10:30',
+      local: 'Clínica',
+      categoria: 'SAUDE',
+    })
+  })
+})
+
+describe('requisicaoDaEntrega', () => {
+  const completa: Entrega = {
+    id: 1,
+    titulo: 'Relatório',
+    prazoData: '2026-10-20',
+    prazoHorario: '18:00:00',
+    concluida: true,
+    concluidaData: '2026-10-19',
+    nota: 'Capítulo 2',
+  }
+
+  it('devolve a entrega como corpo de PUT, sem a conclusão', () => {
+    expect(requisicaoDaEntrega(completa)).toEqual({
+      titulo: 'Relatório',
+      prazoData: '2026-10-20',
+      prazoHorario: '18:00',
+      nota: 'Capítulo 2',
+    })
+  })
+
+  it('omite horário e nota quando não existem', () => {
+    const corpo = requisicaoDaEntrega({
+      id: 2,
+      titulo: 'Sem extras',
+      prazoData: '2026-10-20',
+      concluida: false,
+    })
+
+    expect(corpo).toEqual({ titulo: 'Sem extras', prazoData: '2026-10-20' })
+  })
+
+  it('troca só o que mudou', () => {
+    expect(requisicaoDaEntrega(completa, { prazoData: '2026-10-22' })).toEqual({
+      titulo: 'Relatório',
+      prazoData: '2026-10-22',
+      prazoHorario: '18:00',
+      nota: 'Capítulo 2',
+    })
   })
 })
 

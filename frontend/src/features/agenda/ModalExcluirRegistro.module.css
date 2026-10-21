@@ -1,0 +1,6 @@
+.nomeDestaque {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}

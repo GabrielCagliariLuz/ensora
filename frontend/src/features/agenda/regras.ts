@@ -1,7 +1,9 @@
 import { ErroApi } from '../../api/erro'
 import type {
   CategoriaEvento,
+  Entrega,
   EntregaRequest,
+  Evento,
   EventoRequest,
 } from '../../api/tipos'
 import { MENSAGEM_HORARIO_INVALIDO, normalizarHorario } from '../../lib/horarios'
@@ -125,6 +127,41 @@ export function montarEvento(valores: ValoresEvento): EventoRequest {
   return corpo
 }
 
+// '09:00:00' vira '09:00': o servidor devolve com segundos e recebe sem.
+function semSegundos(horario: string): string {
+  return horario.slice(0, 5)
+}
+
+// Os dados atuais do evento como corpo de PUT, para trocar só o que mudou
+// (ex.: mover para outro dia).
+export function requisicaoDoEvento(
+  evento: Evento,
+  mudancas: Partial<EventoRequest> = {},
+): EventoRequest {
+  const corpo: EventoRequest = {
+    titulo: evento.titulo,
+    data: evento.data,
+    inicio: semSegundos(evento.inicio),
+  }
+  if (evento.termino) corpo.termino = semSegundos(evento.termino)
+  if (evento.local) corpo.local = evento.local
+  if (evento.categoria) corpo.categoria = evento.categoria
+  return { ...corpo, ...mudancas }
+}
+
+export function requisicaoDaEntrega(
+  entrega: Entrega,
+  mudancas: Partial<EntregaRequest> = {},
+): EntregaRequest {
+  const corpo: EntregaRequest = {
+    titulo: entrega.titulo,
+    prazoData: entrega.prazoData,
+  }
+  if (entrega.prazoHorario) corpo.prazoHorario = semSegundos(entrega.prazoHorario)
+  if (entrega.nota) corpo.nota = entrega.nota
+  return { ...corpo, ...mudancas }
+}
+
 // Campos do 400 VALIDACAO que existem no formulário. Os demais não têm onde
 // aparecer e caem na mensagem geral.
 function errosDoServidor<C extends string>(
@@ -155,4 +192,12 @@ export function mensagemErroRegistro(erro: unknown): string {
     if (erro.status === 400) return 'Confira os dados do registro.'
   }
   return 'Não foi possível salvar. Tente de novo.'
+}
+
+export function mensagemErroMovimento(erro: unknown, titulo: string): string {
+  if (erro instanceof ErroApi) {
+    if (erro.status === 0) return `Sem conexão. "${titulo}" não foi movido.`
+    if (erro.status === 404) return `"${titulo}" não existe mais.`
+  }
+  return `Não foi possível mover "${titulo}". Tente de novo.`
 }

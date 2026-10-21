@@ -5,8 +5,70 @@ import {
   diaDoMes,
   diasEntre,
   hojeISO,
+  dataPorExtenso,
+  numeroDoDia,
   rotuloDia,
+  rotuloDoMes,
+  somarDias,
 } from './datas'
+
+describe('dataPorExtenso', () => {
+  it('mostra o dia da semana, o dia e o mês por extenso', () => {
+    expect(dataPorExtenso('2026-10-05')).toBe('Segunda-feira, 5 de outubro')
+    expect(dataPorExtenso('2026-10-21')).toBe('Quarta-feira, 21 de outubro')
+    expect(dataPorExtenso('2026-03-01')).toBe('Domingo, 1 de março')
+  })
+
+  it('devolve o texto original quando a data é inválida', () => {
+    expect(dataPorExtenso('2026-13-01')).toBe('2026-13-01')
+    expect(dataPorExtenso('amanhã')).toBe('amanhã')
+  })
+})
+
+describe('rotuloDoMes', () => {
+  it('mostra o nome do mês por extenso e o ano', () => {
+    expect(rotuloDoMes('2026-10')).toBe('Outubro 2026')
+    expect(rotuloDoMes('2027-01')).toBe('Janeiro 2027')
+    expect(rotuloDoMes('2026-03')).toBe('Março 2026')
+  })
+
+  it('devolve o texto original quando o mês é inválido', () => {
+    expect(rotuloDoMes('2026-13')).toBe('2026-13')
+    expect(rotuloDoMes('outubro')).toBe('outubro')
+  })
+})
+
+describe('somarDias', () => {
+  it('soma e subtrai dias', () => {
+    expect(somarDias('2026-10-21', 3)).toBe('2026-10-24')
+    expect(somarDias('2026-10-21', -1)).toBe('2026-10-20')
+    expect(somarDias('2026-10-21', 0)).toBe('2026-10-21')
+  })
+
+  it('atravessa meses e anos', () => {
+    expect(somarDias('2026-10-30', 3)).toBe('2026-11-02')
+    expect(somarDias('2026-12-31', 1)).toBe('2027-01-01')
+    expect(somarDias('2026-03-01', -1)).toBe('2026-02-28')
+  })
+
+  it('respeita ano bissexto', () => {
+    expect(somarDias('2028-02-28', 1)).toBe('2028-02-29')
+    expect(somarDias('2028-02-28', 2)).toBe('2028-03-01')
+  })
+
+  it('não erra na virada do horário de verão', () => {
+    expect(somarDias('2026-10-24', 1)).toBe('2026-10-25')
+    expect(somarDias('2026-11-01', 1)).toBe('2026-11-02')
+    expect(somarDias('2026-03-28', 2)).toBe('2026-03-30')
+  })
+})
+
+describe('numeroDoDia', () => {
+  it('tira o zero à esquerda', () => {
+    expect(numeroDoDia('2026-10-04')).toBe(4)
+    expect(numeroDoDia('2026-10-29')).toBe(29)
+  })
+})
 
 describe('diasEntre', () => {
   it('conta os dias de calendário', () => {
