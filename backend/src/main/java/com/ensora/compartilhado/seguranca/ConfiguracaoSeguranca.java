@@ -43,7 +43,7 @@ public class ConfiguracaoSeguranca {
 				.sessionManagement(sessao -> sessao.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.cors(cors -> cors.configurationSource(corsConfigurationSource))
 				.authorizeHttpRequests(autorizacao -> {
-					autorizacao.requestMatchers(prefixo + "/auth/**").permitAll();
+					autorizacao.requestMatchers(prefixo + "/auth/**", prefixo + "/saude").permitAll();
 					if (prefixo.isEmpty()) {
 						autorizacao.anyRequest().authenticated();
 					} else {
