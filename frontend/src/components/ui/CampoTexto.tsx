@@ -1,4 +1,5 @@
 import type { KeyboardEvent } from 'react'
+import { focoAutomatico } from '../../lib/foco'
 import styles from './CampoTexto.module.css'
 
 type EventoTecla = KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -50,7 +51,7 @@ export default function CampoTexto({
   // atributo autofocus, que o showModal() respeita. O autoFocus do React
   // chamaria focus() com o diálogo ainda fechado.
   const marcarFoco = (elemento: HTMLElement | null) => {
-    if (focoInicial) elemento?.setAttribute('autofocus', '')
+    if (focoInicial && focoAutomatico()) elemento?.setAttribute('autofocus', '')
   }
 
   return (

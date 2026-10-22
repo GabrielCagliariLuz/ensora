@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { CircleAlert, WifiOff } from 'lucide-react'
 import ControleSegmentado from '../../components/ui/ControleSegmentado'
 import { hojeISO } from '../../lib/datas'
+import { focoAutomatico } from '../../lib/foco'
 import { useOnline } from '../../lib/useOnline'
 import type { Habito, TipoHabito } from '../../api/tipos'
 import StepperMeta from './StepperMeta'
@@ -103,7 +104,7 @@ export default function FormularioHabito({
           // do React chamaria focus() com o diálogo ainda fechado.
           ref={(elemento) => {
             campoNome.current = elemento
-            elemento?.setAttribute('autofocus', '')
+            if (focoAutomatico()) elemento?.setAttribute('autofocus', '')
           }}
           id={idNome}
           className={styles.entrada}

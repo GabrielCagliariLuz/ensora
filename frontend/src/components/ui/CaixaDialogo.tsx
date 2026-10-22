@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
+import { useVisualViewport } from '../../lib/useVisualViewport'
 import styles from './CaixaDialogo.module.css'
 
 // Base de BottomSheet e ModalConfirmacao: um <dialog> nativo aberto com
@@ -33,6 +34,8 @@ export default function CaixaDialogo({
   className,
   children,
 }: CaixaDialogoProps) {
+  // Só enquanto aberto: a sheet acompanha o teclado do celular.
+  useVisualViewport(aberto)
   const dialogo = useRef<HTMLDialogElement>(null)
   const pressionouNoFundo = useRef(false)
 
