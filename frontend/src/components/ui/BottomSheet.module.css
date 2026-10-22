@@ -10,6 +10,16 @@
   animation: subir var(--transicao-media);
 }
 
+/* Alça e cabeçalho: tocar e arrastar para baixo fecha a sheet (no mobile).
+   touch-action: none é só aqui, então o corpo continua rolando. */
+.zonaDeArraste {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  touch-action: none;
+  user-select: none;
+}
+
 .alca {
   flex-shrink: 0;
   align-self: center;
