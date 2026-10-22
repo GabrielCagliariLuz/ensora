@@ -1,0 +1,50 @@
+.anel {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 44px;
+}
+
+/* O traço do progresso começa às 12h: o quadro gira um quarto de volta. */
+.svg {
+  width: 36px;
+  height: 36px;
+  transform: rotate(-90deg);
+}
+
+.trilha,
+.progresso {
+  fill: none;
+  stroke-width: 4;
+}
+
+.trilha {
+  stroke: var(--hairline);
+}
+
+.progresso {
+  stroke: var(--ink);
+  transition: stroke-dasharray var(--transicao-suave);
+}
+
+.valor {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  font-weight: var(--weight-semibold);
+}
+
+/* Consistência alta: o anel e o número ficam verdes. */
+.verde .progresso {
+  stroke: var(--moss);
+}
+
+.verde .valor {
+  color: var(--moss);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progresso {
+    transition: none;
+  }
+}

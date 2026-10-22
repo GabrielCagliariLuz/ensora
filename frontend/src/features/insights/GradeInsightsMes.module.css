@@ -107,8 +107,8 @@
   display: block;
   color: var(--ash);
   font-family: var(--font-mono);
-  font-size: 9px;
-  line-height: 12px;
+  font-size: var(--text-rotulo);
+  line-height: 14px;
 }
 
 .numero {

@@ -164,3 +164,27 @@ export interface Consistencia {
   mes: string
   habitos: HabitoInsights[]
 }
+
+// Ritmo de um dia, em percentual de 0 a 100 com uma casa decimal. Sem `ritmo`
+// quando nenhum hábito existia no dia.
+export interface DiaDoRitmo {
+  data: string
+  ritmo?: number
+}
+
+// Bloco semanal do ritmo: S1 a S4 (dias 1-7, 8-14, 15-21 e 22 em diante).
+export interface SemanaDoRitmo {
+  rotulo: string
+  de: string
+  ate: string
+  ritmo?: number
+}
+
+// Resposta de GET /insights/ritmo (decisão 57).
+export interface Ritmo {
+  de: string
+  ate: string
+  ritmoMedio?: number
+  semanas: SemanaDoRitmo[]
+  dias: DiaDoRitmo[]
+}

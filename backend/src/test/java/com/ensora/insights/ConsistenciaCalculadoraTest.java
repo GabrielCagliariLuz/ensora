@@ -211,11 +211,20 @@ class ConsistenciaCalculadoraTest {
 	}
 
 	@Test
-	void semanalConsistenciaContaSemanasComMetaBatidaSobreSemanasConsideradas() {
+	void semanalConsistenciaSomaDiasFeitosSobreDiasEsperadosDasSemanasConsideradas() {
 		HabitoConsistencia h = unico(List.of(semanalDoRoteiro()), SETEMBRO, HOJE_DEPOIS);
 
-		// Semanas de 07, 14, 21 e 28/09 (a de 31/08 pertence a agosto): batidas as de 07 e 21 = 2/4.
-		assertThat(h.consistencia()).isEqualTo(50.0);
+		// Semanas de 07, 14, 21 e 28/09 (a de 31/08 pertence a agosto), meta 2 cada: esperados 8; feitos 2 + 1 + 2 + 1 = 6.
+		assertThat(h.consistencia()).isEqualTo(75.0);
+	}
+
+	@Test
+	void semanalDiasAlemDaMetaNaoCompensamAsSemanasFracas() {
+		// Meta 2; quatro dias feitos na semana de 07/09 e nenhum nas outras três: conta 2 de 8, não 4 de 8.
+		HabitoHistorico s = semanal(set(1), null, meta(LocalDate.of(2026, 8, 31), 2), set(7), set(8), set(9), set(10));
+		HabitoConsistencia h = unico(List.of(s), SETEMBRO, HOJE_DEPOIS);
+
+		assertThat(h.consistencia()).isEqualTo(25.0);
 	}
 
 	@Test

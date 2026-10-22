@@ -1,5 +1,9 @@
+/* minmax(0, 1fr): sem isso a coluna cresce até o conteúdo mais largo (a grade
+   do mês) e a página inteira rola na horizontal por baixo da sidebar. Com ele, só
+   o card da grade rola. */
 .pagina {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
 }
 

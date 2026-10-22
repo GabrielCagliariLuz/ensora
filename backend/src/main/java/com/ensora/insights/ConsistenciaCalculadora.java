@@ -100,8 +100,9 @@ public final class ConsistenciaCalculadora {
 
 		List<SemanaDoHabito> semanas = new ArrayList<>();
 		List<Celula> dias = new ArrayList<>();
-		int consideradas = 0;
-		int batidasConsideradas = 0;
+		// Dias esperados (soma das metas) e dias feitos (os de cada semana, limitados à meta) das semanas que contam.
+		int esperados = 0;
+		int feitosContados = 0;
 
 		for (LocalDate segunda = Semana.segundaFeiraDe(primeiro); !segunda.isAfter(ultimo); segunda = segunda.plusDays(7)) {
 			Integer meta = habito.metaNaSemana(segunda);
@@ -135,15 +136,14 @@ public final class ConsistenciaCalculadora {
 			boolean daEsteMes = !segunda.isBefore(primeiro);
 			boolean conta = daEsteMes && (encerrada || batida);
 			if (conta) {
-				consideradas++;
-				if (batida) {
-					batidasConsideradas++;
-				}
+				esperados += meta;
+				// Dia além da meta não compensa outra semana: cada semana vale, no máximo, a sua meta.
+				feitosContados += Math.min(feitos, meta);
 			}
 			semanas.add(new SemanaDoHabito(segunda, domingo, meta, feitos, batida, encerrada, conta));
 		}
 
-		Double consistencia = consideradas == 0 ? null : emPercentual((double) batidasConsideradas / consideradas);
+		Double consistencia = esperados == 0 ? null : emPercentual((double) feitosContados / esperados);
 		return new HabitoConsistencia(habito.id(), habito.nome(), habito.tipo(), habito.excluidoDia() != null,
 				consistencia, semanas, dias);
 	}

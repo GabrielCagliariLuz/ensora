@@ -12,6 +12,13 @@
   margin: 0;
 }
 
+/* Fora do card da grade, o estado ganha o próprio cartão. */
+.cartao {
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
 .botao {
   height: 40px;
   padding-inline: var(--space-4);
