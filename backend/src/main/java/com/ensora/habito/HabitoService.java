@@ -33,15 +33,13 @@ public class HabitoService {
 	private final HabitoMetaRepository metas;
 	private final RegistroHabitoRepository registros;
 	private final Clock relogio;
-	private final ZoneId fuso;
 
 	public HabitoService(HabitoRepository habitos, HabitoMetaRepository metas, RegistroHabitoRepository registros,
-			Clock relogio, ZoneId fuso) {
+			Clock relogio) {
 		this.habitos = habitos;
 		this.metas = metas;
 		this.registros = registros;
 		this.relogio = relogio;
-		this.fuso = fuso;
 	}
 
 	// Uma transação só: nunca existe hábito semanal sem a meta da primeira vigência (seção 9).
@@ -176,11 +174,11 @@ public class HabitoService {
 
 	/**
 	 * Base de dados dos Insights: os hábitos do usuário que existiram em algum dia de {@code de} a {@code ate}, inclusive
-	 * os excluídos, com metas e dias feitos. Os dias de criação e exclusão vêm do fuso do usuário. São 3 consultas,
+	 * os excluídos, com metas e dias feitos. Os dias de criação e exclusão vêm do {@code fuso} do usuário. São 3 consultas,
 	 * qualquer que seja o número de hábitos.
 	 */
 	@Transactional(readOnly = true)
-	public List<HabitoHistorico> historicoParaInsights(Long usuarioId, LocalDate de, LocalDate ate) {
+	public List<HabitoHistorico> historicoParaInsights(Long usuarioId, LocalDate de, LocalDate ate, ZoneId fuso) {
 		record Candidato(Habito habito, LocalDate criadoDia, LocalDate excluidoDia) {
 		}
 
@@ -272,6 +270,17 @@ public class HabitoService {
 		if (requisicao.vezesPorSemana() != null) {
 			throw new ValidacaoException("vezesPorSemana", "só vale para hábito semanal");
 		}
+	}
+
+	/**
+	 * Apaga tudo o que é de hábito do usuário, na ordem que as chaves estrangeiras pedem: registros, metas e hábitos
+	 * (inclusive os excluídos). Só a exclusão da conta usa isto.
+	 */
+	@Transactional
+	public void apagarTodosDoUsuario(Long usuarioId) {
+		registros.apagarDoUsuario(usuarioId);
+		metas.apagarDoUsuario(usuarioId);
+		habitos.apagarDoUsuario(usuarioId);
 	}
 
 }

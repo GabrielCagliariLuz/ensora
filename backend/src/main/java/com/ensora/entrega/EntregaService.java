@@ -112,4 +112,10 @@ public class EntregaService {
 		entrega.setNota(nota == null || nota.isEmpty() ? null : nota);
 	}
 
+	/** Apaga todas as entregas do usuário. Só a exclusão da conta usa isto. */
+	@Transactional
+	public void apagarTodasDoUsuario(Long usuarioId) {
+		entregas.apagarDoUsuario(usuarioId);
+	}
+
 }

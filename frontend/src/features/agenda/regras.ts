@@ -1,4 +1,4 @@
-import { ErroApi } from '../../api/erro'
+import { ErroApi, errosPorCampo } from '../../api/erro'
 import type {
   CategoriaEvento,
   Entrega,
@@ -162,28 +162,12 @@ export function requisicaoDaEntrega(
   return { ...corpo, ...mudancas }
 }
 
-// Campos do 400 VALIDACAO que existem no formulário. Os demais não têm onde
-// aparecer e caem na mensagem geral.
-function errosDoServidor<C extends string>(
-  erro: unknown,
-  campos: readonly C[],
-): Partial<Record<C, string>> {
-  const erros: Partial<Record<C, string>> = {}
-  if (!(erro instanceof ErroApi) || erro.status !== 400) return erros
-
-  for (const { campo, mensagem } of erro.campos ?? []) {
-    const conhecido = campos.find((nome) => nome === campo)
-    if (conhecido !== undefined) erros[conhecido] = mensagem
-  }
-  return erros
-}
-
 export function errosDeCamposEntrega(erro: unknown): ErrosEntrega {
-  return errosDoServidor(erro, CAMPOS_ENTREGA)
+  return errosPorCampo(erro, CAMPOS_ENTREGA)
 }
 
 export function errosDeCamposEvento(erro: unknown): ErrosEvento {
-  return errosDoServidor(erro, CAMPOS_EVENTO)
+  return errosPorCampo(erro, CAMPOS_EVENTO)
 }
 
 export function mensagemErroRegistro(erro: unknown): string {

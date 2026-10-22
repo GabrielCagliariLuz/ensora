@@ -1,16 +1,21 @@
 package com.ensora.auth;
 
+import com.ensora.auth.dto.ConfiguracaoCadastroResponse;
 import com.ensora.auth.dto.LoginRequest;
 import com.ensora.auth.dto.RegistrarRequest;
 import com.ensora.auth.dto.UsuarioResponse;
+import com.ensora.compartilhado.data.FusoHorario;
 import com.ensora.compartilhado.erro.AcessoNegadoException;
 import com.ensora.compartilhado.erro.ConflitoException;
 import com.ensora.compartilhado.erro.NaoAutenticadoException;
+import com.ensora.compartilhado.erro.ValidacaoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Locale;
 
 @Service
@@ -24,27 +29,48 @@ public class AuthService {
 	private final TokenAcessoService tokenAcessoService;
 	private final RefreshTokenService refreshTokenService;
 	private final LimitadorDeTentativasLogin limitador;
+	private final LimitadorDeCadastros limitadorDeCadastros;
 	private final boolean registroHabilitado;
+	// Vazio: cadastro sem convite. Preenchido: só entra quem informar este código.
+	private final String conviteCodigo;
+	// Fuso das contas novas que não informam o próprio (variável FUSO).
+	private final String fusoPadrao;
 	// Hash de uma senha que ninguém tem: serve para gastar o mesmo tempo quando o e-mail não existe.
 	private final String hashFicticio;
 
 	public AuthService(UsuarioRepository usuarios, PasswordEncoder codificadorDeSenha,
 			TokenAcessoService tokenAcessoService, RefreshTokenService refreshTokenService,
-			LimitadorDeTentativasLogin limitador,
-			@Value("${ensora.auth.registro-habilitado}") boolean registroHabilitado) {
+			LimitadorDeTentativasLogin limitador, LimitadorDeCadastros limitadorDeCadastros,
+			@Value("${ensora.auth.registro-habilitado}") boolean registroHabilitado,
+			@Value("${ensora.auth.convite-codigo}") String conviteCodigo, @Value("${ensora.fuso}") String fusoPadrao) {
 		this.usuarios = usuarios;
 		this.codificadorDeSenha = codificadorDeSenha;
 		this.tokenAcessoService = tokenAcessoService;
 		this.refreshTokenService = refreshTokenService;
 		this.limitador = limitador;
+		this.limitadorDeCadastros = limitadorDeCadastros;
 		this.registroHabilitado = registroHabilitado;
+		this.conviteCodigo = conviteCodigo == null ? "" : conviteCodigo.trim();
+		this.fusoPadrao = FusoHorario.interpretar(fusoPadrao).getId();
 		this.hashFicticio = codificadorDeSenha.encode("senha-que-ninguem-tem");
 	}
 
-	public UsuarioResponse registrar(RegistrarRequest requisicao) {
+	/** O cadastro aberto ao público depende desta flag; a tela consulta {@link #configuracaoDeCadastro()}. */
+	public ConfiguracaoCadastroResponse configuracaoDeCadastro() {
+		return new ConfiguracaoCadastroResponse(registroHabilitado, !conviteCodigo.isEmpty());
+	}
+
+	public UsuarioResponse registrar(RegistrarRequest requisicao, String ip) {
 		if (!registroHabilitado) {
 			throw new AcessoNegadoException("Cadastro desabilitado");
 		}
+		limitadorDeCadastros.verificar(ip);
+		// Toda tentativa conta, certa ou errada: limita a criação de contas e o palpite do código de convite.
+		limitadorDeCadastros.registrarTentativa(ip);
+		exigirConvite(requisicao.codigoConvite());
+		String fuso = requisicao.fuso() == null || requisicao.fuso().isBlank()
+				? fusoPadrao
+				: FusoHorario.interpretar(requisicao.fuso()).getId();
 		String email = normalizar(requisicao.email());
 		if (usuarios.existsByEmail(email)) {
 			throw new ConflitoException("E-mail já cadastrado");
@@ -52,6 +78,7 @@ public class AuthService {
 		Usuario usuario = new Usuario();
 		usuario.setEmail(email);
 		usuario.setSenhaHash(codificadorDeSenha.encode(requisicao.senha()));
+		usuario.setFuso(fuso);
 		try {
 			usuario = usuarios.save(usuario);
 		} catch (DataIntegrityViolationException e) {
@@ -95,6 +122,19 @@ public class AuthService {
 			return;
 		}
 		refreshTokenService.revogar(refreshToken);
+	}
+
+	// Antes de olhar o e-mail, para quem não tem o código não descobrir se um e-mail já existe.
+	private void exigirConvite(String informado) {
+		if (conviteCodigo.isEmpty()) {
+			return;
+		}
+		byte[] esperado = conviteCodigo.getBytes(StandardCharsets.UTF_8);
+		byte[] recebido = (informado == null ? "" : informado.trim()).getBytes(StandardCharsets.UTF_8);
+		// Comparação em tempo constante, para o tempo de resposta não denunciar quantos caracteres batem.
+		if (!MessageDigest.isEqual(esperado, recebido)) {
+			throw new ValidacaoException("codigoConvite", "Código de convite inválido");
+		}
 	}
 
 	private String normalizar(String email) {

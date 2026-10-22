@@ -77,4 +77,10 @@ public class EventoService {
 		evento.setCategoria(requisicao.categoria());
 	}
 
+	/** Apaga todos os eventos do usuário. Só a exclusão da conta usa isto. */
+	@Transactional
+	public void apagarTodosDoUsuario(Long usuarioId) {
+		eventos.apagarDoUsuario(usuarioId);
+	}
+
 }

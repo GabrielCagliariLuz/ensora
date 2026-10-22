@@ -4,6 +4,7 @@ import AppShell from '../components/layout/AppShell'
 import TelaCarregando from '../components/ui/TelaCarregando'
 import TelaErroConexao from '../components/ui/TelaErroConexao'
 import PaginaAjustes from '../features/ajustes/PaginaAjustes'
+import PaginaCadastro from '../features/auth/PaginaCadastro'
 import PaginaLogin from '../features/auth/PaginaLogin'
 import PaginaCalendario from '../features/calendario/PaginaCalendario'
 import PaginaInicio from '../features/inicio/PaginaInicio'
@@ -30,6 +31,13 @@ export const router = createBrowserRouter([
   {
     path: CAMINHOS.login,
     element: <PaginaLogin />,
+    loader: carregarLogin,
+    HydrateFallback: TelaCarregando,
+    errorElement: <TelaErroConexao />,
+  },
+  {
+    path: CAMINHOS.cadastro,
+    element: <PaginaCadastro />,
     loader: carregarLogin,
     HydrateFallback: TelaCarregando,
     errorElement: <TelaErroConexao />,

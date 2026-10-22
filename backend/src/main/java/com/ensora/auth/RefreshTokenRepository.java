@@ -22,4 +22,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 	@Query("update RefreshToken t set t.revogadoEm = :agora where t.usuarioId = :usuarioId and t.revogadoEm is null")
 	int revogarTodosDoUsuario(@Param("usuarioId") Long usuarioId, @Param("agora") Instant agora);
 
+	/** Apaga todas as sessões do usuário, revogadas ou não: a conta está sendo excluída e a chave estrangeira exige. */
+	@Modifying
+	@Query("delete from RefreshToken t where t.usuarioId = :usuarioId")
+	int apagarDoUsuario(@Param("usuarioId") Long usuarioId);
+
 }

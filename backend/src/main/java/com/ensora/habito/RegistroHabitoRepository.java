@@ -29,4 +29,9 @@ public interface RegistroHabitoRepository extends JpaRepository<RegistroHabito, 
 	@Query("delete from RegistroHabito r where r.habitoId = :habitoId and r.data = :data")
 	int desmarcar(@Param("habitoId") Long habitoId, @Param("data") LocalDate data);
 
+	/** Apaga todos os registros dos hábitos do usuário (exclusão da conta). */
+	@Modifying
+	@Query("delete from RegistroHabito r where r.habitoId in (select h.id from Habito h where h.usuarioId = :usuarioId)")
+	int apagarDoUsuario(@Param("usuarioId") Long usuarioId);
+
 }

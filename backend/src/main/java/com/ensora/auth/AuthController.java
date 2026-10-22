@@ -1,5 +1,6 @@
 package com.ensora.auth;
 
+import com.ensora.auth.dto.ConfiguracaoCadastroResponse;
 import com.ensora.auth.dto.LoginRequest;
 import com.ensora.auth.dto.LoginResponse;
 import com.ensora.auth.dto.RegistrarRequest;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,10 +33,16 @@ public class AuthController {
 		this.authService = authService;
 	}
 
+	/** Público: a tela de cadastro pergunta se o cadastro está aberto e se pede código de convite. */
+	@GetMapping("/registro")
+	public ConfiguracaoCadastroResponse configuracaoDeCadastro() {
+		return authService.configuracaoDeCadastro();
+	}
+
 	@PostMapping("/registrar")
 	@ResponseStatus(HttpStatus.CREATED)
-	public UsuarioResponse registrar(@Valid @RequestBody RegistrarRequest requisicao) {
-		return authService.registrar(requisicao);
+	public UsuarioResponse registrar(@Valid @RequestBody RegistrarRequest requisicao, HttpServletRequest http) {
+		return authService.registrar(requisicao, http.getRemoteAddr());
 	}
 
 	@PostMapping("/login")

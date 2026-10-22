@@ -1,0 +1,148 @@
+.cartao {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.titulo {
+  margin: 0;
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* A zona de perigo: o título e o botão em vermelho. */
+.perigo .titulo {
+  color: var(--ember);
+}
+
+.texto {
+  margin: 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.linha {
+  display: grid;
+  gap: 2px;
+}
+
+.rotuloLinha {
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.valorLinha {
+  overflow-wrap: anywhere;
+  font-size: var(--text-corpo);
+  line-height: var(--leading-corpo);
+}
+
+.formulario {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.status {
+  margin: 0;
+  color: var(--moss);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.botao,
+.botaoPrimario,
+.botaoPerigo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition:
+    background var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.botao {
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  color: var(--ink);
+}
+
+.botao:hover:not(:disabled) {
+  background: var(--hover-surface);
+}
+
+.botaoPrimario {
+  background: var(--ink);
+  border: 0;
+  color: var(--paper);
+  font-weight: var(--weight-semibold);
+}
+
+.botaoPrimario:hover:not(:disabled) {
+  background: var(--ink-hover);
+}
+
+.botaoPerigo {
+  background: var(--card);
+  border: var(--border-width) solid var(--ember-border);
+  color: var(--ember);
+}
+
+.botaoPerigo:hover:not(:disabled) {
+  background: var(--ember-surface);
+}
+
+.botao:active:not(:disabled),
+.botaoPrimario:active:not(:disabled),
+.botaoPerigo:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.botao:disabled,
+.botaoPrimario:disabled,
+.botaoPerigo:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.botao:focus-visible,
+.botaoPrimario:focus-visible,
+.botaoPerigo:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao,
+  .botaoPrimario,
+  .botaoPerigo {
+    transition: none;
+  }
+
+  .botao:active:not(:disabled),
+  .botaoPrimario:active:not(:disabled),
+  .botaoPerigo:active:not(:disabled) {
+    transform: none;
+  }
+}

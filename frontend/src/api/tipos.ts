@@ -188,3 +188,25 @@ export interface Ritmo {
   semanas: SemanaDoRitmo[]
   dias: DiaDoRitmo[]
 }
+
+// Resposta de GET /usuario e de PUT /usuario/fuso: a conta de quem está logado.
+export interface Conta {
+  id: number
+  email: string
+  // Nome IANA do fuso (ex.: America/Sao_Paulo).
+  fuso: string
+}
+
+// GET /auth/registro (público): o que a tela de cadastro precisa saber.
+export interface ConfiguracaoCadastro {
+  habilitado: boolean
+  exigeConvite: boolean
+}
+
+// Corpo de POST /auth/registrar. O código só vale quando o servidor exige convite.
+export interface CadastroRequest {
+  email: string
+  senha: string
+  codigoConvite?: string
+  fuso?: string
+}

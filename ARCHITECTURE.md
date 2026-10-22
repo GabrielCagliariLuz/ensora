@@ -308,6 +308,7 @@ feito no `Service`.
 | ------------ | ----------- | ----------------------------------------------- |
 | `email`      | texto       | único; `CHECK (email = lower(email))` no banco  |
 | `senha_hash` | texto       | BCrypt                                          |
+| `fuso`       | texto       | nome IANA; default `America/Sao_Paulo`          |
 | `criado_em`  | TIMESTAMPTZ | default `now()`                                 |
 
 ### refresh_token
@@ -486,10 +487,20 @@ habito/
 ## 11. Autenticação
 
 - Conta com **e-mail e senha**. E-mail normalizado em minúsculas com
-  índice único; senha com BCrypt (mínimo de 4 caracteres, máximo de 72,
-  que é o limite do BCrypt; ver decisão 40). Erro de login genérico,
-  sem revelar se o e-mail existe. Limite de 5 falhas de login por IP em
-  15 minutos (resposta 429), guardado em memória.
+  índice único; senha com BCrypt (**mínimo de 8 caracteres no cadastro**,
+  máximo de 72, que é o limite do BCrypt; ver decisões 40 e 60). O login
+  não exige tamanho mínimo, para as contas antigas de 4 caracteres
+  continuarem entrando. Erro de login genérico, sem revelar se o e-mail
+  existe. Limite de 5 falhas de login por IP em 15 minutos (resposta
+  429), guardado em memória.
+- **IP do cliente atrás do proxy:** `server.forward-headers-strategy=native`
+  (RemoteIpValve do Tomcat). Atrás do Render, o IP vem do
+  `X-Forwarded-For`, lido da direita para a esquerda e só quando a
+  conexão vem de um proxy interno (faixas privadas, o padrão do Spring),
+  então quem forja o cabeçalho não escolhe o próprio IP. Sem isso, todos
+  os usuários compartilhariam o IP do proxy e o mesmo contador de
+  falhas. Se o provedor usar outras faixas, ajustar
+  `server.tomcat.remoteip.internal-proxies`.
 - **Access token (JWT, ~15 min)** devolvido no corpo da resposta e
   mantido **somente em memória** no frontend. Enviado no header
   `Authorization`. Assinado com HS256 (segredo em `JWT_SEGREDO`); o
@@ -522,8 +533,13 @@ habito/
 - Recuperação de senha e verificação de e-mail ficam fora da v1.
 - A implementação seguirá Spring Security.
 - `POST /auth/registrar` existe, mas só funciona com
-  `REGISTRATION_ENABLED=true` (padrão `false`). A conta é criada uma
-  vez e a flag é desligada em produção.
+  `REGISTRATION_ENABLED=true` (padrão `false`). Com a flag ligada, o
+  cadastro tem limite de **10 tentativas por IP em 60 minutos** (toda
+  tentativa conta, certa ou errada; resposta 429) e, se `CONVITE_CODIGO`
+  estiver preenchido, só aceita quem informar esse código
+  (`codigoConvite`, comparado em tempo constante e antes de olhar o
+  e-mail, para não revelar se ele existe). `GET /auth/registro` (público)
+  diz à tela se o cadastro está aberto e se pede código.
 - Inicialmente o sistema será usado por um único usuário.
 - A solução deve continuar permitindo evolução para múltiplos
   usuários.
@@ -532,7 +548,8 @@ habito/
 
 ## 12. Datas e fuso horário
 
-- Inicialmente será usado o **fuso horário do usuário atual**.
+- Cada usuário tem o **seu fuso horário** (`usuario.fuso`, nome IANA como
+  `America/Sao_Paulo`).
 - O sistema não deve espalhar lógica de "hoje" pelo frontend/backend.
 - A data relevante para consultas deve ser explícita nas requisições
   quando necessário.
@@ -542,12 +559,14 @@ habito/
   usuário.
 - Momentos técnicos usam `TIMESTAMPTZ` (`criado_em`, `excluido_em`,
   `concluida_em`, expiração de token).
-- Se o sistema for expandido para vários usuários, o fuso deverá
-  passar a ser uma configuração por usuário.
-- **Fuso fixo no servidor:** quando o servidor precisa transformar um
-  instante (`criado_em`, `excluido_em`) no dia do usuário, usa o fuso da
-  propriedade `ensora.fuso` (variável `FUSO`, padrão `America/Sao_Paulo`).
-  Hoje isso só serve aos Insights (decisão 56).
+- **Fuso por usuário (decisão 61):** quando o servidor precisa decidir o
+  "hoje" ou transformar um instante (`criado_em`, `excluido_em`) no dia
+  do usuário, usa o fuso guardado na conta dele. Hoje isso só serve aos
+  Insights. A conta nova recebe o fuso que a tela informa (lido do
+  navegador); sem ele, vale o padrão do servidor, a propriedade
+  `ensora.fuso` (variável `FUSO`, padrão `America/Sao_Paulo`). Só são
+  aceitos nomes de região IANA, e não deslocamentos como `+03:00`, que não
+  seguem o horário de verão e dariam o dia errado parte do ano.
 
 ## 13. Frontend
 
@@ -698,20 +717,43 @@ Ações:
 
 ### Settings
 
-Acessada pela engrenagem. Sem protótipo; conteúdo a definir.
+Acessada pelo item Settings (na barra de baixo no mobile e na sidebar
+no desktop). Sem protótipo. Blocos de conta, na API da
+seção 15:
+
+- **Conta:** e-mail (só leitura) e fuso horário, numa lista com os fusos
+  do Brasil primeiro e os demais em ordem alfabética. Salvar o fuso
+  atualiza os Insights;
+- **Senha:** senha atual, nova (8 a 72 caracteres) e confirmação. Trocar a
+  senha encerra todas as sessões: a pessoa volta ao login com um aviso;
+- **Sessão:** sair da conta;
+- **Excluir conta:** pede a senha num modal e apaga tudo. Volta ao login
+  com um aviso.
 
 ### Login / Registro
 
-Sem protótipo; a desenhar.
+Sem protótipo. O **login** (e-mail e senha) mostra o link "Criar conta"
+só quando o cadastro está aberto (`GET /auth/registro`) e, depois de
+trocar a senha ou excluir a conta, um aviso de uma vez.
+
+O **cadastro** (`/cadastro`) pede e-mail, senha, confirmação da senha e,
+quando o servidor exige convite, o código. O fuso do navegador vai junto,
+sem campo na tela (muda-se depois em Configurações). Com o cadastro
+fechado, a tela só avisa. Criada a conta, a pessoa entra e cai na Home.
 
 ## 15. Contrato inicial da API
 
 | Tela            | Ação / dado            | Endpoint                                 |
 | --------------- | ---------------------- | ---------------------------------------- |
+| Auth            | Configuração do cadastro | `GET /auth/registro`                   |
 | Auth            | Registrar              | `POST /auth/registrar`                   |
 | Auth            | Login                  | `POST /auth/login`                       |
 | Auth            | Renovar sessão         | `POST /auth/refresh`                     |
 | Auth            | Sair                   | `POST /auth/logout`                      |
+| Settings        | Ver a conta            | `GET /usuario`                           |
+| Settings        | Trocar o fuso          | `PUT /usuario/fuso`                      |
+| Settings        | Trocar a senha         | `PUT /usuario/senha`                     |
+| Settings        | Excluir a conta        | `DELETE /usuario`                        |
 | Home            | Carregar tela          | `GET /inicio?data=AAAA-MM-DD`            |
 | Habits          | Listar hábitos         | `GET /habitos`                           |
 | Home            | Marcar hábito          | `PUT /habitos/{id}/registros/{data}`     |
@@ -739,14 +781,30 @@ Princípios:
 
 ### Contratos de autenticação
 
+`GET /auth/registro` (público): o que a tela de cadastro precisa saber.
+
+```json
+// resposta 200
+{ "habilitado": true, "exigeConvite": false }
+```
+
 `POST /auth/registrar` (só com `REGISTRATION_ENABLED=true`):
 
 ```json
-// requisição
-{ "email": "pessoa@exemplo.com", "senha": "1234" }
+// requisição (codigoConvite é opcional: só vale quando o servidor exige convite)
+{ "email": "pessoa@exemplo.com", "senha": "senha-com-8-ou-mais", "codigoConvite": "...", "fuso": "America/Sao_Paulo" }
 // resposta 201
 { "id": 1, "email": "pessoa@exemplo.com" }
 ```
+
+- `senha`: de 8 a 72 caracteres (`400 VALIDACAO` no campo `senha`).
+- `fuso` é opcional (nome IANA). Ausente ou em branco, vale o padrão do
+  servidor; um nome inexistente (ou um deslocamento como `+03:00`) dá
+  `400 VALIDACAO` no campo `fuso`.
+- `codigoConvite` ausente ou errado, com convite exigido: `400 VALIDACAO`
+  no campo `codigoConvite`.
+- Cadastro desabilitado: `403 ACESSO_NEGADO`. E-mail já cadastrado:
+  `409 CONFLITO`. Mais de 10 tentativas por IP em 60 minutos: `429`.
 
 `POST /auth/login`:
 
@@ -770,6 +828,59 @@ Princípios:
 `HttpOnly` e `SameSite` do cookie original, para o navegador apagá-lo).
 É idempotente: sem cookie ou com token já revogado, também responde 204.
 Revoga só o token desta sessão.
+
+### Contratos da conta
+
+Todos exigem token. A conta é sempre a do token: não há id na rota.
+
+`GET /usuario`:
+
+```json
+// resposta 200
+{ "id": 1, "email": "pessoa@exemplo.com", "fuso": "America/Sao_Paulo" }
+```
+
+`PUT /usuario/fuso`: troca o fuso e responde `200` com a conta no mesmo
+formato.
+
+```json
+// requisição
+{ "fuso": "America/Manaus" }
+```
+
+- Só nomes de região IANA. Um nome inexistente (ou um deslocamento como
+  `+03:00`) dá `400 VALIDACAO` no campo `fuso`.
+
+`PUT /usuario/senha` (responde `204`):
+
+```json
+// requisição
+{ "senhaAtual": "...", "novaSenha": "senha-com-8-ou-mais" }
+```
+
+- `senhaAtual` errada: `400 VALIDACAO` no campo `senhaAtual` (e não 401,
+  para o cliente HTTP não confundir com sessão perdida e tentar renovar).
+  `novaSenha` com menos de 8 ou mais de 72 caracteres, ou igual à atual:
+  `400 VALIDACAO` no campo `novaSenha`.
+- **Encerra todas as sessões**: revoga todos os refresh tokens do usuário.
+  O refresh token vai num cookie de `Path=/auth`, que esta rota não
+  recebe, então não dá para poupar a sessão atual: o front leva a pessoa
+  de volta ao login. O access token já emitido segue valendo até expirar
+  (até 15 minutos).
+
+`DELETE /usuario` (responde `204`): exclui a conta e **tudo** o que é do
+usuário (registros, metas e hábitos, inclusive os excluídos, entregas,
+eventos e sessões), numa transação só.
+
+```json
+// requisição (a senha confirma a exclusão, que não tem volta)
+{ "senha": "..." }
+```
+
+- `senha` errada: `400 VALIDACAO` no campo `senha`.
+- Errar a senha em `PUT /usuario/senha` ou `DELETE /usuario` conta no
+  mesmo limite por IP do login (5 falhas em 15 minutos, resposta 429):
+  quem tiver só um access token roubado não pode chutar a senha à vontade.
 
 ### Contratos de hábitos
 
@@ -1205,6 +1316,9 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 57  | O ritmo (`GET /insights/ritmo`) é a média aritmética dos ritmos diários, calculada sobre valores não arredondados e mostrada em percentual com uma casa. O hábito existe do dia da criação até o dia anterior ao da exclusão; o semanal entra com meta/7 usando a meta vigente na semana do dia; dia sem hábito existente fica sem valor e fora das médias. S1 a S4 são blocos de 7 dias a partir do primeiro dia do intervalo, e o S4 absorve os dias 29 a 31. O intervalo tem no máximo 31 dias e o front envia `ate` = hoje no mês em andamento |
 | 58  | A consistência e a grade de Insights (`GET /insights/consistencia`) seguem estas regras: o semanal numa semana encerrada sem bater a meta fica vermelho em todos os dias sem registro daquela semana (ponto aberto 8 resolvido); a semana pertence ao mês da sua segunda-feira e só entra na consistência se já terminou ou já bateu a meta (a em andamento nunca penaliza); no diário os dias considerados vão da criação até hoje, o último dia do mês ou o dia anterior à exclusão; dias em que o hábito não existia não têm célula; "hoje" é o do servidor, no fuso fixo da decisão 56. A resposta inclui o resumo de cada semana (`feitos`, `meta`, `batida`) para o front poder suavizar o vermelho sem mudar o backend |
 | 59  | A consistência do hábito semanal passa a ser dias feitos ÷ dias esperados, e não semanas com meta batida ÷ semanas consideradas (revisa a decisão 58 e a seção 7.2): o denominador é a soma das metas das semanas que contam e o numerador, os registros de cada semana limitados à meta (dia além da meta não compensa outra semana fraca). O resto da decisão 58 não muda: a semana pertence ao mês da segunda-feira e a em andamento só conta se já bateu a meta. Motivo: o Figma mostra o semanal em dias (Academia, 7 / 9 dias = 77%), mais fino que "semana batida ou não". O formato da resposta não muda |
+| 60  | Cadastro preparado para mais de um usuário (revisa a decisão 40): senha com mínimo de **8** caracteres no cadastro (o login continua sem mínimo, para as contas antigas); limite de 10 tentativas de cadastro por IP em 60 minutos, contando toda tentativa; código de convite opcional (`CONVITE_CODIGO`), que permite voltar a restringir o app a família e amigos só com uma variável de ambiente; e IP do cliente lido atrás do proxy com `server.forward-headers-strategy=native`, para o limite de login e de cadastro valer por pessoa e não por proxy |
+| 61  | O fuso horário passa a ser por usuário (revisa a decisão 56 e a seção 12): a coluna `usuario.fuso` (nome IANA, default `America/Sao_Paulo`, migration V6) define o "hoje" do servidor e o dia de criação e exclusão dos hábitos nos Insights. O `HabitoService` deixa de ter fuso fixo e recebe o fuso por parâmetro; o `InsightsService` o obtém do `UsuarioService`, um Service do módulo `auth`, porque os módulos não falam com Repositories de outros. O cadastro aceita o fuso (opcional) e a variável `FUSO` vira só o padrão das contas novas. Alterar o fuso depois fica para a API da conta |
+| 62  | API da conta (`/usuario`, módulo agregado `conta`): ver a conta, trocar o fuso e a senha e excluir a conta. Trocar a senha revoga todas as sessões, inclusive a atual, porque o cookie do refresh token só vai a `/auth` e a rota não identifica a sessão corrente; o front leva ao login. Excluir apaga tudo do usuário (registros, metas, hábitos, entregas, eventos e sessões) numa transação, em consultas em massa filtradas por `usuario_id`, e exige a senha. Senha errada nessas rotas é `400` no campo (não 401, para o cliente não tentar renovar a sessão) e conta no limite por IP do login |
 
 ## 17. Pontos ainda em aberto
 

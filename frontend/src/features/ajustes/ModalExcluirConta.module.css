@@ -1,0 +1,9 @@
+/* O texto e o campo de senha dentro do modal de confirmação, alinhados à esquerda
+   (o corpo do modal é centralizado). */
+.texto {
+  margin: 0 0 var(--space-3);
+}
+
+.campo {
+  text-align: left;
+}
