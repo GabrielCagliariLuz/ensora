@@ -486,10 +486,20 @@ habito/
 ## 11. Autenticação
 
 - Conta com **e-mail e senha**. E-mail normalizado em minúsculas com
-  índice único; senha com BCrypt (mínimo de 4 caracteres, máximo de 72,
-  que é o limite do BCrypt; ver decisão 40). Erro de login genérico,
-  sem revelar se o e-mail existe. Limite de 5 falhas de login por IP em
-  15 minutos (resposta 429), guardado em memória.
+  índice único; senha com BCrypt (**mínimo de 8 caracteres no cadastro**,
+  máximo de 72, que é o limite do BCrypt; ver decisões 40 e 60). O login
+  não exige tamanho mínimo, para as contas antigas de 4 caracteres
+  continuarem entrando. Erro de login genérico, sem revelar se o e-mail
+  existe. Limite de 5 falhas de login por IP em 15 minutos (resposta
+  429), guardado em memória.
+- **IP do cliente atrás do proxy:** `server.forward-headers-strategy=native`
+  (RemoteIpValve do Tomcat). Atrás do Render, o IP vem do
+  `X-Forwarded-For`, lido da direita para a esquerda e só quando a
+  conexão vem de um proxy interno (faixas privadas, o padrão do Spring),
+  então quem forja o cabeçalho não escolhe o próprio IP. Sem isso, todos
+  os usuários compartilhariam o IP do proxy e o mesmo contador de
+  falhas. Se o provedor usar outras faixas, ajustar
+  `server.tomcat.remoteip.internal-proxies`.
 - **Access token (JWT, ~15 min)** devolvido no corpo da resposta e
   mantido **somente em memória** no frontend. Enviado no header
   `Authorization`. Assinado com HS256 (segredo em `JWT_SEGREDO`); o
@@ -522,8 +532,13 @@ habito/
 - Recuperação de senha e verificação de e-mail ficam fora da v1.
 - A implementação seguirá Spring Security.
 - `POST /auth/registrar` existe, mas só funciona com
-  `REGISTRATION_ENABLED=true` (padrão `false`). A conta é criada uma
-  vez e a flag é desligada em produção.
+  `REGISTRATION_ENABLED=true` (padrão `false`). Com a flag ligada, o
+  cadastro tem limite de **10 tentativas por IP em 60 minutos** (toda
+  tentativa conta, certa ou errada; resposta 429) e, se `CONVITE_CODIGO`
+  estiver preenchido, só aceita quem informar esse código
+  (`codigoConvite`, comparado em tempo constante e antes de olhar o
+  e-mail, para não revelar se ele existe). `GET /auth/registro` (público)
+  diz à tela se o cadastro está aberto e se pede código.
 - Inicialmente o sistema será usado por um único usuário.
 - A solução deve continuar permitindo evolução para múltiplos
   usuários.
@@ -708,6 +723,7 @@ Sem protótipo; a desenhar.
 
 | Tela            | Ação / dado            | Endpoint                                 |
 | --------------- | ---------------------- | ---------------------------------------- |
+| Auth            | Configuração do cadastro | `GET /auth/registro`                   |
 | Auth            | Registrar              | `POST /auth/registrar`                   |
 | Auth            | Login                  | `POST /auth/login`                       |
 | Auth            | Renovar sessão         | `POST /auth/refresh`                     |
@@ -739,14 +755,27 @@ Princípios:
 
 ### Contratos de autenticação
 
+`GET /auth/registro` (público): o que a tela de cadastro precisa saber.
+
+```json
+// resposta 200
+{ "habilitado": true, "exigeConvite": false }
+```
+
 `POST /auth/registrar` (só com `REGISTRATION_ENABLED=true`):
 
 ```json
-// requisição
-{ "email": "pessoa@exemplo.com", "senha": "1234" }
+// requisição (codigoConvite é opcional: só vale quando o servidor exige convite)
+{ "email": "pessoa@exemplo.com", "senha": "senha-com-8-ou-mais", "codigoConvite": "..." }
 // resposta 201
 { "id": 1, "email": "pessoa@exemplo.com" }
 ```
+
+- `senha`: de 8 a 72 caracteres (`400 VALIDACAO` no campo `senha`).
+- `codigoConvite` ausente ou errado, com convite exigido: `400 VALIDACAO`
+  no campo `codigoConvite`.
+- Cadastro desabilitado: `403 ACESSO_NEGADO`. E-mail já cadastrado:
+  `409 CONFLITO`. Mais de 10 tentativas por IP em 60 minutos: `429`.
 
 `POST /auth/login`:
 
@@ -1205,6 +1234,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 57  | O ritmo (`GET /insights/ritmo`) é a média aritmética dos ritmos diários, calculada sobre valores não arredondados e mostrada em percentual com uma casa. O hábito existe do dia da criação até o dia anterior ao da exclusão; o semanal entra com meta/7 usando a meta vigente na semana do dia; dia sem hábito existente fica sem valor e fora das médias. S1 a S4 são blocos de 7 dias a partir do primeiro dia do intervalo, e o S4 absorve os dias 29 a 31. O intervalo tem no máximo 31 dias e o front envia `ate` = hoje no mês em andamento |
 | 58  | A consistência e a grade de Insights (`GET /insights/consistencia`) seguem estas regras: o semanal numa semana encerrada sem bater a meta fica vermelho em todos os dias sem registro daquela semana (ponto aberto 8 resolvido); a semana pertence ao mês da sua segunda-feira e só entra na consistência se já terminou ou já bateu a meta (a em andamento nunca penaliza); no diário os dias considerados vão da criação até hoje, o último dia do mês ou o dia anterior à exclusão; dias em que o hábito não existia não têm célula; "hoje" é o do servidor, no fuso fixo da decisão 56. A resposta inclui o resumo de cada semana (`feitos`, `meta`, `batida`) para o front poder suavizar o vermelho sem mudar o backend |
 | 59  | A consistência do hábito semanal passa a ser dias feitos ÷ dias esperados, e não semanas com meta batida ÷ semanas consideradas (revisa a decisão 58 e a seção 7.2): o denominador é a soma das metas das semanas que contam e o numerador, os registros de cada semana limitados à meta (dia além da meta não compensa outra semana fraca). O resto da decisão 58 não muda: a semana pertence ao mês da segunda-feira e a em andamento só conta se já bateu a meta. Motivo: o Figma mostra o semanal em dias (Academia, 7 / 9 dias = 77%), mais fino que "semana batida ou não". O formato da resposta não muda |
+| 60  | Cadastro preparado para mais de um usuário (revisa a decisão 40): senha com mínimo de **8** caracteres no cadastro (o login continua sem mínimo, para as contas antigas); limite de 10 tentativas de cadastro por IP em 60 minutos, contando toda tentativa; código de convite opcional (`CONVITE_CODIGO`), que permite voltar a restringir o app a família e amigos só com uma variável de ambiente; e IP do cliente lido atrás do proxy com `server.forward-headers-strategy=native`, para o limite de login e de cadastro valer por pessoa e não por proxy |
 
 ## 17. Pontos ainda em aberto
 
