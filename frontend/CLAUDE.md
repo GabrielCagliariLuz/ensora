@@ -12,7 +12,10 @@ Editado no VS Code. Regras gerais e arquitetura: `../CLAUDE.md` e
   (`react-router`, `createBrowserRouter`).
 - Vitest (ambiente `node`; testes `*.test.ts` ao lado do código, importando
   `describe/it/expect/vi` de `vitest`).
-- PWA (service worker, cache e fila offline): a configurar.
+- PWA: `vite-plugin-pwa` (manifest, ícones e service worker com o shell em
+  cache, `autoUpdate`). Ícones gerados por `npm run icones` a partir de
+  `public/anel.svg`; os PNGs são commitados. Cache de dados e fila offline
+  ainda não existem (#56 e #57).
 
 ## Comandos
 
