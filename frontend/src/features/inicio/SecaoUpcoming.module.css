@@ -63,3 +63,13 @@
     letter-spacing: 0.08em;
   }
 }
+
+/* Em duas colunas, a seção usa as duas linhas do grid da página (título e blocos),
+   iguais às da coluna Today, para os primeiros cartões se alinharem. */
+@media (min-width: 1024px) {
+  .secao {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 2;
+  }
+}
