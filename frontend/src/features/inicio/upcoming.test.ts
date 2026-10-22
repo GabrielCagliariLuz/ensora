@@ -7,6 +7,7 @@ import {
   formatarHorarioEvento,
   legendaPrazo,
   ordenarEntregas,
+  ordenarEventos,
   situacaoPrazo,
   textoDiasEvento,
 } from './upcoming'
@@ -286,6 +287,31 @@ describe('contagemPrazo', () => {
     expect(
       contagemPrazo(entrega({ prazoData: '2026-10-10', concluida: true }), agora),
     ).toEqual({ texto: 'concluída', estado: 'concluida', urgente: false })
+  })
+})
+
+describe('ordenarEventos', () => {
+  // `agora` é 21/10/2026, 10:00.
+  const passado = evento({ id: 1, titulo: 'Passado', inicio: '08:00:00', termino: '09:00:00' })
+  const futuro = evento({ id: 2, titulo: 'Futuro', inicio: '14:00:00' })
+  const acontecendo = evento({ id: 3, titulo: 'Agora', inicio: '09:00:00', termino: '11:00:00' })
+  const outroDia = evento({ id: 4, titulo: 'Amanhã', data: '2026-10-22', inicio: '08:00:00' })
+
+  it('põe os encerrados no fim, sem mudar a ordem dos demais', () => {
+    expect(
+      ordenarEventos([passado, futuro, acontecendo, outroDia], agora).map((e) => e.titulo),
+    ).toEqual(['Futuro', 'Agora', 'Amanhã', 'Passado'])
+  })
+
+  it('não altera a lista recebida', () => {
+    const original = [passado, futuro]
+    ordenarEventos(original, agora)
+
+    expect(original.map((e) => e.titulo)).toEqual(['Passado', 'Futuro'])
+  })
+
+  it('devolve vazio para lista vazia', () => {
+    expect(ordenarEventos([], agora)).toEqual([])
   })
 })
 

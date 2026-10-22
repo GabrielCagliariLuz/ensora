@@ -148,3 +148,13 @@ export function ordenarEntregas(entregas: readonly Entrega[]): Entrega[] {
     ...entregas.filter((entrega) => entrega.concluida),
   ]
 }
+
+// Eventos que ainda vão acontecer ou estão acontecendo primeiro, na ordem do
+// servidor; os encerrados vão para o fim, também na ordem.
+export function ordenarEventos(eventos: readonly Evento[], agora: Date): Evento[] {
+  const encerrado = (evento: Evento) => estadoEvento(evento, agora) === 'encerrado'
+  return [
+    ...eventos.filter((evento) => !encerrado(evento)),
+    ...eventos.filter(encerrado),
+  ]
+}

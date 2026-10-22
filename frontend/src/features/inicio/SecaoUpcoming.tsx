@@ -6,7 +6,7 @@ import { useAnimarOrdem } from '../../lib/useAnimarOrdem'
 import ItemEntrega from './ItemEntrega'
 import ItemEvento from './ItemEvento'
 import { mensagemErroConclusao } from './regras'
-import { ordenarEntregas } from './upcoming'
+import { ordenarEntregas, ordenarEventos } from './upcoming'
 import { useConcluirEntrega } from './useConcluirEntrega'
 import styles from './SecaoUpcoming.module.css'
 
@@ -24,7 +24,8 @@ export default function SecaoUpcoming({ upcoming, hoje }: SecaoUpcomingProps) {
   )
 
   const entregas = ordenarEntregas(upcoming.entregas)
-  const eventos = upcoming.eventos
+  // Eventos encerrados descem para o fim da lista.
+  const eventos = ordenarEventos(upcoming.eventos, agora)
   // Concluir faz a entrega descer: a lista desliza em vez de pular.
   const registrarEntrega = useAnimarOrdem(entregas.map((e) => e.id).join(','))
   const vazio = entregas.length === 0 && eventos.length === 0
