@@ -70,8 +70,11 @@
 }
 
 /* Só o corpo rola, com o cabeçalho fixo. */
+/* flex-basis automático, e não 0: no Safari do iPhone, um flex: 1 dentro de um
+   diálogo de altura automática colapsa o corpo (sobra só o padding). Assim o
+   corpo tem a altura do conteúdo e encolhe, rolando, só quando falta espaço. */
 .corpo {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
   padding: 0 var(--space-5)
