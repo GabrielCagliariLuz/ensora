@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { desmarcarHabito, marcarHabito } from '../../api/habitos'
+import { chavesInsights } from '../insights/chaves'
 import { chavesInicio } from './chaves'
 import { aplicarMarcacaoNoCache } from './marcacao'
 
@@ -50,9 +51,11 @@ export function useMarcarHabito(
       // Só a última marcação em andamento reconcilia com o servidor: refetch no
       // meio de uma sequência de cliques faria o contador piscar.
       if (queryClient.isMutating({ mutationKey: CHAVE_MUTACAO }) === 1) {
-        return queryClient.invalidateQueries({
-          queryKey: chavesInicio.dia(data),
-        })
+        // A grade dos Insights também muda (a célula de hoje).
+        return Promise.all([
+          queryClient.invalidateQueries({ queryKey: chavesInicio.dia(data) }),
+          queryClient.invalidateQueries({ queryKey: chavesInsights.todos }),
+        ])
       }
     },
   })

@@ -123,3 +123,44 @@ export interface ErroResposta {
   caminho: string
   campos?: CampoInvalido[]
 }
+
+// Estado de uma célula hábito × dia da grade de Insights (seção 7.4).
+export type EstadoCelula =
+  | 'CONCLUIDO'
+  | 'DESCANSO_FUTURO'
+  | 'NAO_REALIZADO'
+  | 'EM_ABERTO'
+
+export interface CelulaInsights {
+  data: string
+  estado: EstadoCelula
+}
+
+// Resumo de uma semana (segunda a domingo) de um hábito semanal.
+export interface SemanaDoHabito {
+  de: string
+  ate: string
+  meta: number
+  feitos: number
+  batida: boolean
+  encerrada: boolean
+  contaNaConsistencia: boolean
+}
+
+// Hábito na resposta de GET /insights/consistencia. `dias` só tem os dias em
+// que o hábito existia; `semanas` só existe no semanal; `consistencia` (0 a 100)
+// não aparece quando não há dias ou semanas a considerar.
+export interface HabitoInsights {
+  id: number
+  nome: string
+  tipo: TipoHabito
+  excluido: boolean
+  consistencia?: number
+  semanas?: SemanaDoHabito[]
+  dias: CelulaInsights[]
+}
+
+export interface Consistencia {
+  mes: string
+  habitos: HabitoInsights[]
+}

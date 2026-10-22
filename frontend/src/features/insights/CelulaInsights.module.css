@@ -1,0 +1,53 @@
+.celula {
+  /* O tamanho é múltiplo de 4px de propósito: com a tela em 125% ou 150%, ele dá
+     pixels inteiros e todas as bolinhas saem iguais (14px daria 17,5 pixels). */
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--tamanho-celula, 12px);
+  height: var(--tamanho-celula, 12px);
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+/* Cheia. */
+.concluido {
+  background: var(--ink);
+}
+
+/* Pontinho: dia sem registro em que nada era esperado (semanal com a semana em
+   andamento ou com a meta batida). */
+.descanso::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--rule);
+}
+
+/* Anel fraco: o dia ainda vem. */
+.futuro {
+  border: var(--border-width) solid var(--hairline);
+}
+
+/* Anel claro sobre fundo rosado. */
+.naoRealizado {
+  background: var(--ember-surface);
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--ember) 45%, var(--card));
+}
+
+/* Anel tracejado: hoje, ainda por fazer. */
+.emAberto {
+  border: var(--border-width-strong) dashed var(--ink);
+}
+
+.apenasLeitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

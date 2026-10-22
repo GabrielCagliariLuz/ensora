@@ -1,0 +1,15 @@
+.pagina {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Título de seção do mobile: mono pequeno, como "Upcoming" na Home. */
+.secao {
+  margin: 0 0 var(--space-3);
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
