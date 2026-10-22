@@ -12,7 +12,12 @@ RUN npm run build
 # 2. Back: o build do front entra em static/, e o jar sai com ele dentro.
 FROM eclipse-temurin:21-jdk AS back
 WORKDIR /app/backend
-COPY backend/ ./
+# As dependências do Maven vêm antes do código: a camada só é refeita quando o
+# pom.xml muda, e um deploy que mexe só em código não baixa tudo de novo.
+COPY backend/mvnw backend/pom.xml ./
+COPY backend/.mvn .mvn
+RUN sh ./mvnw -q dependency:go-offline
+COPY backend/src src
 COPY --from=front /app/frontend/dist/ ./src/main/resources/static/
 RUN sh ./mvnw -q -DskipTests package
 
