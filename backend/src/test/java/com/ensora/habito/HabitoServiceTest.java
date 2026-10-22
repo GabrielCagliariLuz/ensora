@@ -48,7 +48,7 @@ class HabitoServiceTest {
 
 	private HabitoService servico(LocalDate hoje) {
 		Clock relogio = Clock.fixed(hoje.atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
-		return new HabitoService(habitos, metas, registros, relogio, SAO_PAULO);
+		return new HabitoService(habitos, metas, registros, relogio);
 	}
 
 	private HabitoService servico() {
@@ -357,11 +357,24 @@ class HabitoServiceTest {
 		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(1L))).thenReturn(List.of());
 		when(registros.findByHabitoIdInAndDataBetween(List.of(1L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of());
 
-		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS, SAO_PAULO);
 
 		assertThat(historico).hasSize(1);
 		assertThat(historico.get(0).criadoDia()).isEqualTo(LocalDate.of(2026, 10, 1));
 		assertThat(historico.get(0).excluidoDia()).isEqualTo(LocalDate.of(2026, 10, 19));
+	}
+
+	@Test
+	void historicoUsaOFusoRecebidoParaConverterOsDias() {
+		// 02/10 às 01:30 UTC: em São Paulo ainda é 01/10 (22:30), mas em Tóquio já é 02/10 (10:30).
+		todosOsHabitosDoUsuario(habitoCriadoEm(1L, TipoHabito.DIARIO, "2026-10-02T01:30:00Z", null));
+		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(1L))).thenReturn(List.of());
+		when(registros.findByHabitoIdInAndDataBetween(List.of(1L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of());
+
+		List<HabitoHistorico> emToquio = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS,
+				ZoneId.of("Asia/Tokyo"));
+
+		assertThat(emToquio.get(0).criadoDia()).isEqualTo(LocalDate.of(2026, 10, 2));
 	}
 
 	@Test
@@ -370,7 +383,7 @@ class HabitoServiceTest {
 		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(1L))).thenReturn(List.of());
 		when(registros.findByHabitoIdInAndDataBetween(List.of(1L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of());
 
-		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS, SAO_PAULO);
 
 		assertThat(historico.get(0).excluidoDia()).isNull();
 		assertThat(historico.get(0).nome()).isEqualTo("H1");
@@ -384,7 +397,7 @@ class HabitoServiceTest {
 				habitoCriadoEm(1L, TipoHabito.DIARIO, "2026-08-01T15:00:00Z", "2026-09-30T15:00:00Z"),
 				habitoCriadoEm(2L, TipoHabito.DIARIO, "2026-08-01T15:00:00Z", "2026-10-01T15:00:00Z"));
 
-		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS, SAO_PAULO);
 
 		assertThat(historico).isEmpty();
 		verifyNoInteractions(metas, registros);
@@ -398,7 +411,7 @@ class HabitoServiceTest {
 		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(2L))).thenReturn(List.of());
 		when(registros.findByHabitoIdInAndDataBetween(List.of(2L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of());
 
-		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS, SAO_PAULO);
 
 		assertThat(historico).extracting(HabitoHistorico::id).containsExactly(2L);
 	}
@@ -409,7 +422,7 @@ class HabitoServiceTest {
 		when(metas.findByHabitoIdInOrderByVigenteDesdeDesc(List.of(1L))).thenReturn(List.of());
 		when(registros.findByHabitoIdInAndDataBetween(List.of(1L), DE_INSIGHTS, ATE_INSIGHTS)).thenReturn(List.of());
 
-		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS, SAO_PAULO);
 
 		assertThat(historico).extracting(HabitoHistorico::excluidoDia).containsExactly(LocalDate.of(2026, 10, 15));
 	}
@@ -427,7 +440,7 @@ class HabitoServiceTest {
 				registro(1L, LocalDate.of(2026, 10, 3)),
 				registro(2L, LocalDate.of(2026, 10, 2))));
 
-		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS);
+		List<HabitoHistorico> historico = servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS, SAO_PAULO);
 
 		HabitoHistorico diario = historico.get(0);
 		HabitoHistorico semanal = historico.get(1);
@@ -444,7 +457,7 @@ class HabitoServiceTest {
 	void historicoSemHabitosDevolveListaVaziaSemConsultarMetasNemRegistros() {
 		when(habitos.findByUsuarioIdOrderByCriadoEmAscIdAsc(USUARIO)).thenReturn(List.of());
 
-		assertThat(servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS)).isEmpty();
+		assertThat(servico().historicoParaInsights(USUARIO, DE_INSIGHTS, ATE_INSIGHTS, SAO_PAULO)).isEmpty();
 
 		verifyNoInteractions(metas, registros);
 	}

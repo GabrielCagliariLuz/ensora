@@ -308,6 +308,7 @@ feito no `Service`.
 | ------------ | ----------- | ----------------------------------------------- |
 | `email`      | texto       | único; `CHECK (email = lower(email))` no banco  |
 | `senha_hash` | texto       | BCrypt                                          |
+| `fuso`       | texto       | nome IANA; default `America/Sao_Paulo`          |
 | `criado_em`  | TIMESTAMPTZ | default `now()`                                 |
 
 ### refresh_token
@@ -547,7 +548,8 @@ habito/
 
 ## 12. Datas e fuso horário
 
-- Inicialmente será usado o **fuso horário do usuário atual**.
+- Cada usuário tem o **seu fuso horário** (`usuario.fuso`, nome IANA como
+  `America/Sao_Paulo`).
 - O sistema não deve espalhar lógica de "hoje" pelo frontend/backend.
 - A data relevante para consultas deve ser explícita nas requisições
   quando necessário.
@@ -557,12 +559,14 @@ habito/
   usuário.
 - Momentos técnicos usam `TIMESTAMPTZ` (`criado_em`, `excluido_em`,
   `concluida_em`, expiração de token).
-- Se o sistema for expandido para vários usuários, o fuso deverá
-  passar a ser uma configuração por usuário.
-- **Fuso fixo no servidor:** quando o servidor precisa transformar um
-  instante (`criado_em`, `excluido_em`) no dia do usuário, usa o fuso da
-  propriedade `ensora.fuso` (variável `FUSO`, padrão `America/Sao_Paulo`).
-  Hoje isso só serve aos Insights (decisão 56).
+- **Fuso por usuário (decisão 61):** quando o servidor precisa decidir o
+  "hoje" ou transformar um instante (`criado_em`, `excluido_em`) no dia
+  do usuário, usa o fuso guardado na conta dele. Hoje isso só serve aos
+  Insights. A conta nova recebe o fuso que a tela informa (lido do
+  navegador); sem ele, vale o padrão do servidor, a propriedade
+  `ensora.fuso` (variável `FUSO`, padrão `America/Sao_Paulo`). Só são
+  aceitos nomes de região IANA, e não deslocamentos como `+03:00`, que não
+  seguem o horário de verão e dariam o dia errado parte do ano.
 
 ## 13. Frontend
 
@@ -766,12 +770,15 @@ Princípios:
 
 ```json
 // requisição (codigoConvite é opcional: só vale quando o servidor exige convite)
-{ "email": "pessoa@exemplo.com", "senha": "senha-com-8-ou-mais", "codigoConvite": "..." }
+{ "email": "pessoa@exemplo.com", "senha": "senha-com-8-ou-mais", "codigoConvite": "...", "fuso": "America/Sao_Paulo" }
 // resposta 201
 { "id": 1, "email": "pessoa@exemplo.com" }
 ```
 
 - `senha`: de 8 a 72 caracteres (`400 VALIDACAO` no campo `senha`).
+- `fuso` é opcional (nome IANA). Ausente ou em branco, vale o padrão do
+  servidor; um nome inexistente (ou um deslocamento como `+03:00`) dá
+  `400 VALIDACAO` no campo `fuso`.
 - `codigoConvite` ausente ou errado, com convite exigido: `400 VALIDACAO`
   no campo `codigoConvite`.
 - Cadastro desabilitado: `403 ACESSO_NEGADO`. E-mail já cadastrado:
@@ -1235,6 +1242,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 58  | A consistência e a grade de Insights (`GET /insights/consistencia`) seguem estas regras: o semanal numa semana encerrada sem bater a meta fica vermelho em todos os dias sem registro daquela semana (ponto aberto 8 resolvido); a semana pertence ao mês da sua segunda-feira e só entra na consistência se já terminou ou já bateu a meta (a em andamento nunca penaliza); no diário os dias considerados vão da criação até hoje, o último dia do mês ou o dia anterior à exclusão; dias em que o hábito não existia não têm célula; "hoje" é o do servidor, no fuso fixo da decisão 56. A resposta inclui o resumo de cada semana (`feitos`, `meta`, `batida`) para o front poder suavizar o vermelho sem mudar o backend |
 | 59  | A consistência do hábito semanal passa a ser dias feitos ÷ dias esperados, e não semanas com meta batida ÷ semanas consideradas (revisa a decisão 58 e a seção 7.2): o denominador é a soma das metas das semanas que contam e o numerador, os registros de cada semana limitados à meta (dia além da meta não compensa outra semana fraca). O resto da decisão 58 não muda: a semana pertence ao mês da segunda-feira e a em andamento só conta se já bateu a meta. Motivo: o Figma mostra o semanal em dias (Academia, 7 / 9 dias = 77%), mais fino que "semana batida ou não". O formato da resposta não muda |
 | 60  | Cadastro preparado para mais de um usuário (revisa a decisão 40): senha com mínimo de **8** caracteres no cadastro (o login continua sem mínimo, para as contas antigas); limite de 10 tentativas de cadastro por IP em 60 minutos, contando toda tentativa; código de convite opcional (`CONVITE_CODIGO`), que permite voltar a restringir o app a família e amigos só com uma variável de ambiente; e IP do cliente lido atrás do proxy com `server.forward-headers-strategy=native`, para o limite de login e de cadastro valer por pessoa e não por proxy |
+| 61  | O fuso horário passa a ser por usuário (revisa a decisão 56 e a seção 12): a coluna `usuario.fuso` (nome IANA, default `America/Sao_Paulo`, migration V6) define o "hoje" do servidor e o dia de criação e exclusão dos hábitos nos Insights. O `HabitoService` deixa de ter fuso fixo e recebe o fuso por parâmetro; o `InsightsService` o obtém do `UsuarioService`, um Service do módulo `auth`, porque os módulos não falam com Repositories de outros. O cadastro aceita o fuso (opcional) e a variável `FUSO` vira só o padrão das contas novas. Alterar o fuso depois fica para a API da conta |
 
 ## 17. Pontos ainda em aberto
 

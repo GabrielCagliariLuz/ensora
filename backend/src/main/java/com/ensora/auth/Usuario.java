@@ -31,6 +31,10 @@ public class Usuario {
 	@Column(nullable = false)
 	private String senhaHash;
 
+	// Nome IANA do fuso (ex.: America/Sao_Paulo); define o "hoje" e o dia de criação nos Insights.
+	@Column(nullable = false)
+	private String fuso = "America/Sao_Paulo";
+
 	@Generated(event = EventType.INSERT)
 	@Column(insertable = false, updatable = false)
 	private Instant criadoEm;

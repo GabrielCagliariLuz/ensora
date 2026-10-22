@@ -9,5 +9,7 @@ public record RegistrarRequest(
 		// O teto de 72 vem do BCrypt, que só lê os 72 primeiros bytes da senha.
 		@NotBlank @Size(min = 8, max = 72) String senha,
 		// Só é exigido quando o servidor tem um código de convite configurado; senão é ignorado.
-		@Size(max = 100) String codigoConvite) {
+		@Size(max = 100) String codigoConvite,
+		// Nome IANA do fuso (ex.: America/Sao_Paulo), lido do navegador pela tela. Sem ele, vale o padrão do servidor.
+		@Size(max = 50) String fuso) {
 }

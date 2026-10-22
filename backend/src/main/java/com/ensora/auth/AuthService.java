@@ -4,6 +4,7 @@ import com.ensora.auth.dto.ConfiguracaoCadastroResponse;
 import com.ensora.auth.dto.LoginRequest;
 import com.ensora.auth.dto.RegistrarRequest;
 import com.ensora.auth.dto.UsuarioResponse;
+import com.ensora.compartilhado.data.FusoHorario;
 import com.ensora.compartilhado.erro.AcessoNegadoException;
 import com.ensora.compartilhado.erro.ConflitoException;
 import com.ensora.compartilhado.erro.NaoAutenticadoException;
@@ -32,6 +33,8 @@ public class AuthService {
 	private final boolean registroHabilitado;
 	// Vazio: cadastro sem convite. Preenchido: só entra quem informar este código.
 	private final String conviteCodigo;
+	// Fuso das contas novas que não informam o próprio (variável FUSO).
+	private final String fusoPadrao;
 	// Hash de uma senha que ninguém tem: serve para gastar o mesmo tempo quando o e-mail não existe.
 	private final String hashFicticio;
 
@@ -39,7 +42,7 @@ public class AuthService {
 			TokenAcessoService tokenAcessoService, RefreshTokenService refreshTokenService,
 			LimitadorDeTentativasLogin limitador, LimitadorDeCadastros limitadorDeCadastros,
 			@Value("${ensora.auth.registro-habilitado}") boolean registroHabilitado,
-			@Value("${ensora.auth.convite-codigo}") String conviteCodigo) {
+			@Value("${ensora.auth.convite-codigo}") String conviteCodigo, @Value("${ensora.fuso}") String fusoPadrao) {
 		this.usuarios = usuarios;
 		this.codificadorDeSenha = codificadorDeSenha;
 		this.tokenAcessoService = tokenAcessoService;
@@ -48,6 +51,7 @@ public class AuthService {
 		this.limitadorDeCadastros = limitadorDeCadastros;
 		this.registroHabilitado = registroHabilitado;
 		this.conviteCodigo = conviteCodigo == null ? "" : conviteCodigo.trim();
+		this.fusoPadrao = FusoHorario.interpretar(fusoPadrao).getId();
 		this.hashFicticio = codificadorDeSenha.encode("senha-que-ninguem-tem");
 	}
 
@@ -64,6 +68,9 @@ public class AuthService {
 		// Toda tentativa conta, certa ou errada: limita a criação de contas e o palpite do código de convite.
 		limitadorDeCadastros.registrarTentativa(ip);
 		exigirConvite(requisicao.codigoConvite());
+		String fuso = requisicao.fuso() == null || requisicao.fuso().isBlank()
+				? fusoPadrao
+				: FusoHorario.interpretar(requisicao.fuso()).getId();
 		String email = normalizar(requisicao.email());
 		if (usuarios.existsByEmail(email)) {
 			throw new ConflitoException("E-mail já cadastrado");
@@ -71,6 +78,7 @@ public class AuthService {
 		Usuario usuario = new Usuario();
 		usuario.setEmail(email);
 		usuario.setSenhaHash(codificadorDeSenha.encode(requisicao.senha()));
+		usuario.setFuso(fuso);
 		try {
 			usuario = usuarios.save(usuario);
 		} catch (DataIntegrityViolationException e) {

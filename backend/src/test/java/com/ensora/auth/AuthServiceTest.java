@@ -64,7 +64,7 @@ class AuthServiceTest {
 
 	private AuthService servico(boolean registroHabilitado, String conviteCodigo) {
 		return new AuthService(usuarios, codificadorDeSenha, tokenAcessoService, refreshTokenService,
-				limitador, limitadorDeCadastros, registroHabilitado, conviteCodigo);
+				limitador, limitadorDeCadastros, registroHabilitado, conviteCodigo, "America/Sao_Paulo");
 	}
 
 	private Usuario usuarioComSenha(String senha) {
@@ -86,7 +86,7 @@ class AuthServiceTest {
 	void registrarComCadastroDesabilitadoLancaAcessoNegado() {
 		AuthService servico = servico(false);
 
-		assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "1234", null), IP))
+		assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "1234", null, null), IP))
 				.isInstanceOf(AcessoNegadoException.class)
 				.hasMessage("Cadastro desabilitado");
 		verifyNoInteractions(usuarios);
@@ -101,7 +101,7 @@ class AuthServiceTest {
 			return salvo;
 		});
 
-		UsuarioResponse resposta = servico(true).registrar(new RegistrarRequest("  Gabriel@Gmail.COM ", "1234", null), IP);
+		UsuarioResponse resposta = servico(true).registrar(new RegistrarRequest("  Gabriel@Gmail.COM ", "1234", null, null), IP);
 
 		assertThat(resposta.id()).isEqualTo(7L);
 		assertThat(resposta.email()).isEqualTo("gabriel@gmail.com");
@@ -111,7 +111,7 @@ class AuthServiceTest {
 	void registrarComEmailJaCadastradoLancaConflito() {
 		when(usuarios.existsByEmail("a@b.com")).thenReturn(true);
 
-		assertThatThrownBy(() -> servico(true).registrar(new RegistrarRequest("A@B.com", "1234", null), IP))
+		assertThatThrownBy(() -> servico(true).registrar(new RegistrarRequest("A@B.com", "1234", null, null), IP))
 				.isInstanceOf(ConflitoException.class)
 				.hasMessage("E-mail já cadastrado");
 		verify(usuarios, never()).save(any());
@@ -121,7 +121,7 @@ class AuthServiceTest {
 	void registrarGuardaHashBcryptENaoASenha() {
 		when(usuarios.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
-		servico(true).registrar(new RegistrarRequest("a@b.com", "senha-secreta", null), IP);
+		servico(true).registrar(new RegistrarRequest("a@b.com", "senha-secreta", null, null), IP);
 
 		ArgumentCaptor<Usuario> capturado = ArgumentCaptor.forClass(Usuario.class);
 		verify(usuarios).save(capturado.capture());
@@ -134,7 +134,7 @@ class AuthServiceTest {
 	void registrarTraduzViolacaoDeUnicidadeDoBancoEmConflito() {
 		when(usuarios.save(any(Usuario.class))).thenThrow(new DataIntegrityViolationException("uk_usuario_email"));
 
-		assertThatThrownBy(() -> servico(true).registrar(new RegistrarRequest("a@b.com", "1234", null), IP))
+		assertThatThrownBy(() -> servico(true).registrar(new RegistrarRequest("a@b.com", "1234", null, null), IP))
 				.isInstanceOf(ConflitoException.class);
 	}
 
@@ -263,11 +263,11 @@ class AuthServiceTest {
 		AuthService servico = servico(true);
 
 		for (int i = 0; i < 3; i++) {
-			assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", null), IP))
+			assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", null, null), IP))
 					.isInstanceOf(ConflitoException.class);
 		}
 
-		assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", null), IP))
+		assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", null, null), IP))
 				.isInstanceOf(LimiteExcedidoException.class)
 				.hasMessage("Muitas tentativas de cadastro. Tente novamente mais tarde.");
 	}
@@ -278,11 +278,11 @@ class AuthServiceTest {
 		AuthService servico = servico(true);
 
 		for (int i = 0; i < 3; i++) {
-			assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", null), IP))
+			assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", null, null), IP))
 					.isInstanceOf(ConflitoException.class);
 		}
 
-		assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", null), "198.51.100.9"))
+		assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", null, null), "198.51.100.9"))
 				.isInstanceOf(ConflitoException.class);
 	}
 
@@ -290,7 +290,7 @@ class AuthServiceTest {
 	void registrarComCadastroDesabilitadoNaoContaTentativa() {
 		AuthService desabilitado = servico(false);
 		for (int i = 0; i < 5; i++) {
-			assertThatThrownBy(() -> desabilitado.registrar(new RegistrarRequest("a@b.com", "senha-segura", null), IP))
+			assertThatThrownBy(() -> desabilitado.registrar(new RegistrarRequest("a@b.com", "senha-segura", null, null), IP))
 					.isInstanceOf(AcessoNegadoException.class);
 		}
 
@@ -300,7 +300,7 @@ class AuthServiceTest {
 
 	@Test
 	void registrarSemOCodigoQuandoOServidorExigeConviteLancaValidacao() {
-		assertThatThrownBy(() -> servico(true, CONVITE).registrar(new RegistrarRequest("a@b.com", "senha-segura", null), IP))
+		assertThatThrownBy(() -> servico(true, CONVITE).registrar(new RegistrarRequest("a@b.com", "senha-segura", null, null), IP))
 				.isInstanceOfSatisfying(ValidacaoException.class, erro -> {
 					assertThat(erro.getCampo()).isEqualTo("codigoConvite");
 					assertThat(erro.getMessage()).isEqualTo("Código de convite inválido");
@@ -310,7 +310,7 @@ class AuthServiceTest {
 
 	@Test
 	void registrarComCodigoErradoLancaValidacaoENaoConsultaOBanco() {
-		assertThatThrownBy(() -> servico(true, CONVITE).registrar(new RegistrarRequest("a@b.com", "senha-segura", "errado"), IP))
+		assertThatThrownBy(() -> servico(true, CONVITE).registrar(new RegistrarRequest("a@b.com", "senha-segura", "errado", null), IP))
 				.isInstanceOf(ValidacaoException.class);
 		verifyNoInteractions(usuarios);
 	}
@@ -320,12 +320,12 @@ class AuthServiceTest {
 		AuthService servico = servico(true, CONVITE);
 
 		for (int i = 0; i < 3; i++) {
-			assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", "palpite"), IP))
+			assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", "palpite", null), IP))
 					.isInstanceOf(ValidacaoException.class);
 		}
 
 		// Mesmo com o código certo, o IP que ficou chutando já está bloqueado.
-		assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", CONVITE), IP))
+		assertThatThrownBy(() -> servico.registrar(new RegistrarRequest("a@b.com", "senha-segura", CONVITE, null), IP))
 				.isInstanceOf(LimiteExcedidoException.class);
 	}
 
@@ -334,7 +334,7 @@ class AuthServiceTest {
 		stubDeCadastroNovo();
 
 		UsuarioResponse resposta = servico(true, CONVITE)
-				.registrar(new RegistrarRequest("a@b.com", "senha-segura", "  " + CONVITE + " "), IP);
+				.registrar(new RegistrarRequest("a@b.com", "senha-segura", "  " + CONVITE + " ", null), IP);
 
 		assertThat(resposta.id()).isEqualTo(7L);
 	}
@@ -344,7 +344,7 @@ class AuthServiceTest {
 		stubDeCadastroNovo();
 
 		UsuarioResponse resposta = servico(true)
-				.registrar(new RegistrarRequest("a@b.com", "senha-segura", "qualquer-coisa"), IP);
+				.registrar(new RegistrarRequest("a@b.com", "senha-segura", "qualquer-coisa", null), IP);
 
 		assertThat(resposta.id()).isEqualTo(7L);
 	}
@@ -356,6 +356,40 @@ class AuthServiceTest {
 		assertThat(servico(true, CONVITE).configuracaoDeCadastro().exigeConvite()).isTrue();
 		assertThat(servico(false).configuracaoDeCadastro().habilitado()).isFalse();
 		assertThat(servico(false).configuracaoDeCadastro().exigeConvite()).isFalse();
+	}
+
+	// ---- cadastro: fuso do usuário ----
+
+	private Usuario cadastrarComFuso(String fusoInformado) {
+		stubDeCadastroNovo();
+
+		servico(true).registrar(new RegistrarRequest("a@b.com", "senha-segura", null, fusoInformado), IP);
+
+		ArgumentCaptor<Usuario> capturado = ArgumentCaptor.forClass(Usuario.class);
+		verify(usuarios).save(capturado.capture());
+		return capturado.getValue();
+	}
+
+	@Test
+	void registrarGuardaOFusoInformadoPelaPessoa() {
+		assertThat(cadastrarComFuso("America/Manaus").getFuso()).isEqualTo("America/Manaus");
+	}
+
+	@Test
+	void registrarSemFusoUsaOPadraoDoServidor() {
+		assertThat(cadastrarComFuso(null).getFuso()).isEqualTo("America/Sao_Paulo");
+	}
+
+	@Test
+	void registrarComFusoEmBrancoUsaOPadraoDoServidor() {
+		assertThat(cadastrarComFuso("  ").getFuso()).isEqualTo("America/Sao_Paulo");
+	}
+
+	@Test
+	void registrarComFusoInvalidoLancaValidacaoNoCampoFusoENaoGravaNada() {
+		assertThatThrownBy(() -> servico(true).registrar(new RegistrarRequest("a@b.com", "senha-segura", null, "Marte/Olimpo"), IP))
+				.isInstanceOfSatisfying(ValidacaoException.class, erro -> assertThat(erro.getCampo()).isEqualTo("fuso"));
+		verifyNoInteractions(usuarios);
 	}
 
 }

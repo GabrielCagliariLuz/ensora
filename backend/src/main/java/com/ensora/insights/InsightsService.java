@@ -1,5 +1,6 @@
 package com.ensora.insights;
 
+import com.ensora.auth.UsuarioService;
 import com.ensora.compartilhado.data.Semana;
 import com.ensora.compartilhado.erro.ValidacaoException;
 import com.ensora.habito.HabitoService;
@@ -21,24 +22,25 @@ public class InsightsService {
 	private static final long INTERVALO_MAXIMO_EM_DIAS = 31;
 
 	private final HabitoService habitoService;
+	private final UsuarioService usuarioService;
 	private final Clock relogio;
-	private final ZoneId fuso;
 
-	public InsightsService(HabitoService habitoService, Clock relogio, ZoneId fuso) {
+	public InsightsService(HabitoService habitoService, UsuarioService usuarioService, Clock relogio) {
 		this.habitoService = habitoService;
+		this.usuarioService = usuarioService;
 		this.relogio = relogio;
-		this.fuso = fuso;
 	}
 
 	/**
-	 * Grade hábito × dia e consistência do mês. O "hoje" é do servidor, no fuso fixo da decisão 56. O histórico vem de
+	 * Grade hábito × dia e consistência do mês. O "hoje" é do servidor, no fuso do usuário (decisão 61). O histórico vem de
 	 * semanas inteiras (da segunda do primeiro dia ao domingo do último), porque a meta do semanal se confere na
 	 * semana toda, mesmo quando ela atravessa o mês.
 	 */
 	public ConsistenciaResponse consistencia(Long usuarioId, YearMonth mes) {
 		LocalDate de = Semana.segundaFeiraDe(mes.atDay(1));
 		LocalDate ate = Semana.segundaFeiraDe(mes.atEndOfMonth()).plusDays(6);
-		var historico = habitoService.historicoParaInsights(usuarioId, de, ate);
+		ZoneId fuso = usuarioService.fusoDe(usuarioId);
+		var historico = habitoService.historicoParaInsights(usuarioId, de, ate, fuso);
 		LocalDate hoje = LocalDate.now(relogio.withZone(fuso));
 		return ConsistenciaResponse.de(mes, ConsistenciaCalculadora.calcular(historico, mes, hoje));
 	}
@@ -49,7 +51,7 @@ public class InsightsService {
 	 */
 	public RitmoResponse ritmo(Long usuarioId, LocalDate de, LocalDate ate) {
 		validarIntervalo(de, ate);
-		var historico = habitoService.historicoParaInsights(usuarioId, de, ate);
+		var historico = habitoService.historicoParaInsights(usuarioId, de, ate, usuarioService.fusoDe(usuarioId));
 		return RitmoResponse.de(de, ate, RitmoCalculadora.calcular(historico, de, ate));
 	}
 
