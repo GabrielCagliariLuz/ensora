@@ -12,6 +12,10 @@
   min-width: 0;
 }
 
+.corpoHoje {
+  min-width: 0;
+}
+
 .aviso {
   display: flex;
   align-items: flex-start;
@@ -74,6 +78,18 @@
        de tela ficar dos dois lados e não só à direita. */
     max-width: 880px;
     margin-inline: auto;
+    /* Só um vão entre as colunas: o espaço entre o cabeçalho e os cartões vem da
+       margem do próprio cabeçalho, igual nas duas. */
+    row-gap: 0;
+  }
+
+  /* A coluna Today ocupa as duas linhas do grid (cabeçalho e corpo) e herda as
+     alturas delas: o cabeçalho com a data e o título de Upcoming ficam na mesma
+     linha, então os primeiros cartões das duas colunas se alinham. */
+  .hoje {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 2;
   }
 }
 

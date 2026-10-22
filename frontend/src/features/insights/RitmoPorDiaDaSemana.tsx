@@ -65,7 +65,7 @@ export default function RitmoPorDiaDaSemana({
             <dl className={styles.extremos}>
               <div>
                 <dt>Melhor dia</dt>
-                <dd>
+                <dd className={styles.valorMelhor}>
                   {extremos.melhor.nome} · {percentual(extremos.melhor.media)}
                 </dd>
               </div>

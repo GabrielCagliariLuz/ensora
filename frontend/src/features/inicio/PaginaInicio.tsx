@@ -44,40 +44,45 @@ export default function PaginaInicio() {
         <section className={styles.hoje}>
           <CabecalhoHoje data={hoje} />
 
-          {aviso && (
-            <div className={styles.aviso} role="alert">
-              <CircleAlert size={16} strokeWidth={1.5} />
-              <span>{aviso}</span>
-            </div>
-          )}
+          {/* O resto da coluna é a segunda linha do grid: o cabeçalho de Today e o
+              título de Upcoming dividem a primeira, e os primeiros cartões das duas
+              colunas começam juntos. */}
+          <div className={styles.corpoHoje}>
+            {aviso && (
+              <div className={styles.aviso} role="alert">
+                <CircleAlert size={16} strokeWidth={1.5} />
+                <span>{aviso}</span>
+              </div>
+            )}
 
-          {inicio.isPending ? (
-            <p className={styles.estado}>Carregando…</p>
-          ) : inicio.isError ? (
-            <div className={styles.estado}>
-              <p>Não foi possível carregar seus hábitos.</p>
-              <button
-                className={styles.botao}
-                type="button"
-                onClick={() => void inicio.refetch()}
-              >
-                Tentar de novo
-              </button>
-            </div>
-          ) : inicio.data.habitos.length === 0 ? (
-            <p className={styles.estado}>Nenhum hábito ainda.</p>
-          ) : (
-            <ListaHabitosDoDia
-              habitos={inicio.data.habitos}
-              aoAlternar={alternar}
+            {inicio.isPending ? (
+              <p className={styles.estado}>Carregando…</p>
+            ) : inicio.isError ? (
+              <div className={styles.estado}>
+                <p>Não foi possível carregar seus hábitos.</p>
+                <button
+                  className={styles.botao}
+                  type="button"
+                  onClick={() => void inicio.refetch()}
+                >
+                  Tentar de novo
+                </button>
+              </div>
+            ) : inicio.data.habitos.length === 0 ? (
+              <p className={styles.estado}>Nenhum hábito ainda.</p>
+            ) : (
+              <ListaHabitosDoDia
+                habitos={inicio.data.habitos}
+                aoAlternar={alternar}
+              />
+            )}
+
+            {/* Sempre visíveis: com a lista vazia, "Novo Hábito" cria o primeiro. */}
+            <AcoesHabitos
+              aoNovo={() => setSheet('novo')}
+              aoEditar={() => setSheet('gerenciar')}
             />
-          )}
-
-          {/* Sempre visíveis: com a lista vazia, "Novo Hábito" cria o primeiro. */}
-          <AcoesHabitos
-            aoNovo={() => setSheet('novo')}
-            aoEditar={() => setSheet('gerenciar')}
-          />
+          </div>
         </section>
 
         {/* Coluna Upcoming: abaixo do Today no mobile e no tablet. */}

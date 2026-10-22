@@ -61,14 +61,14 @@
   transition: height var(--transicao-suave);
 }
 
-/* O dia mais forte do mês. */
+/* O dia mais forte do mês: verde, no mesmo tom do anel dos hábitos acima de 90%. */
 .melhor .preenchimento {
-  background: var(--ink);
+  background: var(--moss);
 }
 
 .melhor .percentual,
 .melhor .inicial {
-  color: var(--ink);
+  color: var(--moss);
   font-weight: var(--weight-bold);
 }
 
@@ -101,6 +101,10 @@
 .extremos dd {
   margin: 0;
   color: var(--ink);
+}
+
+.extremos .valorMelhor {
+  color: var(--moss);
 }
 
 .extremos .valorPior {

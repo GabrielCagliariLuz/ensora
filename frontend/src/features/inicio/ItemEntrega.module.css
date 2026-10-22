@@ -32,6 +32,14 @@
   line-height: var(--leading-legenda);
 }
 
+/* No desktop há espaço: o subtexto sob o nome (prazo e situação) sobe de 11px para
+   13px. */
+@media (min-width: 768px) {
+  .prazo {
+    font-size: var(--text-legenda);
+  }
+}
+
 /* Cor de urgência: só aqui, nas entregas, nunca nos eventos. */
 .urgente {
   color: var(--ember);

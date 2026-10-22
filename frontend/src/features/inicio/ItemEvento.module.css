@@ -67,3 +67,15 @@
   color: var(--graphite);
   font-size: var(--text-rotulo);
 }
+
+/* No desktop há espaço: os textos à direita ("N dias" e o horário) sobem um
+   degrau, de 13px para 15px e de 11px para 13px. */
+@media (min-width: 768px) {
+  .dias {
+    font-size: var(--text-corpo);
+  }
+
+  .horario {
+    font-size: var(--text-legenda);
+  }
+}
