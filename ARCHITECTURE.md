@@ -178,10 +178,14 @@ registros da semana anterior.
 A consistência de um hábito semanal é:
 
 ```text
-semanas com meta batida / semanas em que o hábito existia
+dias feitos / dias esperados
 ```
 
-usando a meta vigente em cada semana.
+Em cada semana considerada, os **dias esperados** são a meta vigente
+naquela semana e os **dias feitos** são os registros dela, limitados à
+meta: um dia além da meta não compensa outra semana fraca. Exemplo, com
+meta 3: uma semana com 3 feitos e outra com 1 feito dão 4/6 (66,7%),
+não 1 semana batida em 2 (decisão 59).
 
 No cálculo de um mês, cada semana (segunda a domingo) pertence ao mês em
 que cai a sua **segunda-feira**, para não contar em dois meses. Ela só
@@ -240,8 +244,8 @@ Cada célula (hábito × dia) tem um estado:
   semana ainda não foi batida; se já foi, hoje descansa.
 
 Enquanto a semana está em andamento, o hábito semanal nunca fica
-vermelho. O anel de consistência dele usa semanas com meta batida
-(seção 7.2).
+vermelho. O anel de consistência dele usa dias feitos sobre dias
+esperados (seção 7.2).
 
 Dia em que o hábito não existia (antes da criação, a partir do dia da
 exclusão, ou semanal sem meta vigente) não tem célula: a grade fica em
@@ -637,11 +641,20 @@ desabilitada) e excluir (modal de confirmação).
 
 Desktop:
 
-- grade hábito × dia do mês com navegação entre meses (seção 7.4);
-- "Consistência do mês": ritmo médio, barras semanais S1 a S4 e anel
-  de consistência por hábito.
+- grade hábito × dia do mês com navegação entre meses (seção 7.4), com
+  legenda dos estados e a coluna de hoje marcada;
+- "Consistência do mês", no mesmo mês da grade: ritmo médio com as
+  barras semanais S1 a S4, ritmo médio por dia da semana (com o melhor
+  e o pior dia) e um cartão por hábito com anel de consistência, a
+  contagem de dias e a diferença para o mês anterior, do mais para o
+  menos consistente.
 
-Mobile: ritmo semanal (frame ainda não lido).
+Mobile:
+
+- grade hábito × dia de uma semana (segunda a domingo), com navegação de
+  semana em semana (frame Figma 100:366);
+- "Consistência do mês", com seletor de mês próprio e os cartões em
+  duas colunas.
 
 Ações:
 
@@ -996,8 +1009,9 @@ a grade hábito × dia (seção 7.4) e a consistência de cada hábito (seções
 - `semanas` (só no semanal): todas as semanas, de segunda a domingo, que
   têm célula no mês, com `feitos`/`meta`, `batida`, `encerrada` e
   `contaNaConsistencia` (se entrou na conta deste mês). Dá ao front o
-  resumo `feitos/meta` e a possibilidade de suavizar o vermelho depois,
-  sem mudar o backend.
+  resumo `feitos/meta`, a conta da consistência (soma de `min(feitos,
+  meta)` sobre soma de `meta`, nas semanas com `contaNaConsistencia`) e a
+  possibilidade de suavizar o vermelho depois, sem mudar o backend.
 - O "hoje" é o do servidor, no fuso fixo da seção 12. Não há streak
   (seção 7.5).
 
@@ -1190,14 +1204,15 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 56  | O servidor transforma `criado_em` e `excluido_em` (instantes UTC) no dia do usuário com um fuso fixo, configurável em `ensora.fuso` (`FUSO`, padrão `America/Sao_Paulo`), em vez de gravar a data local na criação e na exclusão do hábito. Serve aos Insights, é válido enquanto o app for de uso pessoal e não exige migração nem mudança de contrato; com vários usuários, o fuso passa a ser por usuário (seção 12) |
 | 57  | O ritmo (`GET /insights/ritmo`) é a média aritmética dos ritmos diários, calculada sobre valores não arredondados e mostrada em percentual com uma casa. O hábito existe do dia da criação até o dia anterior ao da exclusão; o semanal entra com meta/7 usando a meta vigente na semana do dia; dia sem hábito existente fica sem valor e fora das médias. S1 a S4 são blocos de 7 dias a partir do primeiro dia do intervalo, e o S4 absorve os dias 29 a 31. O intervalo tem no máximo 31 dias e o front envia `ate` = hoje no mês em andamento |
 | 58  | A consistência e a grade de Insights (`GET /insights/consistencia`) seguem estas regras: o semanal numa semana encerrada sem bater a meta fica vermelho em todos os dias sem registro daquela semana (ponto aberto 8 resolvido); a semana pertence ao mês da sua segunda-feira e só entra na consistência se já terminou ou já bateu a meta (a em andamento nunca penaliza); no diário os dias considerados vão da criação até hoje, o último dia do mês ou o dia anterior à exclusão; dias em que o hábito não existia não têm célula; "hoje" é o do servidor, no fuso fixo da decisão 56. A resposta inclui o resumo de cada semana (`feitos`, `meta`, `batida`) para o front poder suavizar o vermelho sem mudar o backend |
+| 59  | A consistência do hábito semanal passa a ser dias feitos ÷ dias esperados, e não semanas com meta batida ÷ semanas consideradas (revisa a decisão 58 e a seção 7.2): o denominador é a soma das metas das semanas que contam e o numerador, os registros de cada semana limitados à meta (dia além da meta não compensa outra semana fraca). O resto da decisão 58 não muda: a semana pertence ao mês da segunda-feira e a em andamento só conta se já bateu a meta. Motivo: o Figma mostra o semanal em dias (Academia, 7 / 9 dias = 77%), mais fino que "semana batida ou não". O formato da resposta não muda |
 
 ## 17. Pontos ainda em aberto
 
 1.  "Pontos" não aparece em nenhum protótipo; considerar fora do
     produto.
 2.  Telas de Login/Registro e Settings (sem protótipo).
-3.  Frames do Figma ainda não lidos: Insights mobile (100:366),
-    Calendar desktop (214:513) e frames 200:260 e 211:1703.
+3.  Frames do Figma ainda não lidos: Calendar desktop (214:513) e
+    frames 200:260 e 211:1703.
 4.  Extrair tokens de design do Figma.
 5.  Corrigir no protótipo: "Excluir Ritual?" e histórico "apagado"
     (modal de exclusão), botão "Inserir Evento" no sheet de Entrega,
