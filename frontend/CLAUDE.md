@@ -69,6 +69,8 @@ styles/       tokens globais (tokens.css, importado por index.css)
   renova a sessão (uma renovação por vez, pois o refresh token é rotativo)
   e repete a requisição uma vez. `/auth/*` não recebe `Authorization` nem
   dispara renovação. A base vem de `VITE_API_URL` (ver `.env.example`).
+  Em produção o Dockerfile define `VITE_API_URL=/api`: a API fica na mesma
+  origem da SPA.
 - Sessão perdida (refresh recusado): o cliente limpa o token e chama o
   callback de `definirAoSessaoExpirar`, registrado em `app/`. `api/` não
   conhece o router. Falha de rede vira `ErroApi` com `status: 0`.

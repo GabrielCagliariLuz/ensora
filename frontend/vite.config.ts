@@ -37,6 +37,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
         // Navegação sem rede cai no shell: o roteador do app resolve a rota.
         navigateFallback: '/index.html',
+        // A API também é servida pela origem em produção: não é navegação da SPA.
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\//,

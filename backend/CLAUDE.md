@@ -88,6 +88,12 @@ com.ensora/habito/
   `criado_em` e `excluido_em` no dia do usuário nos Insights.
 - Cadastro: `REGISTRATION_ENABLED` (padrão `false`). Ligue (`true`) só
   para criar a conta e desligue depois; em produção fica desligada.
+- Prefixo da API: `API_PREFIXO` (padrão vazio; em produção `/api`). Com
+  ele, os controllers ficam sob `/api` e a SPA é servida de `static/`. Em
+  dev fica vazio. Sem barra no início, a app não sobe.
+- Porta: `PORT` (padrão 8080; o Render define).
+- Produção: `docker build -t ensora .` na raiz. O Dockerfile gera o front
+  com `VITE_API_URL=/api` e copia o `dist` para `static/` antes do jar.
 
 ## Testes
 

@@ -7,6 +7,7 @@ import com.ensora.auth.dto.RegistrarRequest;
 import com.ensora.auth.dto.UsuarioResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -28,9 +29,12 @@ public class AuthController {
 	public static final String NOME_COOKIE_REFRESH = "refresh_token";
 
 	private final AuthService authService;
+	// Vazio em dev; em produção, /api. O cookie precisa seguir o caminho real das rotas.
+	private final String prefixo;
 
-	public AuthController(AuthService authService) {
+	public AuthController(AuthService authService, @Value("${ensora.api.prefixo:}") String prefixo) {
 		this.authService = authService;
+		this.prefixo = prefixo;
 	}
 
 	/** Público: a tela de cadastro pergunta se o cadastro está aberto e se pede código de convite. */
@@ -84,7 +88,7 @@ public class AuthController {
 				.httpOnly(true)
 				.secure(true)
 				.sameSite("Strict")
-				.path("/auth")
+				.path(prefixo + "/auth")
 				.maxAge(validade)
 				.build();
 	}
