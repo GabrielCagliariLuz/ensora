@@ -1,0 +1,114 @@
+.cartao {
+  padding: var(--space-4);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.titulo {
+  margin: 0 0 var(--space-3);
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.vazio {
+  margin: 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.barras {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coluna {
+  display: grid;
+  flex: 1;
+  justify-items: center;
+  gap: 4px;
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  line-height: 14px;
+}
+
+/* Barra vertical lisa, sem contorno: serve para comparar a altura de relance. */
+.trilha {
+  position: relative;
+  width: 16px;
+  height: 56px;
+  overflow: hidden;
+  background: var(--hairline);
+  border-radius: 3px;
+}
+
+.preenchimento {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--ash);
+  transition: height var(--transicao-suave);
+}
+
+/* O dia mais forte do mês. */
+.melhor .preenchimento {
+  background: var(--ink);
+}
+
+.melhor .percentual,
+.melhor .inicial {
+  color: var(--ink);
+  font-weight: var(--weight-bold);
+}
+
+/* O dia mais fraco do mês: vermelho sutil na barra, no percentual e na inicial. */
+.pior .preenchimento {
+  background: color-mix(in srgb, var(--ember) 65%, var(--card));
+}
+
+.pior .percentual,
+.pior .inicial {
+  color: var(--ember);
+  font-weight: var(--weight-semibold);
+}
+
+.extremos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: var(--space-4) 0 0;
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  line-height: 14px;
+}
+
+.extremos dt {
+  color: var(--ash);
+}
+
+.extremos dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.extremos .valorPior {
+  color: var(--ember);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preenchimento {
+    transition: none;
+  }
+}

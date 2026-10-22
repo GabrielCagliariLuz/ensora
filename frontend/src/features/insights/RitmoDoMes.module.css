@@ -1,0 +1,102 @@
+.cartao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.media {
+  min-width: 0;
+}
+
+.numero {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-display);
+}
+
+.simbolo {
+  margin-left: 2px;
+  font-size: var(--text-h1);
+  font-weight: var(--weight-regular);
+}
+
+.legenda {
+  margin: 0;
+  max-width: 120px;
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  line-height: 14px;
+}
+
+.barras {
+  display: flex;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coluna {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 32px;
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  line-height: 14px;
+}
+
+.percentual {
+  color: var(--ink);
+}
+
+/* Barra vertical: contorno escuro e preenchimento de baixo para cima. */
+.trilha {
+  position: relative;
+  width: 20px;
+  height: 72px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: var(--border-width-strong) solid var(--ink);
+  border-radius: 3px;
+}
+
+/* Semana sem valor: contorno tracejado e fraco. */
+.vazia {
+  border: var(--border-width) dashed var(--rule);
+}
+
+.preenchimento {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--ink);
+  transition: height var(--transicao-suave);
+}
+
+.intervalo {
+  color: var(--ash);
+}
+
+/* Semana de hoje: tudo em negrito e escuro. */
+.atual .percentual,
+.atual .rotulo {
+  color: var(--ink);
+  font-weight: var(--weight-bold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preenchimento {
+    transition: none;
+  }
+}

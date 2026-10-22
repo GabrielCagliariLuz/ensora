@@ -1,0 +1,57 @@
+.cartao {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-3);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.texto {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.nome {
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--text-legenda);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-legenda);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hábito excluído: aparece nos meses em que existia, mais apagado. */
+.excluido {
+  color: var(--ash);
+}
+
+.contagem,
+.delta {
+  margin: 0;
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  line-height: 14px;
+}
+
+.sobe {
+  color: var(--moss);
+}
+
+.desce {
+  color: var(--ember);
+}
+
+.apenasLeitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
