@@ -644,8 +644,8 @@ Mobile:
   caixa discreta no fim da linha;
   atrasada só até o dia seguinte ao prazo) e eventos e compromissos
   (data, "em N dias", horário; o evento de hoje vira "agora" em moss
-  entre o início e o término e "encerrado", esmaecido, depois disso; sem
-  término, encerra ao começar). Tocar numa entrega ou num evento (a
+  entre o início e o término e "encerrado", esmaecido, e vai para o fim da
+  lista; sem término, encerra ao começar). Tocar numa entrega ou num evento (a
   linha toda, que ganha hover) abre o Calendar no dia dele e já com os
   detalhes dele abertos (`/calendario?dia=AAAA-MM-DD&tipo=entrega&id=12`):
   o mês certo, o popover ancorado na etiqueta no desktop (com um destaque
