@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import { chavesInicio } from '../inicio/chaves'
+import { chavesInsights } from '../insights/chaves'
 import { chavesHabitos } from './chaves'
 import { invalidarDadosDeHabitos } from './invalidarHabitos'
 
@@ -14,6 +15,8 @@ describe('invalidarDadosDeHabitos', () => {
     cliente.setQueryData(chavesHabitos.todos, [])
     cliente.setQueryData(chavesInicio.dia('2026-10-21'), { habitos: [] })
     cliente.setQueryData(chavesInicio.dia('2026-10-20'), { habitos: [] })
+    cliente.setQueryData(chavesInsights.consistencia('2026-10'), { habitos: [] })
+    cliente.setQueryData(chavesInsights.consistencia('2026-09'), { habitos: [] })
     cliente.setQueryData(['outra'], 'intacta')
     return cliente
   }
@@ -33,6 +36,15 @@ describe('invalidarDadosDeHabitos', () => {
 
     expect(invalidada(cliente, chavesInicio.dia('2026-10-21'))).toBe(true)
     expect(invalidada(cliente, chavesInicio.dia('2026-10-20'))).toBe(true)
+  })
+
+  it('invalida os Insights de qualquer mês em cache', async () => {
+    const cliente = clienteComDados()
+
+    await invalidarDadosDeHabitos(cliente)
+
+    expect(invalidada(cliente, chavesInsights.consistencia('2026-10'))).toBe(true)
+    expect(invalidada(cliente, chavesInsights.consistencia('2026-09'))).toBe(true)
   })
 
   it('não afeta consultas de outros assuntos', async () => {

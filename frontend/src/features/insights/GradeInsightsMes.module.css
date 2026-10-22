@@ -1,0 +1,225 @@
+.cartao {
+  background: var(--card);
+  border: var(--border-width) solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--hairline);
+}
+
+.mes {
+  margin: 0;
+  font-size: var(--text-botao);
+  font-weight: var(--weight-medium);
+}
+
+.seta {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: 50%;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background var(--transicao-rapida),
+    transform var(--transicao-rapida);
+}
+
+.seta:hover {
+  background: var(--hover-surface);
+}
+
+.seta:active {
+  transform: scale(0.92);
+}
+
+.seta:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Quando o mês não cabe (janela estreita), o card rola na horizontal e a coluna
+   dos nomes fica fixa à esquerda. */
+.rolagem {
+  overflow-x: auto;
+  animation: aparecer var(--transicao-suave);
+  transition: opacity var(--transicao-suave);
+}
+
+.carregando {
+  opacity: 0.55;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* A coluna do nome tem a largura do maior nome (width: 1% encolhe a coluna ao
+   conteúdo); os dias dividem o resto. */
+.colunaHabito {
+  width: 1%;
+  padding: var(--space-3) var(--space-4);
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.1em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.colunaHabito,
+.nome {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--card);
+  box-shadow: 1px 0 0 var(--hairline);
+}
+
+/* Cabeçalho do dia: a inicial e o número, um sobre o outro. */
+.dia {
+  min-width: 26px;
+  padding: var(--space-3) 0 var(--space-2);
+  font-weight: var(--weight-regular);
+  text-align: center;
+}
+
+.inicial {
+  display: block;
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 12px;
+}
+
+.numero {
+  display: inline-block;
+  min-width: 18px;
+  margin-top: 2px;
+  border-radius: 4px;
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  line-height: 18px;
+}
+
+/* Hoje: selo escuro, como no mock. */
+.hoje {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.tabela tbody th,
+.tabela tbody td {
+  border-top: var(--border-width) solid var(--hairline);
+}
+
+.nome {
+  max-width: 280px;
+  padding: var(--space-3) var(--space-4);
+  overflow: hidden;
+  font-size: var(--text-legenda);
+  font-weight: var(--weight-medium);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hábito excluído: aparece nos meses em que existia, mais apagado. */
+.excluido {
+  color: var(--ash);
+}
+
+.celula {
+  padding: 0;
+  text-align: center;
+}
+
+/* Legenda e data de hoje são rótulos: mesma fonte mono do cabeçalho da tabela. */
+.legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--border-width) solid var(--hairline);
+  color: var(--graphite);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+}
+
+
+
+/* Cada dia é uma coluna separada por uma linha fina; a segunda-feira, que abre a
+   semana, ganha uma linha mais forte; sábado e domingo ficam tingidos. */
+.dia,
+.celula {
+  border-left: var(--border-width) solid var(--hairline);
+}
+
+.inicioDaSemana {
+  border-left-color: var(--ash);
+}
+
+.fimDeSemana {
+  background: color-mix(in srgb, var(--canvas) 70%, var(--card));
+}
+
+/* A coluna de hoje: uma moldura de 2px, sem fundo, com os cantos de cima e de
+   baixo arredondados. Só funciona com border-collapse: separate, que deixa cada
+   célula ter o seu raio. A coluna ao lado perde a linha fina que encostaria na
+   moldura. */
+.colunaDeHoje {
+  border-right: 2px solid var(--graphite);
+  border-left: 2px solid var(--graphite);
+}
+
+.tabela thead .colunaDeHoje {
+  border-top: 2px solid var(--graphite);
+  border-radius: 6px 6px 0 0;
+}
+
+.tabela tbody tr:last-child .colunaDeHoje {
+  border-bottom: 2px solid var(--graphite);
+  border-radius: 0 0 6px 6px;
+}
+
+.colunaDeHoje + .dia,
+.colunaDeHoje + .celula {
+  border-left-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rolagem {
+    animation: none;
+    transition: none;
+  }
+
+  .seta {
+    transition: none;
+  }
+
+  .seta:active {
+    transform: none;
+  }
+}

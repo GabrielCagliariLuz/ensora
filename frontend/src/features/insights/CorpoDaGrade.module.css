@@ -1,0 +1,41 @@
+.estado {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.estado p {
+  margin: 0;
+}
+
+.botao {
+  height: 40px;
+  padding-inline: var(--space-4);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.botao:hover {
+  background: var(--hover-surface);
+}
+
+.botao:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botao {
+    transition: none;
+  }
+}
