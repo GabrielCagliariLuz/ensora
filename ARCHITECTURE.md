@@ -633,9 +633,20 @@ Mobile:
 - lista de hábitos do dia com checkbox (semanais mostram o contador
   `feito/meta`, ex.: `1/3`);
 - botões Novo Hábito e Editar Hábitos;
-- Upcoming: entregas e prazos (com botão Concluir e "vence em N dias";
+- Upcoming: entregas e prazos (ícone de situação à esquerda: bandeira,
+  relógio amarelo de 24h a 48h do prazo,
+  despertador em ember com menos de 24h, alerta em ember para atrasada
+  e check para concluída; "qui, 04 out · até 14h30" e a contagem à
+  direita: "3 dias", "amanhã", "hoje" ou "atrasada"; concluir é uma
+  caixa discreta no fim da linha;
   atrasada só até o dia seguinte ao prazo) e eventos e compromissos
-  (data, "em N dias", horário).
+  (data, "em N dias", horário; o evento de hoje vira "agora" em moss
+  entre o início e o término e "encerrado", esmaecido, depois disso; sem
+  término, encerra ao começar). Tocar numa entrega ou num evento (a
+  linha toda, que ganha hover) abre o Calendar no dia dele e já com os
+  detalhes dele abertos (`/calendario?dia=AAAA-MM-DD&tipo=entrega&id=12`):
+  o mês certo, o popover ancorado na etiqueta no desktop (com um destaque
+  breve na célula) e o sheet de detalhes no mobile.
 
 Desktop:
 

@@ -35,6 +35,7 @@ export default function EtiquetaEntrega({
       solida={!urgente}
       esmaecida={entrega.concluida}
       dica={entrega.titulo}
+      identificador={`ENTREGA-${entrega.id}`}
       aoAbrir={aoAbrir}
       arrastando={arrastando}
       aoComecarArrasto={aoComecarArrasto}

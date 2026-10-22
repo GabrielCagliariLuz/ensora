@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import type { Entrega } from '../../api/tipos'
+import type { Entrega, Evento } from '../../api/tipos'
 import {
+  contagemPrazo,
+  estadoEvento,
   formatarHora,
   formatarHorarioEvento,
+  legendaPrazo,
   ordenarEntregas,
-  rotuloPrazo,
   situacaoPrazo,
   textoDiasEvento,
 } from './upcoming'
@@ -47,6 +49,56 @@ describe('formatarHorarioEvento', () => {
   })
 })
 
+function evento(parcial: Partial<Evento> = {}): Evento {
+  return {
+    id: 1,
+    titulo: 'Consulta',
+    data: '2026-10-21',
+    inicio: '14:00:00',
+    ...parcial,
+  }
+}
+
+describe('estadoEvento', () => {
+  // `agora` é 21/10/2026, 10:00.
+  it('antes do início é normal', () => {
+    expect(estadoEvento(evento(), agora)).toBe('normal')
+  })
+
+  it('dias à frente são sempre normais', () => {
+    expect(estadoEvento(evento({ data: '2026-10-22', inicio: '08:00:00' }), agora)).toBe(
+      'normal',
+    )
+  })
+
+  it('entre o início e o término está acontecendo', () => {
+    const rolando = evento({ inicio: '09:00:00', termino: '11:00:00' })
+    expect(estadoEvento(rolando, agora)).toBe('agora')
+  })
+
+  it('no minuto exato do início já começou, e no do término já acabou', () => {
+    const comecando = evento({ inicio: '10:00:00', termino: '11:00:00' })
+    expect(estadoEvento(comecando, agora)).toBe('agora')
+    const acabando = evento({ inicio: '09:00:00', termino: '10:00:00' })
+    expect(estadoEvento(acabando, agora)).toBe('encerrado')
+  })
+
+  it('passado o término está encerrado', () => {
+    const passou = evento({ inicio: '08:00:00', termino: '09:30:00' })
+    expect(estadoEvento(passou, agora)).toBe('encerrado')
+  })
+
+  it('sem término, encerra quando começa', () => {
+    expect(estadoEvento(evento({ inicio: '09:00:00' }), agora)).toBe('encerrado')
+    expect(estadoEvento(evento({ inicio: '10:00:00' }), agora)).toBe('encerrado')
+    expect(estadoEvento(evento({ inicio: '10:00:01' }), agora)).toBe('normal')
+  })
+
+  it('um dia que já passou está encerrado', () => {
+    expect(estadoEvento(evento({ data: '2026-10-20' }), agora)).toBe('encerrado')
+  })
+})
+
 describe('textoDiasEvento', () => {
   it('diz hoje, amanhã e N dias', () => {
     expect(textoDiasEvento('2026-10-21', '2026-10-21')).toBe('hoje')
@@ -60,15 +112,19 @@ describe('textoDiasEvento', () => {
   })
 })
 
-describe('rotuloPrazo', () => {
-  it('mostra só a data quando não há horário', () => {
-    expect(rotuloPrazo(entrega({ prazoData: '2026-10-04' }))).toBe('04 out')
+describe('legendaPrazo', () => {
+  it('mostra o dia da semana e a data quando não há horário', () => {
+    // 04/10/2026 é domingo.
+    expect(legendaPrazo(entrega({ prazoData: '2026-10-04' }))).toBe('dom, 04 out')
   })
 
-  it('acrescenta o horário quando há', () => {
+  it('acrescenta até que horas, quando há', () => {
     expect(
-      rotuloPrazo(entrega({ prazoData: '2026-10-04', prazoHorario: '14:30:00' })),
-    ).toBe('04 out, 14h30')
+      legendaPrazo(entrega({ prazoData: '2026-10-04', prazoHorario: '14:30:00' })),
+    ).toBe('dom, 04 out · até 14h30')
+    expect(
+      legendaPrazo(entrega({ prazoData: '2026-10-04', prazoHorario: '09:00:00' })),
+    ).toBe('dom, 04 out · até 9h')
   })
 })
 
@@ -149,6 +205,87 @@ describe('situacaoPrazo', () => {
     expect(
       situacaoPrazo(entrega({ prazoData: '2026-10-20', concluida: true }), agora),
     ).toEqual({ texto: 'concluída', urgente: false })
+  })
+})
+
+describe('contagemPrazo', () => {
+  it('diz quantos dias faltam, sem urgência a partir de 2 dias', () => {
+    expect(contagemPrazo(entrega({ prazoData: '2026-10-24' }), agora)).toEqual({
+      texto: '3 dias',
+      estado: 'normal',
+      urgente: false,
+    })
+  })
+
+  it('hoje é urgente', () => {
+    expect(contagemPrazo(entrega({ prazoData: '2026-10-21' }), agora)).toEqual({
+      texto: 'hoje',
+      estado: 'urgente',
+      urgente: true,
+    })
+  })
+
+  it('menos de 24h para o prazo é urgente, mesmo que seja amanhã', () => {
+    // Amanhã às 8h: faltam 22h.
+    const cedo = entrega({ prazoData: '2026-10-22', prazoHorario: '08:00:00' })
+    expect(contagemPrazo(cedo, agora)).toEqual({
+      texto: 'amanhã',
+      estado: 'urgente',
+      urgente: true,
+    })
+  })
+
+  it('de 24h a 48h é atenção, em amarelo', () => {
+    // Amanhã sem horário vale até 23:59: faltam quase 38h.
+    expect(contagemPrazo(entrega({ prazoData: '2026-10-22' }), agora)).toEqual({
+      texto: 'amanhã',
+      estado: 'atencao',
+      urgente: false,
+    })
+    // Depois de amanhã às 9h: faltam 47h.
+    const doisDias = entrega({ prazoData: '2026-10-23', prazoHorario: '09:00:00' })
+    expect(contagemPrazo(doisDias, agora)).toEqual({
+      texto: '2 dias',
+      estado: 'atencao',
+      urgente: false,
+    })
+  })
+
+  it('48h ou mais é normal', () => {
+    // Depois de amanhã às 10h: faltam exatamente 48h.
+    const limite = entrega({ prazoData: '2026-10-23', prazoHorario: '10:00:00' })
+    expect(contagemPrazo(limite, agora).estado).toBe('normal')
+  })
+
+  it('hoje com o horário já passado está atrasada desde hoje', () => {
+    const passada = entrega({ prazoData: '2026-10-21', prazoHorario: '09:00:00' })
+    expect(contagemPrazo(passada, agora)).toEqual({
+      texto: 'atrasada',
+      apoio: 'desde hoje',
+      estado: 'atrasada',
+      urgente: true,
+    })
+  })
+
+  it('diz desde quando está atrasada', () => {
+    expect(contagemPrazo(entrega({ prazoData: '2026-10-20' }), agora)).toEqual({
+      texto: 'atrasada',
+      apoio: 'desde ontem',
+      estado: 'atrasada',
+      urgente: true,
+    })
+    expect(contagemPrazo(entrega({ prazoData: '2026-10-17' }), agora)).toEqual({
+      texto: 'atrasada',
+      apoio: 'há 4 dias',
+      estado: 'atrasada',
+      urgente: true,
+    })
+  })
+
+  it('entrega concluída não é urgente, mesmo com prazo vencido', () => {
+    expect(
+      contagemPrazo(entrega({ prazoData: '2026-10-10', concluida: true }), agora),
+    ).toEqual({ texto: 'concluída', estado: 'concluida', urgente: false })
   })
 })
 

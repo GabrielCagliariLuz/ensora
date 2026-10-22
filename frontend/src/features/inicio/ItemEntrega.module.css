@@ -1,12 +1,92 @@
 .item {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-3);
-  padding-block: var(--space-3);
+  /* A linha vai um pouco além do texto, para o hover ocupar o cartão todo. */
+  margin-inline: calc(var(--space-3) * -1);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: background var(--transicao-rapida);
 }
 
-/* Título longo quebra linha sem empurrar o botão. */
+.item:hover {
+  background: color-mix(in srgb, var(--hover-surface) 45%, var(--card));
+}
+
+/* A área que leva ao Calendar. O ::after estica o link pela linha inteira; só
+   a caixa de concluir fica por cima dele. */
+.conteudo {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  color: inherit;
+  text-decoration: none;
+}
+
+.conteudo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-sm);
+}
+
+.conteudo:focus-visible {
+  outline: none;
+}
+
+.conteudo:focus-visible::after {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+/* Ícone de situação num quadrado arredondado de 40px, do mesmo tamanho do selo de data dos
+   eventos: neutro, ember (urgente e atrasada) ou
+   moss (concluída). */
+.icone {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: var(--canvas);
+  border-radius: var(--radius-sm);
+  color: var(--graphite);
+  transition:
+    background var(--transicao-rapida),
+    color var(--transicao-rapida);
+}
+
+/* Cores de alerta: só aqui, nas entregas, nunca nos eventos. Amarelo de 24h a
+   48h; ember com menos de 24h e quando atrasada. */
+.atencao .icone {
+  background: var(--amber-surface);
+  color: var(--amber);
+}
+
+.atencao .contagem {
+  color: var(--amber);
+}
+
+.urgente .icone,
+.atrasada .icone {
+  background: var(--ember-surface);
+  color: var(--ember);
+}
+
+.urgente .contagem,
+.atrasada .contagem {
+  color: var(--ember);
+}
+
+.concluida .icone {
+  background: var(--moss-surface);
+  color: var(--moss);
+}
+
+/* Título longo quebra linha sem empurrar a contagem. */
 .texto {
   min-width: 0;
   display: grid;
@@ -20,62 +100,110 @@
   line-height: var(--leading-corpo);
 }
 
-.concluida {
-  color: var(--graphite);
-  text-decoration: line-through;
-}
-
-.prazo {
+.legenda {
   color: var(--graphite);
   font-family: var(--font-mono);
   font-size: var(--text-rotulo);
   line-height: var(--leading-legenda);
 }
 
-/* No desktop há espaço: o subtexto sob o nome (prazo e situação) sobe de 11px para
-   13px. */
-@media (min-width: 768px) {
-  .prazo {
-    font-size: var(--text-legenda);
-  }
+.quando {
+  display: grid;
+  transition: opacity var(--transicao-rapida);
+  justify-items: end;
+  gap: 2px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
 }
 
-/* Cor de urgência: só aqui, nas entregas, nunca nos eventos. */
-.urgente {
-  color: var(--ember);
-  font-weight: var(--weight-semibold);
-}
-
-.botao {
-  flex-shrink: 0;
-  height: 32px;
-  padding-inline: var(--space-3);
-  background: var(--card);
-  border: var(--border-width) solid var(--rule);
-  border-radius: var(--radius-sm);
-  color: var(--ink);
+.contagem {
   font-size: var(--text-legenda);
   font-weight: var(--weight-semibold);
-  cursor: pointer;
-  transition: background var(--transicao-rapida);
 }
 
-.desfazer {
+.apoio {
   color: var(--graphite);
-  font-weight: var(--weight-medium);
+  font-size: var(--text-rotulo);
 }
 
-.botao:hover {
-  background: var(--hover-surface);
+/* Concluída: o título é riscado e cinza, e a contagem vira "concluída". */
+.concluida .titulo {
+  color: var(--graphite);
+  text-decoration: line-through;
 }
 
-.botao:focus-visible {
+.concluida .legenda,
+.concluida .quando {
+  opacity: 0.6;
+}
+
+.concluida .contagem {
+  color: var(--graphite);
+  font-weight: var(--weight-regular);
+}
+
+/* Marcar é secundário: uma caixa discreta (quadrada, como a dos hábitos), com
+   área de toque de 40px. */
+.marcar {
+  position: relative;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.circulo {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: var(--border-width) solid var(--rule);
+  border-radius: 4px;
+  color: transparent;
+  transition:
+    background var(--transicao-rapida),
+    border-color var(--transicao-rapida),
+    color var(--transicao-rapida);
+}
+
+.marcar:hover .circulo {
+  border-color: var(--graphite);
+}
+
+.marcar[aria-pressed='true'] .circulo {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: var(--paper);
+}
+
+.marcar:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
+/* No desktop há espaço: os textos sobem um degrau, como no cartão de eventos. */
+@media (min-width: 768px) {
+  .legenda,
+  .apoio {
+    font-size: var(--text-legenda);
+  }
+
+  .contagem {
+    font-size: var(--text-corpo);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .botao {
+  .item,
+  .icone,
+  .quando,
+  .circulo {
     transition: none;
   }
 }
