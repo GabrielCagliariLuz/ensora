@@ -609,7 +609,10 @@ Regras:
 
 ### Offline
 
-- PWA instalável, com o shell do app em cache.
+- PWA instalável (manifest e ícones do anel, janela própria ao
+  instalar), com o shell do app em cache pelo service worker. O shell
+  inclui as fontes do Google, em cache próprio.
+  Atualização automática: a versão nova assume no próximo carregamento.
 - Leitura a partir de um cache local dos dados: sem conexão, as telas
   mostram o último estado conhecido.
 - Marcar e desmarcar hábito funcionam offline: a operação entra numa
@@ -1333,6 +1336,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 61  | O fuso horário passa a ser por usuário (revisa a decisão 56 e a seção 12): a coluna `usuario.fuso` (nome IANA, default `America/Sao_Paulo`, migration V6) define o "hoje" do servidor e o dia de criação e exclusão dos hábitos nos Insights. O `HabitoService` deixa de ter fuso fixo e recebe o fuso por parâmetro; o `InsightsService` o obtém do `UsuarioService`, um Service do módulo `auth`, porque os módulos não falam com Repositories de outros. O cadastro aceita o fuso (opcional) e a variável `FUSO` vira só o padrão das contas novas. Alterar o fuso depois fica para a API da conta |
 | 62  | API da conta (`/usuario`, módulo agregado `conta`): ver a conta, trocar o fuso e a senha e excluir a conta. Trocar a senha revoga todas as sessões, inclusive a atual, porque o cookie do refresh token só vai a `/auth` e a rota não identifica a sessão corrente; o front leva ao login. Excluir apaga tudo do usuário (registros, metas, hábitos, entregas, eventos e sessões) numa transação, em consultas em massa filtradas por `usuario_id`, e exige a senha. Senha errada nessas rotas é `400` no campo (não 401, para o cliente não tentar renovar a sessão) e conta no limite por IP do login |
 | 63  | Isolamento entre usuários provado por testes de integração com PostgreSQL real (Testcontainers, classes `*IT`, só no `./mvnw verify`): contas A e B pela API de verdade, A não lê, edita, exclui nem vê em Calendar, Home e Insights o que é de B, e excluir a conta de A poupa B. Complementa a decisão 33: os Services seguem com testes unitários, e o que depende de consulta (filtro por `usuario_id`, JPQL de exclusão, migrations) fica no teste com banco |
+| 64  | PWA com `vite-plugin-pwa` (Workbox): manifest, ícones gerados do anel (`npm run icones`, PNGs commitados) e service worker com o shell em cache, `registerType: 'autoUpdate'`. Só o shell é cacheado: os dados da API ficam para o cache de leitura (#56), e a instalação é oferecida pelo navegador, sem botão próprio |
 
 ## 17. Pontos ainda em aberto
 
@@ -1361,7 +1365,8 @@ bloqueia a chamada, então o front não depende desse corpo.
     V1, V2, V3 (entrega), V4 (evento) e V5 (data local da conclusão) prontas.
 12. ~~Renomear o pacote do backend de `com.example.backend` para
     `com.ensora`.~~ Resolvido (issue #3).
-13. Bibliotecas do frontend ainda indefinidas (ícones, rotas, PWA).
+13. ~~Bibliotecas do frontend ainda indefinidas (ícones, rotas, PWA).~~
+    Resolvido: lucide-react, React Router e `vite-plugin-pwa` (decisão 64).
 
 ## 18. Ordem de implementação
 
