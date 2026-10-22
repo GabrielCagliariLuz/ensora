@@ -213,7 +213,7 @@ Detalhes do cálculo (decisão 57):
 
 - **O hábito existe** do dia da criação até o dia anterior ao da
   exclusão: o dia da criação conta e o da exclusão não. Os dias vêm de
-  `criado_em` e `excluido_em` no fuso do servidor (seção 12). Um registro
+  `criado_em` e `excluido_em` no fuso do usuário (seção 12). Um registro
   feito antes da criação não conta.
 - **O semanal entra** com `meta da semana / 7`, usando a meta vigente na
   segunda-feira da semana do dia (seção 5.2). Sem meta vigente naquela
@@ -509,8 +509,8 @@ habito/
   às rotas `/auth/*`: com token inválido ou expirado, o Spring responde
   401 mesmo nas rotas públicas.
 - **Refresh token opaco (~30 dias)** em cookie `refresh_token`
-  `HttpOnly; Secure; SameSite=Strict; Path=/auth`. São 32 bytes
-  aleatórios; o banco guarda só o hash SHA-256 em hexadecimal
+  `HttpOnly; Secure; SameSite=Strict; Path=/auth` (em produção,
+  `Path=/api/auth`, ver decisão 65). São 32 bytes aleatórios; o banco guarda só o hash SHA-256 em hexadecimal
   (`refresh_token`: `usuario_id`, `token_hash`, `expira_em`,
   `revogado_em`), e o valor em claro só existe no cookie.
 - `POST /auth/refresh` rotaciona o refresh token a cada uso. Reuso de
@@ -542,7 +542,9 @@ habito/
   (`codigoConvite`, comparado em tempo constante e antes de olhar o
   e-mail, para não revelar se ele existe). `GET /auth/registro` (público)
   diz à tela se o cadastro está aberto e se pede código.
-- Inicialmente o sistema será usado por um único usuário.
+- O sistema é multiusuário: cada conta só enxerga os próprios dados
+  (filtro por `usuario_id` em todo acesso), com fuso próprio. O cadastro
+  só abre com `REGISTRATION_ENABLED=true` (decisões 60 a 62).
 - A solução deve continuar permitindo evolução para múltiplos
   usuários.
 - Essa decisão poderá ser revista antes de uma versão
