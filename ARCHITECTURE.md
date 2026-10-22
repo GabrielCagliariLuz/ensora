@@ -602,6 +602,11 @@ Regras:
 - Criar e editar hábito usam o mesmo formulário em modos diferentes.
 - Bottom sheets (novo/editar hábito, gerenciar hábitos, novo registro)
   e o modal de confirmação são componentes de `components/ui`.
+- No celular, a sheet acompanha o teclado: `useVisualViewport` (em
+  `lib/`) escreve `--vv-altura` e `--teclado` no `<html>` enquanto o
+  diálogo está aberto. Em tela de toque, nenhum campo recebe foco
+  automático (`focoAutomatico`, em `lib/foco.ts`), para o teclado não
+  subir junto com a sheet.
 - Rótulos de navegação seguem o Figma: Today, Insights, Calendar e
   Settings (engrenagem); seções da Home: Today e Upcoming.
 - Tokens de design (cores, tipografia, espaçamento) serão extraídos do
