@@ -6,7 +6,7 @@ services:
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /api/auth/registro
+    healthCheckPath: /api/saude
     envVars:
       - key: DB_URL
         sync: false # jdbc:postgresql://<host-neon>/<banco>?sslmode=require

@@ -78,6 +78,13 @@ class ApiComPrefixoIT {
 	}
 
 	@Test
+	void saudeEPublicaESemBanco() throws Exception {
+		mvc.perform(get("/api/saude"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("\"status\":\"ok\"")));
+	}
+
+	@Test
 	void caminhoDeArquivoAusenteDa404EmVezDoIndice() throws Exception {
 		mvc.perform(get("/assets/nao-existe.js")).andExpect(status().isNotFound());
 	}

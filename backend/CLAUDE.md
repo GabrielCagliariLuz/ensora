@@ -92,6 +92,8 @@ com.ensora/habito/
   ele, os controllers ficam sob `/api` e a SPA é servida de `static/`. Em
   dev fica vazio. Sem barra no início, a app não sobe.
 - Porta: `PORT` (padrão 8080; o Render define).
+- `GET /api/saude` (ou `/saude` em dev): público e sem banco. É o health
+  check do Render e o alvo do monitor de keep-alive.
 - Produção: `docker build -t ensora .` na raiz. O Dockerfile gera o front
   com `VITE_API_URL=/api` e copia o `dist` para `static/` antes do jar.
 
