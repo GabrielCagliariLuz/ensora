@@ -1,6 +1,7 @@
 package com.ensora.compartilhado.seguranca;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -26,7 +27,8 @@ public class ConfiguracaoSeguranca {
 	@Bean
 	SecurityFilterChain cadeiaDeSeguranca(HttpSecurity http,
 			CorsConfigurationSource corsConfigurationSource,
-			@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolvedorDeErros) throws Exception {
+			@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolvedorDeErros,
+			@Value("${ensora.api.prefixo:}") String prefixo) throws Exception {
 		// 401 e 403 são entregues ao ManipuladorDeErros, para o formato de erro ter uma única fonte.
 		AuthenticationEntryPoint naoAutenticado = (requisicao, resposta, ex) ->
 				resolvedorDeErros.resolveException(requisicao, resposta, null, ex);
@@ -40,9 +42,16 @@ public class ConfiguracaoSeguranca {
 				.formLogin(AbstractHttpConfigurer::disable)
 				.sessionManagement(sessao -> sessao.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.cors(cors -> cors.configurationSource(corsConfigurationSource))
-				.authorizeHttpRequests(autorizacao -> autorizacao
-						.requestMatchers("/auth/**").permitAll()
-						.anyRequest().authenticated())
+				.authorizeHttpRequests(autorizacao -> {
+					autorizacao.requestMatchers(prefixo + "/auth/**").permitAll();
+					if (prefixo.isEmpty()) {
+						autorizacao.anyRequest().authenticated();
+					} else {
+						// Com prefixo, só a API exige token; a SPA e os arquivos estáticos são públicos.
+						autorizacao.requestMatchers(prefixo + "/**").authenticated();
+						autorizacao.anyRequest().permitAll();
+					}
+				})
 				// Valida o JWT do header Authorization: Bearer (assinatura, expiração e emissor).
 				.oauth2ResourceServer(oauth -> oauth
 						.jwt(Customizer.withDefaults())
