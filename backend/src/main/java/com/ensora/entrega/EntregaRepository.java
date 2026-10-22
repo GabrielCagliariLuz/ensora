@@ -1,6 +1,7 @@
 package com.ensora.entrega;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -39,5 +40,10 @@ public interface EntregaRepository extends JpaRepository<Entrega, Long> {
 			""")
 	List<Entrega> findParaHome(@Param("usuarioId") Long usuarioId, @Param("desde") LocalDate desde,
 			@Param("ate") LocalDate ate);
+
+	/** Apaga todas as entregas do usuário (exclusão da conta). */
+	@Modifying
+	@Query("delete from Entrega e where e.usuarioId = :usuarioId")
+	int apagarDoUsuario(@Param("usuarioId") Long usuarioId);
 
 }

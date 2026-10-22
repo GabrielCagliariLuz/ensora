@@ -145,4 +145,18 @@ class RefreshTokenServiceTest {
 		verify(refreshTokens, never()).revogarSeAtivo(any(), any());
 	}
 
+	@Test
+	void revogarTodasRevogaAsSessoesDoUsuarioComOInstanteDoRelogio() {
+		servico().revogarTodas(7L);
+
+		verify(refreshTokens).revogarTodosDoUsuario(7L, AGORA);
+	}
+
+	@Test
+	void apagarTodasApagaAsSessoesDoUsuario() {
+		servico().apagarTodas(7L);
+
+		verify(refreshTokens).apagarDoUsuario(7L);
+	}
+
 }

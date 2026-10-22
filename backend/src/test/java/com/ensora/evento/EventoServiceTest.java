@@ -250,4 +250,11 @@ class EventoServiceTest {
 		verify(eventos, never()).delete(any());
 	}
 
+	@Test
+	void apagarTodosDoUsuarioApagaSoOsEventosDele() {
+		servico().apagarTodosDoUsuario(7L);
+
+		verify(eventos).apagarDoUsuario(7L);
+	}
+
 }

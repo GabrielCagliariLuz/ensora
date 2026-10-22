@@ -717,7 +717,9 @@ Ações:
 
 ### Settings
 
-Acessada pela engrenagem. Sem protótipo; conteúdo a definir.
+Acessada pela engrenagem. Sem protótipo. Conteúdo da conta, definido
+pela API (seção 15): e-mail, fuso horário, trocar a senha, excluir a
+conta e sair. Trocar a senha encerra todas as sessões e leva ao login.
 
 ### Login / Registro
 
@@ -732,6 +734,10 @@ Sem protótipo; a desenhar.
 | Auth            | Login                  | `POST /auth/login`                       |
 | Auth            | Renovar sessão         | `POST /auth/refresh`                     |
 | Auth            | Sair                   | `POST /auth/logout`                      |
+| Settings        | Ver a conta            | `GET /usuario`                           |
+| Settings        | Trocar o fuso          | `PUT /usuario/fuso`                      |
+| Settings        | Trocar a senha         | `PUT /usuario/senha`                     |
+| Settings        | Excluir a conta        | `DELETE /usuario`                        |
 | Home            | Carregar tela          | `GET /inicio?data=AAAA-MM-DD`            |
 | Habits          | Listar hábitos         | `GET /habitos`                           |
 | Home            | Marcar hábito          | `PUT /habitos/{id}/registros/{data}`     |
@@ -806,6 +812,59 @@ Princípios:
 `HttpOnly` e `SameSite` do cookie original, para o navegador apagá-lo).
 É idempotente: sem cookie ou com token já revogado, também responde 204.
 Revoga só o token desta sessão.
+
+### Contratos da conta
+
+Todos exigem token. A conta é sempre a do token: não há id na rota.
+
+`GET /usuario`:
+
+```json
+// resposta 200
+{ "id": 1, "email": "pessoa@exemplo.com", "fuso": "America/Sao_Paulo" }
+```
+
+`PUT /usuario/fuso`: troca o fuso e responde `200` com a conta no mesmo
+formato.
+
+```json
+// requisição
+{ "fuso": "America/Manaus" }
+```
+
+- Só nomes de região IANA. Um nome inexistente (ou um deslocamento como
+  `+03:00`) dá `400 VALIDACAO` no campo `fuso`.
+
+`PUT /usuario/senha` (responde `204`):
+
+```json
+// requisição
+{ "senhaAtual": "...", "novaSenha": "senha-com-8-ou-mais" }
+```
+
+- `senhaAtual` errada: `400 VALIDACAO` no campo `senhaAtual` (e não 401,
+  para o cliente HTTP não confundir com sessão perdida e tentar renovar).
+  `novaSenha` com menos de 8 ou mais de 72 caracteres, ou igual à atual:
+  `400 VALIDACAO` no campo `novaSenha`.
+- **Encerra todas as sessões**: revoga todos os refresh tokens do usuário.
+  O refresh token vai num cookie de `Path=/auth`, que esta rota não
+  recebe, então não dá para poupar a sessão atual: o front leva a pessoa
+  de volta ao login. O access token já emitido segue valendo até expirar
+  (até 15 minutos).
+
+`DELETE /usuario` (responde `204`): exclui a conta e **tudo** o que é do
+usuário (registros, metas e hábitos, inclusive os excluídos, entregas,
+eventos e sessões), numa transação só.
+
+```json
+// requisição (a senha confirma a exclusão, que não tem volta)
+{ "senha": "..." }
+```
+
+- `senha` errada: `400 VALIDACAO` no campo `senha`.
+- Errar a senha em `PUT /usuario/senha` ou `DELETE /usuario` conta no
+  mesmo limite por IP do login (5 falhas em 15 minutos, resposta 429):
+  quem tiver só um access token roubado não pode chutar a senha à vontade.
 
 ### Contratos de hábitos
 
@@ -1243,6 +1302,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 59  | A consistência do hábito semanal passa a ser dias feitos ÷ dias esperados, e não semanas com meta batida ÷ semanas consideradas (revisa a decisão 58 e a seção 7.2): o denominador é a soma das metas das semanas que contam e o numerador, os registros de cada semana limitados à meta (dia além da meta não compensa outra semana fraca). O resto da decisão 58 não muda: a semana pertence ao mês da segunda-feira e a em andamento só conta se já bateu a meta. Motivo: o Figma mostra o semanal em dias (Academia, 7 / 9 dias = 77%), mais fino que "semana batida ou não". O formato da resposta não muda |
 | 60  | Cadastro preparado para mais de um usuário (revisa a decisão 40): senha com mínimo de **8** caracteres no cadastro (o login continua sem mínimo, para as contas antigas); limite de 10 tentativas de cadastro por IP em 60 minutos, contando toda tentativa; código de convite opcional (`CONVITE_CODIGO`), que permite voltar a restringir o app a família e amigos só com uma variável de ambiente; e IP do cliente lido atrás do proxy com `server.forward-headers-strategy=native`, para o limite de login e de cadastro valer por pessoa e não por proxy |
 | 61  | O fuso horário passa a ser por usuário (revisa a decisão 56 e a seção 12): a coluna `usuario.fuso` (nome IANA, default `America/Sao_Paulo`, migration V6) define o "hoje" do servidor e o dia de criação e exclusão dos hábitos nos Insights. O `HabitoService` deixa de ter fuso fixo e recebe o fuso por parâmetro; o `InsightsService` o obtém do `UsuarioService`, um Service do módulo `auth`, porque os módulos não falam com Repositories de outros. O cadastro aceita o fuso (opcional) e a variável `FUSO` vira só o padrão das contas novas. Alterar o fuso depois fica para a API da conta |
+| 62  | API da conta (`/usuario`, módulo agregado `conta`): ver a conta, trocar o fuso e a senha e excluir a conta. Trocar a senha revoga todas as sessões, inclusive a atual, porque o cookie do refresh token só vai a `/auth` e a rota não identifica a sessão corrente; o front leva ao login. Excluir apaga tudo do usuário (registros, metas, hábitos, entregas, eventos e sessões) numa transação, em consultas em massa filtradas por `usuario_id`, e exige a senha. Senha errada nessas rotas é `400` no campo (não 401, para o cliente não tentar renovar a sessão) e conta no limite por IP do login |
 
 ## 17. Pontos ainda em aberto
 

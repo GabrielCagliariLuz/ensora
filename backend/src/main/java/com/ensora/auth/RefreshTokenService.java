@@ -100,4 +100,16 @@ public class RefreshTokenService {
 		}
 	}
 
+	/** Revoga todas as sessões do usuário (troca de senha). Quem estiver logado precisa entrar de novo. */
+	@Transactional
+	public void revogarTodas(Long usuarioId) {
+		refreshTokens.revogarTodosDoUsuario(usuarioId, relogio.instant());
+	}
+
+	/** Apaga todas as sessões do usuário, para a conta poder ser excluída. */
+	@Transactional
+	public void apagarTodas(Long usuarioId) {
+		refreshTokens.apagarDoUsuario(usuarioId);
+	}
+
 }

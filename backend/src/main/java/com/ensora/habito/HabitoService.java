@@ -272,4 +272,15 @@ public class HabitoService {
 		}
 	}
 
+	/**
+	 * Apaga tudo o que é de hábito do usuário, na ordem que as chaves estrangeiras pedem: registros, metas e hábitos
+	 * (inclusive os excluídos). Só a exclusão da conta usa isto.
+	 */
+	@Transactional
+	public void apagarTodosDoUsuario(Long usuarioId) {
+		registros.apagarDoUsuario(usuarioId);
+		metas.apagarDoUsuario(usuarioId);
+		habitos.apagarDoUsuario(usuarioId);
+	}
+
 }

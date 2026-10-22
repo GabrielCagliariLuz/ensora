@@ -363,4 +363,11 @@ class EntregaServiceTest {
 		verify(entregas, never()).delete(any());
 	}
 
+	@Test
+	void apagarTodasDoUsuarioApagaSoAsEntregasDele() {
+		servico().apagarTodasDoUsuario(7L);
+
+		verify(entregas).apagarDoUsuario(7L);
+	}
+
 }

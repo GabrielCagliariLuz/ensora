@@ -28,6 +28,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import org.mockito.InOrder;
+import static org.mockito.Mockito.inOrder;
 
 @ExtendWith(MockitoExtension.class)
 class HabitoServiceTest {
@@ -609,6 +611,16 @@ class HabitoServiceTest {
 
 		verify(habitos).findByIdAndUsuarioIdAndExcluidoEmIsNull(10L, USUARIO);
 		verify(habitos, never()).delete(any());
+	}
+
+	@Test
+	void apagarTodosDoUsuarioApagaRegistrosMetasEHabitosNessaOrdem() {
+		servico().apagarTodosDoUsuario(USUARIO);
+
+		InOrder ordem = inOrder(registros, metas, habitos);
+		ordem.verify(registros).apagarDoUsuario(USUARIO);
+		ordem.verify(metas).apagarDoUsuario(USUARIO);
+		ordem.verify(habitos).apagarDoUsuario(USUARIO);
 	}
 
 }
