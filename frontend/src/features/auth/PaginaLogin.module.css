@@ -167,3 +167,30 @@
     transition: none;
   }
 }
+
+/* Texto sob o formulário ("Não tem conta? Criar conta") e a dica de apoio. */
+.rodape {
+  margin: 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+  text-align: center;
+}
+
+.ligacao {
+  color: var(--ink);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ligacao:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.apoio {
+  color: var(--ash);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}

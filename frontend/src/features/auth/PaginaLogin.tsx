@@ -1,8 +1,13 @@
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Link, useLocation } from 'react-router'
 import { CircleAlert } from 'lucide-react'
+import BlocoAviso from '../../components/ui/BlocoAviso'
 import LogoEnsora from '../../components/ui/LogoEnsora'
+import { CAMINHOS } from '../../lib/caminhos'
+import { avisoDoEstado, textoDoAviso } from './avisos'
 import { mensagemErroLogin } from './mensagemErroLogin'
+import { useConfiguracaoCadastro } from './useConfiguracaoCadastro'
 import { useEntrar } from './useEntrar'
 import styles from './PaginaLogin.module.css'
 
@@ -18,6 +23,9 @@ export default function PaginaLogin() {
   const campoEmail = useRef<HTMLInputElement>(null)
   const campoSenha = useRef<HTMLInputElement>(null)
   const login = useEntrar()
+  // O cadastro só aparece como saída quando está aberto.
+  const cadastro = useConfiguracaoCadastro()
+  const aviso = avisoDoEstado(useLocation().state)
 
   function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
@@ -51,6 +59,8 @@ export default function PaginaLogin() {
           </div>
 
           <form className={styles.formulario} onSubmit={enviar} noValidate>
+            {aviso && <BlocoAviso tom="aviso">{textoDoAviso(aviso)}</BlocoAviso>}
+
             {login.isError && (
               <div className={styles.alerta} role="alert">
                 <CircleAlert size={16} strokeWidth={1.5} />
@@ -113,6 +123,15 @@ export default function PaginaLogin() {
               {login.isPending ? 'Entrando…' : 'Entrar'}
             </button>
           </form>
+
+          {cadastro.data?.habilitado && (
+            <p className={styles.rodape}>
+              Não tem conta?{' '}
+              <Link className={styles.ligacao} to={CAMINHOS.cadastro}>
+                Criar conta
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </main>

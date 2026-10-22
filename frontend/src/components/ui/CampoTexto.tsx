@@ -10,7 +10,7 @@ interface CampoTextoProps {
   rotulo: string
   valor: string
   aoMudar: (valor: string) => void
-  tipo?: 'text' | 'date'
+  tipo?: 'text' | 'date' | 'password'
   multilinha?: boolean
   opcional?: boolean
   placeholder?: string
@@ -19,6 +19,8 @@ interface CampoTextoProps {
   focoInicial?: boolean
   // Para campos com comportamento próprio (como o de horário).
   modoEntrada?: 'numeric'
+  // Dica para o gerenciador de senhas (current-password, new-password).
+  autoCompletar?: string
   maxLength?: number
   aoTeclar?: (evento: EventoTecla) => void
   aoSair?: () => void
@@ -37,6 +39,7 @@ export default function CampoTexto({
   apoio,
   focoInicial = false,
   modoEntrada,
+  autoCompletar,
   maxLength,
   aoTeclar,
   aoSair,
@@ -78,7 +81,7 @@ export default function CampoTexto({
           type={tipo}
           inputMode={modoEntrada}
           maxLength={maxLength}
-          autoComplete="off"
+          autoComplete={autoCompletar ?? 'off'}
           placeholder={placeholder}
           value={valor}
           onChange={(e) => aoMudar(e.target.value)}

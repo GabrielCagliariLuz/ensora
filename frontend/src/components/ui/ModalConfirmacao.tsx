@@ -16,6 +16,8 @@ interface ModalConfirmacaoProps {
   aoCancelar: () => void
   // Ação em andamento: trava os botões, o Esc e o clique no fundo.
   carregando?: boolean
+  // Trava só o botão de confirmar (ex.: falta digitar a senha); o Cancelar e o Esc seguem livres.
+  confirmarDesabilitado?: boolean
   // Falha da ação: aparece sob a descrição e o modal continua aberto.
   erro?: string
 }
@@ -32,6 +34,7 @@ export default function ModalConfirmacao({
   aoConfirmar,
   aoCancelar,
   carregando = false,
+  confirmarDesabilitado = false,
   erro,
 }: ModalConfirmacaoProps) {
   const idTitulo = useId()
@@ -71,7 +74,7 @@ export default function ModalConfirmacao({
             className={styles.confirmar}
             type="button"
             onClick={aoConfirmar}
-            disabled={carregando}
+            disabled={carregando || confirmarDesabilitado}
           >
             {carregando ? 'Aguarde…' : rotuloConfirmar}
           </button>

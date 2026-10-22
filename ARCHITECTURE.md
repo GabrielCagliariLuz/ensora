@@ -717,13 +717,29 @@ Ações:
 
 ### Settings
 
-Acessada pela engrenagem. Sem protótipo. Conteúdo da conta, definido
-pela API (seção 15): e-mail, fuso horário, trocar a senha, excluir a
-conta e sair. Trocar a senha encerra todas as sessões e leva ao login.
+Acessada pelo item Settings (na barra de baixo no mobile e na sidebar
+no desktop). Sem protótipo. Blocos de conta, na API da
+seção 15:
+
+- **Conta:** e-mail (só leitura) e fuso horário, numa lista com os fusos
+  do Brasil primeiro e os demais em ordem alfabética. Salvar o fuso
+  atualiza os Insights;
+- **Senha:** senha atual, nova (8 a 72 caracteres) e confirmação. Trocar a
+  senha encerra todas as sessões: a pessoa volta ao login com um aviso;
+- **Sessão:** sair da conta;
+- **Excluir conta:** pede a senha num modal e apaga tudo. Volta ao login
+  com um aviso.
 
 ### Login / Registro
 
-Sem protótipo; a desenhar.
+Sem protótipo. O **login** (e-mail e senha) mostra o link "Criar conta"
+só quando o cadastro está aberto (`GET /auth/registro`) e, depois de
+trocar a senha ou excluir a conta, um aviso de uma vez.
+
+O **cadastro** (`/cadastro`) pede e-mail, senha, confirmação da senha e,
+quando o servidor exige convite, o código. O fuso do navegador vai junto,
+sem campo na tela (muda-se depois em Configurações). Com o cadastro
+fechado, a tela só avisa. Criada a conta, a pessoa entra e cai na Home.
 
 ## 15. Contrato inicial da API
 
