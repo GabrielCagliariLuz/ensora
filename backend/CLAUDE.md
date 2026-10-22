@@ -16,7 +16,8 @@ Editado no IntelliJ. Regras gerais e arquitetura: `../CLAUDE.md` e
 
 ```bash
 ./mvnw spring-boot:run   # sobe a API (precisa do PostgreSQL local)
-./mvnw test              # roda os testes
+./mvnw test              # testes unitários (sem banco, sem Docker)
+./mvnw verify            # unitários + integração (exige o Docker aberto)
 ./mvnw clean package     # gera o .jar
 ```
 
@@ -95,5 +96,9 @@ com.ensora/habito/
   sem subir o Spring nem o banco.
 - Um teste por regra: `HabitoServiceTest`, método com nome que descreve
   o caso (`marcarDuasVezesNaoDuplicaRegistro`).
-- O `BackendApplicationTests` atual sobe o contexto inteiro e precisa do
-  banco rodando. Testes com banco ficam para depois.
+- Testes de integração ficam em `src/test/java/com/ensora/integracao`,
+  terminam em `IT` e estendem `IntegracaoBase`: app inteira contra um
+  PostgreSQL descartável (Testcontainers). Rodam só no `./mvnw verify`
+  (Failsafe) e exigem o Docker aberto. Cada teste cria as próprias contas.
+- O `BackendApplicationTests` fica desabilitado; o contexto real já sobe
+  nos testes de integração.

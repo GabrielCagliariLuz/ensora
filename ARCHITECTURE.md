@@ -482,7 +482,9 @@ habito/
 
 - JUnit, começando por **testes unitários dos Services**, sem banco
   (Repository simulado).
-- Testes com banco real ficam para depois.
+- **Testes de integração** (`*IT`, só no `./mvnw verify`) com PostgreSQL
+  real em container (Testcontainers), para o que depende de consulta:
+  isolamento entre usuários, JPQL de exclusão e migrations (decisão 63).
 
 ## 11. Autenticação
 
@@ -1319,6 +1321,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 60  | Cadastro preparado para mais de um usuário (revisa a decisão 40): senha com mínimo de **8** caracteres no cadastro (o login continua sem mínimo, para as contas antigas); limite de 10 tentativas de cadastro por IP em 60 minutos, contando toda tentativa; código de convite opcional (`CONVITE_CODIGO`), que permite voltar a restringir o app a família e amigos só com uma variável de ambiente; e IP do cliente lido atrás do proxy com `server.forward-headers-strategy=native`, para o limite de login e de cadastro valer por pessoa e não por proxy |
 | 61  | O fuso horário passa a ser por usuário (revisa a decisão 56 e a seção 12): a coluna `usuario.fuso` (nome IANA, default `America/Sao_Paulo`, migration V6) define o "hoje" do servidor e o dia de criação e exclusão dos hábitos nos Insights. O `HabitoService` deixa de ter fuso fixo e recebe o fuso por parâmetro; o `InsightsService` o obtém do `UsuarioService`, um Service do módulo `auth`, porque os módulos não falam com Repositories de outros. O cadastro aceita o fuso (opcional) e a variável `FUSO` vira só o padrão das contas novas. Alterar o fuso depois fica para a API da conta |
 | 62  | API da conta (`/usuario`, módulo agregado `conta`): ver a conta, trocar o fuso e a senha e excluir a conta. Trocar a senha revoga todas as sessões, inclusive a atual, porque o cookie do refresh token só vai a `/auth` e a rota não identifica a sessão corrente; o front leva ao login. Excluir apaga tudo do usuário (registros, metas, hábitos, entregas, eventos e sessões) numa transação, em consultas em massa filtradas por `usuario_id`, e exige a senha. Senha errada nessas rotas é `400` no campo (não 401, para o cliente não tentar renovar a sessão) e conta no limite por IP do login |
+| 63  | Isolamento entre usuários provado por testes de integração com PostgreSQL real (Testcontainers, classes `*IT`, só no `./mvnw verify`): contas A e B pela API de verdade, A não lê, edita, exclui nem vê em Calendar, Home e Insights o que é de B, e excluir a conta de A poupa B. Complementa a decisão 33: os Services seguem com testes unitários, e o que depende de consulta (filtro por `usuario_id`, JPQL de exclusão, migrations) fica no teste com banco |
 
 ## 17. Pontos ainda em aberto
 
