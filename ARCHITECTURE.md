@@ -607,6 +607,10 @@ Regras:
   diálogo está aberto. Em tela de toque, nenhum campo recebe foco
   automático (`focoAutomatico`, em `lib/foco.ts`), para o teclado não
   subir junto com a sheet.
+- No celular, a sheet fecha arrastando a alça ou o cabeçalho para baixo
+  (`useArrastarParaFechar`): fecha passando de 100 px, ou com um arrasto
+  rápido; senão volta ao lugar. O corpo não participa, para a rolagem e os
+  campos continuarem normais.
 - Rótulos de navegação seguem o Figma: Today, Insights, Calendar e
   Settings (engrenagem); seções da Home: Today e Upcoming.
 - Tokens de design (cores, tipografia, espaçamento) serão extraídos do
