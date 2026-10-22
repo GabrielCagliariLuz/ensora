@@ -20,6 +20,8 @@ interface VisaoMobileProps {
   dias: Map<string, RegistrosDoDia>
   carregando: boolean
   selecionado: string
+  // Registro cujos detalhes abrem ao chegar (vindo da Home).
+  abertoInicial?: Aberto | null
   // Aviso de erro (conclusão, movimento), já montado pela página.
   aviso: ReactNode
   aoAnterior: () => void
@@ -48,6 +50,7 @@ export default function VisaoMobile({
   dias,
   carregando,
   selecionado,
+  abertoInicial = null,
   aviso,
   aoAnterior,
   aoProximo,
@@ -57,7 +60,7 @@ export default function VisaoMobile({
   aoExcluir,
   aoNovoRegistro,
 }: VisaoMobileProps) {
-  const [aberto, setAberto] = useState<Aberto | null>(null)
+  const [aberto, setAberto] = useState<Aberto | null>(abertoInicial)
   const fechar = useCallback(() => setAberto(null), [])
 
   const registroAberto =

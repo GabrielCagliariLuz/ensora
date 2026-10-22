@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Entrega } from '../../api/tipos'
 import { registrosDoDia } from './agenda'
 import type { Registro, RegistrosDoDia } from './agenda'
@@ -17,6 +17,10 @@ interface GradeMesProps {
   agora: Date
   // Registros por dia (AAAA-MM-DD), de agruparPorDia.
   dias: Map<string, RegistrosDoDia>
+  // Dia que chegou pela URL: ganha um destaque breve.
+  diaDestacado?: string | null
+  // Registro cujos detalhes abrem ao chegar (vindo da Home).
+  abertoInicial?: Omit<Aberto, 'ancora'> | null
   // Os dados na tela são do mês anterior: a grade esmaece até os novos chegarem.
   carregando?: boolean
   aoAlternarEntrega: (entrega: Entrega) => void
@@ -41,6 +45,8 @@ export default function GradeMes({
   hoje,
   agora,
   dias,
+  diaDestacado = null,
+  abertoInicial = null,
   carregando = false,
   aoAlternarEntrega,
   aoEditar,
@@ -48,6 +54,20 @@ export default function GradeMes({
   aoMover,
 }: GradeMesProps) {
   const [aberto, setAberto] = useState<Aberto | null>(null)
+  const grade = useRef<HTMLDivElement>(null)
+
+  // Vindo da Home, abre os detalhes do registro pedido, ancorados na etiqueta
+  // dele (o popover precisa do elemento, que só existe depois de desenhar).
+  useEffect(() => {
+    if (abertoInicial === null) return
+    const ancora = grade.current?.querySelector<HTMLElement>(
+      `[data-registro="${abertoInicial.tipo}-${abertoInicial.id}"]`,
+    )
+    if (ancora) setAberto({ ...abertoInicial, ancora })
+    // Só na chegada: depois disso o popover é do usuário.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Registro em arraste e o dia sob o cursor.
   const [arrastando, setArrastando] = useState<Registro | null>(null)
   const [alvo, setAlvo] = useState<string | null>(null)
@@ -101,6 +121,7 @@ export default function GradeMes({
         {/* A chave refaz a grade a cada mês, e ela surge com um fade. */}
         <div
           key={mes}
+          ref={grade}
           className={
             carregando ? `${styles.dias} ${styles.carregando}` : styles.dias
           }
@@ -117,6 +138,7 @@ export default function GradeMes({
               aoAbrir={(registro, elemento) => abrir(dia, registro, elemento)}
               arrastando={arrastando}
               alvo={alvo === dia}
+              destacada={diaDestacado === dia}
               aceitaSoltura={
                 arrastando !== null && dataDoRegistro(arrastando) !== dia
               }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import type { Entrega } from '../../api/tipos'
 import BlocoAviso from '../../components/ui/BlocoAviso'
 import { mesDoDia } from './grade'
@@ -12,6 +13,8 @@ import { mensagemErroMovimento } from '../agenda/regras'
 import { mensagemErroConclusao } from '../inicio/regras'
 import { useConcluirEntrega } from '../inicio/useConcluirEntrega'
 import { agruparPorDia } from './agenda'
+import { pedidoDaBusca } from './diaDaUrl'
+import { useDiaDestacado } from './useDiaDestacado'
 import type { Registro } from './agenda'
 import CabecalhoCalendario from './CabecalhoCalendario'
 import GradeMes from './GradeMes'
@@ -27,8 +30,20 @@ export default function PaginaCalendario() {
   const hoje = useHoje()
   const agora = useAgora()
   const ehMobile = useEhMobile()
-  const { mes, anterior, proximo, irParaHoje, irParaMes } = useMesVisivel(hoje)
-  const { dia: selecionado, escolher } = useDiaSelecionado(mes, hoje)
+  // Quem chega da Home traz o dia (e o registro) na URL: o Calendar abre nesse
+  // mês e dia, com os detalhes do registro abertos. Só vale na chegada; depois,
+  // navegar pelos meses é livre.
+  const [busca] = useSearchParams()
+  const [pedido] = useState(() => pedidoDaBusca(busca))
+  const diaDaUrl = pedido?.dia ?? null
+  const abertoInicial =
+    pedido?.registro != null ? { dia: pedido.dia, ...pedido.registro } : null
+  const diaDestacado = useDiaDestacado(diaDaUrl)
+  const { mes, anterior, proximo, irParaHoje, irParaMes } = useMesVisivel(
+    hoje,
+    diaDaUrl,
+  )
+  const { dia: selecionado, escolher } = useDiaSelecionado(mes, hoje, diaDaUrl)
   const { de, ate } = intervaloDaGrade(mes)
   const calendario = useCalendario(de, ate)
   usePrefetchMesesVizinhos(mes)
@@ -115,6 +130,7 @@ export default function PaginaCalendario() {
             dias={dias}
             carregando={calendario.isPlaceholderData}
             selecionado={selecionado}
+            abertoInicial={abertoInicial}
             aviso={blocoAviso}
             aoAnterior={anterior}
             aoProximo={proximo}
@@ -143,6 +159,8 @@ export default function PaginaCalendario() {
               hoje={hoje}
               agora={agora}
               dias={dias}
+              diaDestacado={diaDestacado}
+              abertoInicial={abertoInicial}
               carregando={calendario.isPlaceholderData}
               aoAlternarEntrega={alternar}
               aoEditar={setEditando}

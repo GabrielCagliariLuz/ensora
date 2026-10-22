@@ -16,6 +16,9 @@
   --ember: #a8402f;
   --ember-surface: #fbeeea;
   --ember-border: #f0d0c6;
+  --amber: #8f6928;
+  --amber-surface: #f9f2e6;
+  --amber-border: #efddbe;
 
   /* Categorias de evento: uma cor fixa por categoria; sem categoria, a neutra */
   --cat-saude: var(--moss);

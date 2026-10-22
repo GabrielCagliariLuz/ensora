@@ -11,6 +11,9 @@ interface EtiquetaProps {
   solida?: boolean
   // Texto completo, para o título cortado.
   dica: string
+  // Marca o botão (data-registro) para achá-lo no DOM: vindo da Home, o Calendar
+  // abre os detalhes ancorados nele.
+  identificador: string
   // Abre os detalhes. Recebe o botão clicado, de onde o popover se ancora.
   aoAbrir: (elemento: HTMLElement) => void
   // Fica antes do botão, fora da área que abre os detalhes (a caixa da entrega).
@@ -28,6 +31,7 @@ export default function Etiqueta({
   esmaecida = false,
   solida = false,
   dica,
+  identificador,
   aoAbrir,
   prefixo,
   arrastando = false,
@@ -62,6 +66,7 @@ export default function Etiqueta({
       <button
         className={styles.corpo}
         type="button"
+        data-registro={identificador}
         aria-haspopup="dialog"
         onClick={(evento) => aoAbrir(evento.currentTarget)}
       >

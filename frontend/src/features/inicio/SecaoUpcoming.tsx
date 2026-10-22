@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Entrega, Upcoming } from '../../api/tipos'
 import BlocoAviso from '../../components/ui/BlocoAviso'
 import { useAgora } from '../../lib/useAgora'
+import { useAnimarOrdem } from '../../lib/useAnimarOrdem'
 import ItemEntrega from './ItemEntrega'
 import ItemEvento from './ItemEvento'
 import { mensagemErroConclusao } from './regras'
@@ -24,6 +25,8 @@ export default function SecaoUpcoming({ upcoming, hoje }: SecaoUpcomingProps) {
 
   const entregas = ordenarEntregas(upcoming.entregas)
   const eventos = upcoming.eventos
+  // Concluir faz a entrega descer: a lista desliza em vez de pular.
+  const registrarEntrega = useAnimarOrdem(entregas.map((e) => e.id).join(','))
   const vazio = entregas.length === 0 && eventos.length === 0
 
   // O alvo é o contrário do que o cartão mostra agora, já com a conclusão
@@ -57,7 +60,7 @@ export default function SecaoUpcoming({ upcoming, hoje }: SecaoUpcomingProps) {
             <h3 className={styles.rotulo}>Entregas &amp; Prazos</h3>
             <ul className={styles.lista}>
               {entregas.map((entrega) => (
-                <li key={entrega.id}>
+                <li key={entrega.id} ref={registrarEntrega(entrega.id)}>
                   <ItemEntrega
                     entrega={entrega}
                     agora={agora}
@@ -75,7 +78,7 @@ export default function SecaoUpcoming({ upcoming, hoje }: SecaoUpcomingProps) {
             <ul className={styles.lista}>
               {eventos.map((evento) => (
                 <li key={evento.id}>
-                  <ItemEvento evento={evento} hoje={hoje} />
+                  <ItemEvento evento={evento} hoje={hoje} agora={agora} />
                 </li>
               ))}
             </ul>

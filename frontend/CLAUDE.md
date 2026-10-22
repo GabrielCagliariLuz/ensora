@@ -49,7 +49,7 @@ styles/       tokens globais (tokens.css, importado por index.css)
   Nada de valor solto de cor ou fonte nos módulos.
 - Tokens em `src/styles/tokens.css`. Cores: canvas, card, hover-surface,
   hairline, rule, ink, ink-hover, graphite, ash, paper, moss (+ surface,
-  border) e ember (+ surface, border). Sem tema escuro. Fontes: IBM Plex
+  border), ember (+ surface, border) e amber (+ surface, border). Sem tema escuro. Fontes: IBM Plex
   Sans (interface) e IBM Plex Mono (números e rótulos), via Google Fonts.
 - Ícones: importar sempre por ícone (`import { Plus } from 'lucide-react'`),
   nunca o pacote inteiro. Usar `strokeWidth={1.5}` e o tamanho pela prop

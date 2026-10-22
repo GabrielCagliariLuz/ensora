@@ -20,6 +20,8 @@ interface CelulaDiaProps {
   arrastando: Registro | null
   // O dia está sob o cursor e aceita a soltura.
   alvo: boolean
+  // O dia chegou pela URL (vindo da Home): destaque breve.
+  destacada?: boolean
   aoComecarArrasto: (registro: Registro) => void
   aoTerminarArrasto: () => void
   aoEntrarArrasto: () => void
@@ -39,6 +41,7 @@ export default function CelulaDia({
   aoAbrir,
   arrastando,
   alvo,
+  destacada = false,
   aoComecarArrasto,
   aoTerminarArrasto,
   aoEntrarArrasto,
@@ -53,6 +56,7 @@ export default function CelulaDia({
     foraDoMes && styles.foraDoMes,
     ehHoje && styles.hoje,
     alvo && styles.alvo,
+    destacada && styles.destacada,
   ]
     .filter(Boolean)
     .join(' ')

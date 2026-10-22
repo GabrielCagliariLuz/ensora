@@ -26,6 +26,7 @@ export default function EtiquetaEvento({
     <Etiqueta
       cor={corDaCategoria(evento.categoria)}
       dica={`${hora} ${evento.titulo}`}
+      identificador={`EVENTO-${evento.id}`}
       aoAbrir={aoAbrir}
       arrastando={arrastando}
       aoComecarArrasto={aoComecarArrasto}

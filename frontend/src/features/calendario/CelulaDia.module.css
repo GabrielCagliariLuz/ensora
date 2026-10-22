@@ -61,6 +61,13 @@
   background: color-mix(in srgb, var(--hover-surface) 45%, var(--card));
 }
 
+/* Dia que chegou pela URL: o mesmo contorno do dia que recebe um registro
+   arrastado, que aparece e some sozinho (a transição da célula suaviza a saída). */
+.destacada {
+  background: var(--hover-surface);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 25%, transparent);
+}
+
 /* Dia que vai receber o registro arrastado. */
 .alvo {
   background: var(--hover-surface);
