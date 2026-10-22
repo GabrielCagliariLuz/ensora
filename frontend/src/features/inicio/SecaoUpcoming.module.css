@@ -15,13 +15,17 @@
 }
 
 /* Os blocos (aviso, entregas, eventos) ficam empilhados, com espaço entre eles. */
+/* Cada cartão tem a altura do próprio conteúdo. Sem isso, o grid estica os dois
+   até a altura da coluna Today, e sobra espaço vazio dentro deles. */
 .blocos {
   display: grid;
+  align-content: start;
   gap: var(--space-4);
 }
 
 /* Um cartão por bloco: entregas e eventos não dividem a mesma caixa. */
 .cartao {
+  align-self: start;
   padding: var(--space-4);
   background: var(--card);
   border-radius: var(--radius-md);
