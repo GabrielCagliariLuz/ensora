@@ -1,0 +1,26 @@
+# Blueprint do Render: um serviço web em Docker, no plano gratuito.
+# Os valores marcados com sync: false são digitados no painel do Render (não vão para o repositório).
+services:
+  - type: web
+    name: ensora
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/auth/registro
+    envVars:
+      - key: DB_URL
+        sync: false # jdbc:postgresql://<host-neon>/<banco>?sslmode=require
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SEGREDO
+        generateValue: true
+      - key: CORS_ORIGEM
+        sync: false # https://<nome>.onrender.com, a própria origem
+      - key: API_PREFIXO
+        value: /api
+      - key: REGISTRATION_ENABLED
+        value: "false"
+      - key: CONVITE_CODIGO
+        sync: false # vazio = cadastro sem convite; preencher para restringir

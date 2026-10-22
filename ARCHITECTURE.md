@@ -29,13 +29,12 @@
 | Banco            | PostgreSQL local em desenvolvimento; Neon em produção       |
 | Migrações        | Flyway (`ddl-auto=validate`)                                |
 | Testes           | JUnit no backend; Vitest no frontend                        |
-| Frontend hosting | Vercel                                                      |
-| Backend hosting  | Render                                                      |
+| Hospedagem       | Render: um serviço Docker com a SPA e a API (decisão 65)    |
 
 ## 3. Mapa do sistema
 
 ```text
-[PWA React - Vercel] -- HTTPS/JSON + JWT --> [API Spring Boot - Render] -- JDBC --> [PostgreSQL - Neon]
+[PWA React + API Spring Boot - Render, mesma origem /api] -- JDBC --> [PostgreSQL - Neon]
         |
    cache local + fila de marcações (offline)
 ```
@@ -529,9 +528,10 @@ habito/
   reconectar, renova a sessão antes de enviar a fila (seção 13).
 - O logout apaga o cache local e a fila do dispositivo.
 - **Nada de token em localStorage/sessionStorage.**
-- Frontend e API ficam no **mesmo site** via domínio próprio
-  (`app.<dominio>` na Vercel e `api.<dominio>` no Render), para o
-  cookie ser first-party. CORS com origem fixa e `allowCredentials`.
+- Frontend e API ficam na **mesma origem**: um único serviço no Render
+  serve a SPA e a API sob `/api` (decisão 65). Assim o cookie é
+  first-party sem domínio próprio, e fica em `Path=/api/auth`. CORS com
+  origem fixa e `allowCredentials`.
 - Recuperação de senha e verificação de e-mail ficam fora da v1.
 - A implementação seguirá Spring Security.
 - `POST /auth/registrar` existe, mas só funciona com
@@ -1337,6 +1337,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 62  | API da conta (`/usuario`, módulo agregado `conta`): ver a conta, trocar o fuso e a senha e excluir a conta. Trocar a senha revoga todas as sessões, inclusive a atual, porque o cookie do refresh token só vai a `/auth` e a rota não identifica a sessão corrente; o front leva ao login. Excluir apaga tudo do usuário (registros, metas, hábitos, entregas, eventos e sessões) numa transação, em consultas em massa filtradas por `usuario_id`, e exige a senha. Senha errada nessas rotas é `400` no campo (não 401, para o cliente não tentar renovar a sessão) e conta no limite por IP do login |
 | 63  | Isolamento entre usuários provado por testes de integração com PostgreSQL real (Testcontainers, classes `*IT`, só no `./mvnw verify`): contas A e B pela API de verdade, A não lê, edita, exclui nem vê em Calendar, Home e Insights o que é de B, e excluir a conta de A poupa B. Complementa a decisão 33: os Services seguem com testes unitários, e o que depende de consulta (filtro por `usuario_id`, JPQL de exclusão, migrations) fica no teste com banco |
 | 64  | PWA com `vite-plugin-pwa` (Workbox): manifest, ícones gerados do anel (`npm run icones`, PNGs commitados) e service worker com o shell em cache, `registerType: 'autoUpdate'`. Só o shell é cacheado: os dados da API ficam para o cache de leitura (#56), e a instalação é oferecida pelo navegador, sem botão próprio |
+| 65  | Deploy em um único serviço no Render (Docker), sem domínio próprio. O backend serve a SPA e a API sob `/api` (`ensora.api.prefixo`), na mesma origem, para o cookie do refresh ser first-party. Vercel com proxy de reescrita foi descartada: o Render passaria a ver o IP da Vercel e o limite de login por IP ficaria compartilhado por todos. O Dockerfile tem três estágios (front, jar com o build em `static/`, JRE). Sem e-mail real: a #84 saiu do escopo, por ser projeto de portfólio e uso pessoal |
 
 ## 17. Pontos ainda em aberto
 
@@ -1350,8 +1351,10 @@ bloqueia a chamada, então o front não depende desse corpo.
     (modal de exclusão), botão "Inserir Evento" no sheet de Entrega,
     campo de disciplina na entrega, e trocar o seletor de cor do
     evento pelo de categoria (decisão 51).
-6.  Registrar o domínio próprio e configurar subdomínios na Vercel e no
-    Render; decidir quando entra recuperação de senha.
+6.  ~~Registrar o domínio próprio e configurar subdomínios na Vercel e no
+    Render.~~ Resolvido sem domínio: um serviço no Render, com a SPA e a
+    API na mesma origem (decisão 65). Recuperação de senha saiu do escopo
+    (#84).
 7.  Confirmar limites atuais do Render/Neon (horas gratuitas, termos)
     antes de depender do keep-alive.
 8.  ~~Semanal não cumprido: pintar de vermelho todos os dias não marcados

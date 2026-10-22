@@ -27,6 +27,10 @@ public class ConfiguracaoWeb implements WebMvcConfigurer {
 	private final String prefixo;
 
 	public ConfiguracaoWeb(@Value("${ensora.api.prefixo:}") String prefixo) {
+		// Um valor como "C:/.../api" (conversão de caminho do shell) vira erro claro, e não um erro do Spring Security.
+		if (!prefixo.isEmpty() && !prefixo.matches("/[A-Za-z0-9._-]+")) {
+			throw new IllegalStateException("ensora.api.prefixo deve ser vazio ou começar com / (ex.: /api): " + prefixo);
+		}
 		this.prefixo = prefixo;
 	}
 
