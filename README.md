@@ -1,21 +1,13 @@
 # Ensora
 
+![Ensora: hábitos, entregas e eventos num só lugar](docs/screenshots/apresentacao.png)
+
 App PWA de rastreamento de hábitos e organização pessoal, com calendário. Nasceu para resolver um problema meu: conseguir **ver o progresso dos meus hábitos** e organizar melhor a rotina, os compromissos, os eventos e as entregas, tudo num só lugar.
 
 **Experimente:** [ensora.onrender.com](https://ensora.onrender.com)
 
 > O primeiro acesso pode demorar um pouco para abrir. Depois disso, a navegação é rápida.
 > Dá para **instalar no celular**: no iPhone, abra no Safari, toque em Compartilhar e em "Adicionar à Tela de Início"; no Android, use "Instalar app" no menu do Chrome.
-
-## Telas
-
-| Today | Calendar | Insights |
-|---|---|---|
-| ![Today no desktop](docs/screenshots/home-desktop.png) | ![Calendar no desktop](docs/screenshots/calendar-desktop.png) | ![Insights no desktop](docs/screenshots/insights-desktop.png) |
-
-| Today | Calendar | Novo hábito |
-|---|---|---|
-| ![Today no celular](docs/screenshots/home-mobile.png) | ![Calendar no celular](docs/screenshots/calendar-mobile.png) | ![Novo hábito no celular](docs/screenshots/novo-habito-mobile.png) |
 
 ## O que ele faz
 
