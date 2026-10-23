@@ -1,8 +1,8 @@
 # Ensora
 
-![Ensora: hábitos, entregas e eventos num só lugar](docs/screenshots/apresentacao.png)
-
 App PWA de rastreamento de hábitos e organização pessoal, com calendário. Nasceu para resolver um problema meu: conseguir **ver o progresso dos meus hábitos** e organizar melhor a rotina, os compromissos, os eventos e as entregas, tudo num só lugar.
+
+![Ensora: hábitos, entregas e eventos num só lugar](docs/screenshots/apresentacao.png)
 
 **Experimente:** [ensora.onrender.com](https://ensora.onrender.com)
 
