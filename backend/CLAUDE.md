@@ -96,6 +96,10 @@ com.ensora/habito/
   check do Render e o alvo do monitor de keep-alive.
 - Produção: `docker build -t ensora .` na raiz. O Dockerfile gera o front
   com `VITE_API_URL=/api` e copia o `dist` para `static/` antes do jar.
+  Na imagem final, um passo de treino sobe o contexto sem banco e grava
+  `app.jsa` (AppCDS); o `ENTRYPOINT` o usa e roda só com o C1 (decisão 66).
+  Se mexer em configuração que exija banco para subir, o treino pode
+  falhar e quebrar o build do Docker.
 
 ## Testes
 

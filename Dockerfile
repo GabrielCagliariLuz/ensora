@@ -25,6 +25,19 @@ RUN sh ./mvnw -q -DskipTests package
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=back /app/backend/target/backend-*.jar app.jar
+RUN java -Djarmode=tools -jar app.jar extract --destination /app/extraido
+# Subida mais rápida: o Render grátis tem uma fração de CPU, e a JVM gastava a maior parte do
+# tempo carregando classes. Aqui o contexto sobe uma vez, sem banco (Flyway desligado e dialeto
+# informado), e as classes carregadas ficam gravadas em app.jsa (AppCDS). Na execução a JVM lê o
+# arquivo em vez de carregar tudo de novo. Se o arquivo não servir, a JVM sobe sem ele.
+RUN DB_URL=jdbc:postgresql://localhost/x DB_USER=x DB_PASSWORD=x CORS_ORIGEM=http://localhost \
+    JWT_SEGREDO=treino-treino-treino-treino-treino-12345 \
+    java -XX:ArchiveClassesAtExit=/app/app.jsa -XX:TieredStopAtLevel=1 -Dspring.context.exit=onRefresh \
+    -Dspring.flyway.enabled=false -Dspring.jpa.hibernate.ddl-auto=none \
+    -Dspring.jpa.properties.hibernate.boot.allow_jdbc_metadata_access=false \
+    -Dspring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect \
+    -jar /app/extraido/app.jar
 EXPOSE 8080
-# Render grátis tem 512 MB: heap pequeno e coletor serial para caber.
-ENTRYPOINT ["java", "-Xmx300m", "-XX:+UseSerialGC", "-jar", "/app/app.jar"]
+# Render grátis tem 512 MB: heap pequeno e coletor serial para caber. O compilador C1 só
+# (TieredStopAtLevel=1) deixa a subida bem mais rápida e basta para o tráfego deste app.
+ENTRYPOINT ["java", "-XX:SharedArchiveFile=/app/app.jsa", "-XX:TieredStopAtLevel=1", "-Xmx300m", "-XX:+UseSerialGC", "-jar", "/app/extraido/app.jar"]
