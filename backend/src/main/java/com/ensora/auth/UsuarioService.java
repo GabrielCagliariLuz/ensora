@@ -5,6 +5,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneId;
 
 /** Dados da conta que outros módulos precisam, sem tocar no Repository (os módulos só falam com Services). */
@@ -14,12 +16,14 @@ public class UsuarioService {
 	private final UsuarioRepository usuarios;
 	private final PasswordEncoder codificadorDeSenha;
 	private final RefreshTokenService refreshTokenService;
+	private final Clock relogio;
 
 	public UsuarioService(UsuarioRepository usuarios, PasswordEncoder codificadorDeSenha,
-			RefreshTokenService refreshTokenService) {
+			RefreshTokenService refreshTokenService, Clock relogio) {
 		this.usuarios = usuarios;
 		this.codificadorDeSenha = codificadorDeSenha;
 		this.refreshTokenService = refreshTokenService;
+		this.relogio = relogio;
 	}
 
 	@Transactional(readOnly = true)
@@ -39,6 +43,16 @@ public class UsuarioService {
 		Usuario usuario = buscar(usuarioId);
 		// O usuário foi carregado nesta transação: o JPA grava a mudança sozinho, ao final.
 		usuario.setFuso(fuso.getId());
+		return usuario;
+	}
+
+	/** Marca o tutorial de primeiro acesso como visto. Idempotente: repetir não muda a data da primeira vez. */
+	@Transactional
+	public Usuario concluirIntroducao(Long usuarioId) {
+		Usuario usuario = buscar(usuarioId);
+		if (usuario.getIntroducaoConcluidaEm() == null) {
+			usuario.setIntroducaoConcluidaEm(Instant.now(relogio));
+		}
 		return usuario;
 	}
 

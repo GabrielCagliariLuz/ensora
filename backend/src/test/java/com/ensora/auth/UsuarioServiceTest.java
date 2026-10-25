@@ -9,7 +9,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,8 +33,14 @@ class UsuarioServiceTest {
 
 	private final PasswordEncoder codificadorDeSenha = new BCryptPasswordEncoder();
 
+	private final Instant agora = Instant.parse("2026-10-24T12:00:00Z");
+
 	private UsuarioService servico() {
-		return new UsuarioService(usuarios, codificadorDeSenha, refreshTokenService);
+		return servico(Clock.fixed(agora, ZoneOffset.UTC));
+	}
+
+	private UsuarioService servico(Clock relogio) {
+		return new UsuarioService(usuarios, codificadorDeSenha, refreshTokenService, relogio);
 	}
 
 	private Usuario usuario(String fuso, String senha) {
@@ -71,6 +80,39 @@ class UsuarioServiceTest {
 		Usuario alterado = servico().alterarFuso(7L, ZoneId.of("Asia/Tokyo"));
 
 		assertThat(alterado.getFuso()).isEqualTo("Asia/Tokyo");
+	}
+
+	@Test
+	void usuarioNovoAindaNaoConcluiuAIntroducao() {
+		assertThat(new Usuario().getIntroducaoConcluidaEm()).isNull();
+	}
+
+	@Test
+	void concluirIntroducaoGravaOMomentoDaConclusao() {
+		Usuario atual = usuario("America/Sao_Paulo", "senha-segura");
+		when(usuarios.findById(7L)).thenReturn(Optional.of(atual));
+
+		Usuario concluido = servico().concluirIntroducao(7L);
+
+		assertThat(concluido.getIntroducaoConcluidaEm()).isEqualTo(agora);
+	}
+
+	@Test
+	void concluirIntroducaoDeNovoNaoMudaADataDaPrimeiraVez() {
+		Usuario atual = usuario("America/Sao_Paulo", "senha-segura");
+		when(usuarios.findById(7L)).thenReturn(Optional.of(atual));
+
+		servico().concluirIntroducao(7L);
+		Usuario repetido = servico(Clock.fixed(agora.plusSeconds(3600), ZoneOffset.UTC)).concluirIntroducao(7L);
+
+		assertThat(repetido.getIntroducaoConcluidaEm()).isEqualTo(agora);
+	}
+
+	@Test
+	void concluirIntroducaoDeUsuarioInexistenteLancaNaoEncontrado() {
+		when(usuarios.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> servico().concluirIntroducao(99L)).isInstanceOf(RecursoNaoEncontradoException.class);
 	}
 
 	@Test

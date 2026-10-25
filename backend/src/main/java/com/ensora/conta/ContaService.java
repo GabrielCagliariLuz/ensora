@@ -43,6 +43,12 @@ public class ContaService {
 		return ContaResponse.de(usuarioService.alterarFuso(usuarioId, FusoHorario.interpretar(fuso)));
 	}
 
+	/** Registra que a pessoa viu (ou pulou) o tutorial de primeiro acesso; o front não o mostra de novo. */
+	@Transactional
+	public ContaResponse concluirIntroducao(Long usuarioId) {
+		return ContaResponse.de(usuarioService.concluirIntroducao(usuarioId));
+	}
+
 	/** Exige a senha atual e encerra todas as sessões; a pessoa entra de novo com a senha nova. */
 	@Transactional
 	public void alterarSenha(Long usuarioId, String senhaAtual, String novaSenha, String ip) {

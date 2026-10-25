@@ -69,7 +69,18 @@ class ContaServiceTest {
 
 		ContaResponse conta = servico().buscar(USUARIO);
 
-		assertThat(conta).isEqualTo(new ContaResponse(7L, "a@b.com", "America/Manaus"));
+		assertThat(conta).isEqualTo(new ContaResponse(7L, "a@b.com", "America/Manaus", false));
+	}
+
+	@Test
+	void concluirIntroducaoDevolveAContaComAIntroducaoConcluida() {
+		Usuario concluido = usuario();
+		concluido.setIntroducaoConcluidaEm(Instant.parse("2026-10-24T12:00:00Z"));
+		when(usuarioService.concluirIntroducao(USUARIO)).thenReturn(concluido);
+
+		ContaResponse conta = servico().concluirIntroducao(USUARIO);
+
+		assertThat(conta.introducaoConcluida()).isTrue();
 	}
 
 	@Test

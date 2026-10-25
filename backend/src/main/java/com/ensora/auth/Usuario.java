@@ -35,6 +35,9 @@ public class Usuario {
 	@Column(nullable = false)
 	private String fuso = "America/Sao_Paulo";
 
+	// Quando concluiu ou pulou o tutorial de primeiro acesso; nulo enquanto não viu.
+	private Instant introducaoConcluidaEm;
+
 	@Generated(event = EventType.INSERT)
 	@Column(insertable = false, updatable = false)
 	private Instant criadoEm;

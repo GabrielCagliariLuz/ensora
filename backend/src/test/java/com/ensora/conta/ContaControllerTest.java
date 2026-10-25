@@ -54,6 +54,7 @@ class ContaControllerTest {
 		mvc.perform(get("/usuario")).andExpect(status().isUnauthorized());
 		mvc.perform(put("/usuario/fuso").contentType(MediaType.APPLICATION_JSON).content("{\"fuso\": \"Asia/Tokyo\"}"))
 				.andExpect(status().isUnauthorized());
+		mvc.perform(put("/usuario/introducao")).andExpect(status().isUnauthorized());
 		mvc.perform(delete("/usuario").contentType(MediaType.APPLICATION_JSON).content("{\"senha\": \"x\"}"))
 				.andExpect(status().isUnauthorized());
 		verifyNoInteractions(contaService);
@@ -61,18 +62,29 @@ class ContaControllerTest {
 
 	@Test
 	void buscarDevolve200ComIdEmailEFusoDoUsuarioDoToken() throws Exception {
-		when(contaService.buscar(7L)).thenReturn(new ContaResponse(7L, "a@b.com", "America/Manaus"));
+		when(contaService.buscar(7L)).thenReturn(new ContaResponse(7L, "a@b.com", "America/Manaus", false));
 
 		mvc.perform(get("/usuario").with(usuario("7")))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(7))
 				.andExpect(jsonPath("$.email").value("a@b.com"))
-				.andExpect(jsonPath("$.fuso").value("America/Manaus"));
+				.andExpect(jsonPath("$.fuso").value("America/Manaus"))
+				.andExpect(jsonPath("$.introducaoConcluida").value(false));
+	}
+
+	@Test
+	void concluirIntroducaoDevolve200ComAContaDoUsuarioDoToken() throws Exception {
+		when(contaService.concluirIntroducao(7L)).thenReturn(new ContaResponse(7L, "a@b.com", "America/Manaus", true));
+
+		mvc.perform(put("/usuario/introducao").with(usuario("7")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(7))
+				.andExpect(jsonPath("$.introducaoConcluida").value(true));
 	}
 
 	@Test
 	void alterarFusoDevolve200ComAContaAtualizada() throws Exception {
-		when(contaService.alterarFuso(7L, "Asia/Tokyo")).thenReturn(new ContaResponse(7L, "a@b.com", "Asia/Tokyo"));
+		when(contaService.alterarFuso(7L, "Asia/Tokyo")).thenReturn(new ContaResponse(7L, "a@b.com", "Asia/Tokyo", false));
 
 		mvc.perform(put("/usuario/fuso").with(usuario("7")).contentType(MediaType.APPLICATION_JSON)
 						.content("{\"fuso\": \"Asia/Tokyo\"}"))
