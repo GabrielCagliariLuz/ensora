@@ -36,6 +36,11 @@ public class ContaController {
 		return contaService.alterarFuso(usuarioId, requisicao.fuso());
 	}
 
+	@PutMapping("/introducao")
+	public ContaResponse concluirIntroducao(@UsuarioLogado Long usuarioId) {
+		return contaService.concluirIntroducao(usuarioId);
+	}
+
 	@PutMapping("/senha")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void alterarSenha(@UsuarioLogado Long usuarioId, @Valid @RequestBody SenhaRequest requisicao,

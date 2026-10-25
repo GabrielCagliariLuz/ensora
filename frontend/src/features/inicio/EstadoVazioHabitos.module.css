@@ -1,0 +1,84 @@
+.cartao {
+  padding: var(--space-5);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}
+
+.anel {
+  display: block;
+  width: 32px;
+  height: 32px;
+  margin-bottom: var(--space-3);
+  color: var(--ink);
+}
+
+.titulo {
+  margin: 0;
+  font-size: var(--text-subtitulo);
+  line-height: var(--leading-subtitulo);
+  font-weight: var(--weight-semibold);
+}
+
+.texto {
+  margin: var(--space-2) 0 0;
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+.exemplos {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--hairline);
+}
+
+.rotulo {
+  margin: 0;
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 36px;
+  padding-inline: var(--space-3);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-legenda);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.chip:hover {
+  background: var(--hover-surface);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
+}

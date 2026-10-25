@@ -1,0 +1,198 @@
+/* Mobile: colado embaixo (margin-top: auto num <dialog> modal com inset: 0). */
+.modal {
+  width: 100%;
+  max-width: 100%;
+  max-height: 90dvh;
+  margin: auto 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--sombra-camada);
+  animation: subir var(--transicao-media);
+}
+
+/* Só o corpo rola. flex-basis automático, e não 0, pelo mesmo motivo do
+   BottomSheet: no Safari do iPhone um flex: 1 num diálogo de altura automática
+   colapsa o corpo. */
+.corpo {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5)
+    calc(var(--space-5) + env(safe-area-inset-bottom));
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.contagem {
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pular {
+  margin-right: calc(var(--space-2) * -1);
+  padding: var(--space-1) var(--space-2);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: color var(--transicao-rapida);
+}
+
+.pular:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.pular:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* A altura mínima evita o modal pular de tamanho a cada passo. */
+.palco {
+  display: grid;
+  align-content: center;
+  min-height: 188px;
+  padding: var(--space-4);
+  background: var(--canvas);
+  border-radius: var(--radius-md);
+}
+
+.titulo {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-subtitulo);
+  line-height: var(--leading-subtitulo);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.texto {
+  margin: var(--space-2) 0 0;
+  color: var(--graphite);
+  font-size: var(--text-corpo);
+  line-height: var(--leading-corpo);
+}
+
+.rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.pontos {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ponto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rule);
+}
+
+.atual {
+  background: var(--ink);
+}
+
+.botoes {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.voltar,
+.avancar {
+  height: 44px;
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.avancar {
+  border: 0;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.avancar:hover {
+  background: var(--ink-hover);
+}
+
+.voltar {
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  color: var(--ink);
+}
+
+.voltar:hover {
+  background: var(--hover-surface);
+}
+
+.voltar:focus-visible,
+.avancar:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@keyframes subir {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+}
+
+@media (min-width: 768px) {
+  .modal {
+    width: 520px;
+    max-width: calc(100% - var(--space-5) * 2);
+    max-height: 85dvh;
+    margin: auto;
+    border-radius: var(--radius-lg);
+    animation-name: entrar;
+  }
+
+  .corpo {
+    padding-bottom: var(--space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal {
+    animation: none;
+  }
+
+  .pular,
+  .voltar,
+  .avancar {
+    transition: none;
+  }
+}

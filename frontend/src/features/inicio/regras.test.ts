@@ -1,10 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { ErroApi } from '../../api/erro'
+import { validarHabito } from '../habitos/regras'
 import {
+  EXEMPLOS_DE_HABITO,
   mensagemErroConclusao,
   mensagemErroMarcacao,
   textoProgresso,
 } from './regras'
+
+describe('EXEMPLOS_DE_HABITO', () => {
+  it('cada exemplo é um nome que o formulário de hábito aceita', () => {
+    for (const nome of EXEMPLOS_DE_HABITO) {
+      expect(validarHabito({ nome, tipo: 'DIARIO', vezesPorSemana: 3 })).toEqual({})
+    }
+  })
+
+  it('não repete nomes', () => {
+    expect(new Set(EXEMPLOS_DE_HABITO).size).toBe(EXEMPLOS_DE_HABITO.length)
+  })
+})
 
 describe('mensagemErroConclusao', () => {
   it('avisa quando está sem conexão', () => {

@@ -189,12 +189,15 @@ export interface Ritmo {
   dias: DiaDoRitmo[]
 }
 
-// Resposta de GET /usuario e de PUT /usuario/fuso: a conta de quem está logado.
+// Resposta de GET /usuario e dos PUT /usuario/fuso e /usuario/introducao: a conta
+// de quem está logado.
 export interface Conta {
   id: number
   email: string
   // Nome IANA do fuso (ex.: America/Sao_Paulo).
   fuso: string
+  // Já concluiu ou pulou o tutorial de primeiro acesso (só contas novas começam false).
+  introducaoConcluida: boolean
 }
 
 // GET /auth/registro (público): o que a tela de cadastro precisa saber.

@@ -27,12 +27,15 @@ const OPCOES_FREQUENCIA: { valor: TipoHabito; rotulo: string }[] = [
 interface FormularioHabitoProps {
   // Sem hábito é criação; com hábito é edição (o tipo não muda).
   habito?: Habito
+  // Nome já preenchido na criação (os exemplos da Home vazia); na edição vale o do hábito.
+  nomeInicial?: string
   aoConcluir: () => void
   aoCancelar: () => void
 }
 
 export default function FormularioHabito({
   habito,
+  nomeInicial,
   aoConcluir,
   aoCancelar,
 }: FormularioHabitoProps) {
@@ -42,7 +45,7 @@ export default function FormularioHabito({
   const idFrequencia = `${id}-frequencia`
   const idMeta = `${id}-meta`
 
-  const [nome, setNome] = useState(habito?.nome ?? '')
+  const [nome, setNome] = useState(habito?.nome ?? nomeInicial ?? '')
   const [tipo, setTipo] = useState<TipoHabito>(habito?.tipo ?? 'DIARIO')
   const [meta, setMeta] = useState(habito?.vezesPorSemana ?? META_PADRAO)
   const [errosLocais, setErrosLocais] = useState<ErrosHabito>({})
