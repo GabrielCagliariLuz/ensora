@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { CircleAlert } from 'lucide-react'
 import type { HabitoNaHome } from '../../api/tipos'
 import { useHoje } from '../../lib/useHoje'
+import SheetNovoRegistro from '../agenda/SheetNovoRegistro'
+import type { AbaNovoRegistro } from '../agenda/SheetNovoRegistro'
 import SheetGerenciarHabitos from '../habitos/SheetGerenciarHabitos'
 import SheetHabito from '../habitos/SheetHabito'
 import AcoesHabitos from './AcoesHabitos'
 import CabecalhoHoje from './CabecalhoHoje'
+import EstadoVazioHabitos from './EstadoVazioHabitos'
 import ListaHabitosDoDia from './ListaHabitosDoDia'
 import { mensagemErroMarcacao } from './regras'
 import SecaoUpcoming from './SecaoUpcoming'
@@ -21,6 +24,10 @@ export default function PaginaInicio() {
   const inicio = useInicio(hoje)
   const [aviso, setAviso] = useState<string | null>(null)
   const [sheet, setSheet] = useState<SheetAberto>(null)
+  // Nome que o formulário de novo hábito já traz (os exemplos da Home vazia).
+  const [nomeInicial, setNomeInicial] = useState('')
+  // Aba do sheet de novo registro; nulo com o sheet fechado.
+  const [registro, setRegistro] = useState<AbaNovoRegistro | null>(null)
   const marcar = useMarcarHabito((erro, marcacao) =>
     setAviso(mensagemErroMarcacao(erro, marcacao.nome)),
   )
@@ -36,6 +43,16 @@ export default function PaginaInicio() {
       data: hoje,
     })
   }
+
+  // Sempre passa o nome (vazio por padrão): um exemplo escolhido antes não
+  // pode voltar preenchido numa próxima abertura.
+  function abrirNovoHabito(nome = '') {
+    setNomeInicial(nome)
+    setSheet('novo')
+  }
+
+  // Sem hábitos o convite do estado vazio já tem o botão de criar.
+  const semHabitos = inicio.isSuccess && inicio.data.habitos.length === 0
 
   return (
     <>
@@ -68,8 +85,11 @@ export default function PaginaInicio() {
                   Tentar de novo
                 </button>
               </div>
-            ) : inicio.data.habitos.length === 0 ? (
-              <p className={styles.estado}>Nenhum hábito ainda.</p>
+            ) : semHabitos ? (
+              <EstadoVazioHabitos
+                aoNovo={() => abrirNovoHabito()}
+                aoEscolherExemplo={abrirNovoHabito}
+              />
             ) : (
               <ListaHabitosDoDia
                 habitos={inicio.data.habitos}
@@ -77,24 +97,39 @@ export default function PaginaInicio() {
               />
             )}
 
-            {/* Sempre visíveis: com a lista vazia, "Novo Hábito" cria o primeiro. */}
-            <AcoesHabitos
-              aoNovo={() => setSheet('novo')}
-              aoEditar={() => setSheet('gerenciar')}
-            />
+            {!semHabitos && (
+              <AcoesHabitos
+                aoNovo={() => abrirNovoHabito()}
+                aoEditar={() => setSheet('gerenciar')}
+              />
+            )}
           </div>
         </section>
 
         {/* Coluna Upcoming: abaixo do Today no mobile e no tablet. */}
         {inicio.data && (
-          <SecaoUpcoming upcoming={inicio.data.upcoming} hoje={hoje} />
+          <SecaoUpcoming
+            upcoming={inicio.data.upcoming}
+            hoje={hoje}
+            aoNovaEntrega={() => setRegistro('ENTREGA')}
+            aoNovoEvento={() => setRegistro('EVENTO')}
+          />
         )}
       </div>
 
-      <SheetHabito aberto={sheet === 'novo'} aoFechar={() => setSheet(null)} />
+      <SheetHabito
+        aberto={sheet === 'novo'}
+        aoFechar={() => setSheet(null)}
+        nomeInicial={nomeInicial}
+      />
       <SheetGerenciarHabitos
         aberto={sheet === 'gerenciar'}
         aoFechar={() => setSheet(null)}
+      />
+      <SheetNovoRegistro
+        aberto={registro !== null}
+        aoFechar={() => setRegistro(null)}
+        abaInicial={registro ?? undefined}
       />
     </>
   )

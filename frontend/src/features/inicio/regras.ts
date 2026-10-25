@@ -29,3 +29,12 @@ export function mensagemErroConclusao(erro: unknown, titulo: string): string {
 export function textoProgresso({ feitos, meta }: ProgressoSemanal): string {
   return `${feitos}/${meta}`
 }
+
+// Atalhos da Home vazia: cada um abre o formulário de hábito com o nome pronto.
+export const EXEMPLOS_DE_HABITO: readonly string[] = [
+  'Ler',
+  'Academia',
+  'Beber água',
+  'Meditação',
+  'Estudar',
+]

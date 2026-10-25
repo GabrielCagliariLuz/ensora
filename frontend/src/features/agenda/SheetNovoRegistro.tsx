@@ -5,9 +5,9 @@ import FormularioEntrega from './FormularioEntrega'
 import FormularioEvento from './FormularioEvento'
 import styles from './SheetNovoRegistro.module.css'
 
-type Aba = 'EVENTO' | 'ENTREGA'
+export type AbaNovoRegistro = 'EVENTO' | 'ENTREGA'
 
-const ABAS: { valor: Aba; rotulo: string }[] = [
+const ABAS: { valor: AbaNovoRegistro; rotulo: string }[] = [
   { valor: 'EVENTO', rotulo: 'Evento' },
   { valor: 'ENTREGA', rotulo: 'Entrega' },
 ]
@@ -17,16 +17,23 @@ interface SheetNovoRegistroProps {
   aoFechar: () => void
   // Data que os formulários já trazem preenchida; sem ela, hoje.
   dataInicial?: string
+  // Aba que abre selecionada; sem ela, Evento.
+  abaInicial?: AbaNovoRegistro
 }
 
 export default function SheetNovoRegistro({
   aberto,
   aoFechar,
   dataInicial,
+  abaInicial,
 }: SheetNovoRegistroProps) {
   return (
     <BottomSheet aberto={aberto} aoFechar={aoFechar} titulo="Novo Registro">
-      <ConteudoNovoRegistro aoFechar={aoFechar} dataInicial={dataInicial} />
+      <ConteudoNovoRegistro
+        aoFechar={aoFechar}
+        dataInicial={dataInicial}
+        abaInicial={abaInicial}
+      />
     </BottomSheet>
   )
 }
@@ -36,12 +43,14 @@ export default function SheetNovoRegistro({
 function ConteudoNovoRegistro({
   aoFechar,
   dataInicial,
+  abaInicial,
 }: {
   aoFechar: () => void
   dataInicial?: string
+  abaInicial?: AbaNovoRegistro
 }) {
   const idAbas = useId()
-  const [aba, setAba] = useState<Aba>('EVENTO')
+  const [aba, setAba] = useState<AbaNovoRegistro>(abaInicial ?? 'EVENTO')
 
   return (
     <>

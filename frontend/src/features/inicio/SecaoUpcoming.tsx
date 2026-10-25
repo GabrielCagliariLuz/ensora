@@ -14,9 +14,17 @@ interface SecaoUpcomingProps {
   upcoming: Upcoming
   // Dia de hoje (AAAA-MM-DD) da Home: chave do cache e data da conclusão.
   hoje: string
+  // Só aparecem com a seção vazia: um atalho para cadastrar o primeiro registro.
+  aoNovaEntrega: () => void
+  aoNovoEvento: () => void
 }
 
-export default function SecaoUpcoming({ upcoming, hoje }: SecaoUpcomingProps) {
+export default function SecaoUpcoming({
+  upcoming,
+  hoje,
+  aoNovaEntrega,
+  aoNovoEvento,
+}: SecaoUpcomingProps) {
   const agora = useAgora()
   const [aviso, setAviso] = useState<string | null>(null)
   const concluir = useConcluirEntrega((erro, conclusao) =>
@@ -50,10 +58,37 @@ export default function SecaoUpcoming({ upcoming, hoje }: SecaoUpcomingProps) {
       <div className={styles.blocos}>
         {aviso && <BlocoAviso tom="erro">{aviso}</BlocoAviso>}
 
+        {/* Sem nada nos próximos 4 dias, os dois blocos aparecem vazios, cada um
+            com o atalho para criar o seu tipo de registro. */}
         {vazio && (
-          <div className={styles.cartao}>
-            <p className={styles.vazio}>Nada nos próximos 4 dias.</p>
-          </div>
+          <>
+            <div className={styles.cartao}>
+              <h3 className={styles.rotulo}>Entregas &amp; Prazos</h3>
+              <p className={styles.vazio}>
+                Nenhuma entrega com prazo nos próximos 4 dias.
+              </p>
+              <button
+                className={styles.novo}
+                type="button"
+                onClick={aoNovaEntrega}
+              >
+                Nova entrega
+              </button>
+            </div>
+            <div className={styles.cartao}>
+              <h3 className={styles.rotulo}>Eventos &amp; Compromissos</h3>
+              <p className={styles.vazio}>
+                Nenhum evento nos próximos 4 dias.
+              </p>
+              <button
+                className={styles.novo}
+                type="button"
+                onClick={aoNovoEvento}
+              >
+                Novo evento
+              </button>
+            </div>
+          </>
         )}
 
         {entregas.length > 0 && (

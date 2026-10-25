@@ -59,6 +59,40 @@
   line-height: var(--leading-legenda);
 }
 
+.rotulo + .vazio {
+  margin-top: var(--space-2);
+}
+
+/* Atalho de cadastro do cartão vazio: o mesmo botão secundário de "Editar Hábitos". */
+.novo {
+  height: 40px;
+  margin-top: var(--space-3);
+  padding-inline: var(--space-4);
+  background: var(--card);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-botao);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--transicao-rapida);
+}
+
+.novo:hover {
+  background: var(--hover-surface);
+}
+
+.novo:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .novo {
+    transition: none;
+  }
+}
+
 @media (min-width: 768px) {
   .titulo {
     margin-bottom: var(--space-5);

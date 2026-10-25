@@ -7,6 +7,8 @@ interface SheetHabitoProps {
   aoFechar: () => void
   // Sem hábito abre "Novo Hábito"; com hábito abre "Editar Hábito".
   habito?: Habito
+  // Só na criação: nome que o formulário já traz preenchido.
+  nomeInicial?: string
 }
 
 // Ponto único de entrada para a Home (criar) e o Gerenciar Hábitos (editar).
@@ -14,6 +16,7 @@ export default function SheetHabito({
   aberto,
   aoFechar,
   habito,
+  nomeInicial,
 }: SheetHabitoProps) {
   return (
     <BottomSheet
@@ -23,6 +26,7 @@ export default function SheetHabito({
     >
       <FormularioHabito
         habito={habito}
+        nomeInicial={nomeInicial}
         aoConcluir={aoFechar}
         aoCancelar={aoFechar}
       />
