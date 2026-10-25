@@ -1,0 +1,70 @@
+/* Passo 1: os três conceitos lado a lado. */
+.conceitos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conceito {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--sombra-card);
+}
+
+.icone {
+  display: grid;
+  place-items: center;
+  align-self: flex-start;
+  width: 24px;
+  height: 24px;
+  margin-bottom: var(--space-2);
+  color: var(--ink);
+}
+
+.anel {
+  width: 22px;
+  height: 22px;
+}
+
+.rotulo {
+  color: var(--ash);
+  font-family: var(--font-mono);
+  font-size: var(--text-rotulo);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.texto {
+  color: var(--graphite);
+  font-size: var(--text-legenda);
+  line-height: var(--leading-legenda);
+}
+
+/* Passo 2: os cartões de hábito, um sobre o outro como na Home. */
+.habitos {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Passo 3: um cartão para a entrega e outro para o evento, como no Upcoming. */
+.cartoes {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.cartao {
+  padding: var(--space-4);
+  background: var(--card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--sombra-card);
+}

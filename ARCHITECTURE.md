@@ -308,6 +308,7 @@ feito no `Service`.
 | `email`      | texto       | único; `CHECK (email = lower(email))` no banco  |
 | `senha_hash` | texto       | BCrypt                                          |
 | `fuso`       | texto       | nome IANA; default `America/Sao_Paulo`          |
+| `introducao_concluida_em` | TIMESTAMPTZ | opcional; preenchido ao concluir ou pular o tutorial de primeiro acesso (V7: as contas que já existiam vêm preenchidas) |
 | `criado_em`  | TIMESTAMPTZ | default `now()`                                 |
 
 ### refresh_token
@@ -677,6 +678,22 @@ Ações:
 - marcar entrega como concluída;
 - visualizar eventos próximos.
 
+Primeiro acesso:
+
+- sem hábitos, a coluna Today mostra um convite no lugar da lista (anel da
+  marca, texto, Novo Hábito e atalhos de exemplo: Ler, Academia, Beber
+  água, Meditação e Estudar, que abrem o formulário de hábito com o nome
+  preenchido); o Editar Hábitos só aparece quando há hábitos;
+- sem entregas e eventos nos próximos 4 dias, o Upcoming mostra os dois
+  blocos vazios, cada um com o atalho Nova entrega ou Novo evento, que
+  abre o sheet de Novo Registro na aba certa;
+- na primeira entrada de uma conta nova, um tutorial de 4 passos
+  (Bem-vindo, Hábitos, Entregas e Eventos, Insights) abre por cima da Home
+  já carregada: bottom sheet no mobile e modal centralizado no desktop.
+  Pular introdução, Começar, Esc e clique fora encerram o tutorial, que não
+  volta (decisão 67). Os exemplos dos passos são fictícios e usam os mesmos
+  componentes da Home e dos Insights.
+
 ### Habits (bottom sheet)
 
 Não é uma tela. "Gerenciar Hábitos" é um bottom sheet aberto pela Home,
@@ -779,6 +796,7 @@ fechado, a tela só avisa. Criada a conta, a pessoa entra e cai na Home.
 | Auth            | Sair                   | `POST /auth/logout`                      |
 | Settings        | Ver a conta            | `GET /usuario`                           |
 | Settings        | Trocar o fuso          | `PUT /usuario/fuso`                      |
+| Home            | Concluir o tutorial    | `PUT /usuario/introducao`                |
 | Settings        | Trocar a senha         | `PUT /usuario/senha`                     |
 | Settings        | Excluir a conta        | `DELETE /usuario`                        |
 | Home            | Carregar tela          | `GET /inicio?data=AAAA-MM-DD`            |
@@ -864,8 +882,13 @@ Todos exigem token. A conta é sempre a do token: não há id na rota.
 
 ```json
 // resposta 200
-{ "id": 1, "email": "pessoa@exemplo.com", "fuso": "America/Sao_Paulo" }
+{ "id": 1, "email": "pessoa@exemplo.com", "fuso": "America/Sao_Paulo",
+  "introducaoConcluida": true }
 ```
+
+`PUT /usuario/introducao`: marca o tutorial de primeiro acesso como visto
+e responde `200` com a conta no mesmo formato. Sem corpo e idempotente:
+repetir não muda a data da primeira vez.
 
 `PUT /usuario/fuso`: troca o fuso e responde `200` com a conta no mesmo
 formato.
@@ -1350,6 +1373,7 @@ bloqueia a chamada, então o front não depende desse corpo.
 | 64  | PWA com `vite-plugin-pwa` (Workbox): manifest, ícones gerados do anel (`npm run icones`, PNGs commitados) e service worker com o shell em cache, `registerType: 'autoUpdate'`. Só o shell é cacheado: os dados da API ficam para o cache de leitura (#56), e a instalação é oferecida pelo navegador, sem botão próprio |
 | 65  | Deploy em um único serviço no Render (Docker), sem domínio próprio. O backend serve a SPA e a API sob `/api` (`ensora.api.prefixo`), na mesma origem, para o cookie do refresh ser first-party. Vercel com proxy de reescrita foi descartada: o Render passaria a ver o IP da Vercel e o limite de login por IP ficaria compartilhado por todos. O Dockerfile tem três estágios (front, jar com o build em `static/`, JRE). Sem e-mail real: a #84 saiu do escopo, por ser projeto de portfólio e uso pessoal |
 | 66  | Subida mais rápida da JVM no plano gratuito do Render (cerca de 0,1 CPU): o serviço dorme após 15 minutos sem requisição e a subida a frio levava 1 a 2 minutos. Medido em Docker com `--cpus=0.1`: 190 s antes, 52 s depois. Três frentes. (1) Um monitor externo chama `GET /api/saude` a cada 5 minutos para o serviço não dormir (o endpoint não toca no banco; um serviço ligado o mês todo usa 744 das 750 horas gratuitas). (2) A imagem grava um arquivo AppCDS (`app.jsa`) no build, subindo o contexto uma vez sem banco (Flyway desligado, dialeto informado), e a JVM o lê na execução. (3) O compilador C1 só (`-XX:TieredStopAtLevel=1`), que reduz a subida e basta para o tráfego do app. Testadas e descartadas: `spring.main.lazy-initialization` (ganho pequeno e esconde erro de configuração) e JDK 25 com cache AOT (43 s, só 9 s a menos, não compensa trocar a versão principal do Java). O deploy não derruba a sessão nem faz o usuário esperar: o Render só troca o tráfego quando a instância nova responde no health check |
+| 67  | Tutorial de primeiro acesso: o fato de a conta já ter visto (ou pulado) o tutorial fica no servidor, em `usuario.introducao_concluida_em` (V7), e não em `localStorage`, para não repetir em outro dispositivo ou navegador. As contas que já existiam na V7 vêm marcadas como concluídas. O front abre o tutorial só com a Home carregada e a conta ainda não concluída, fecha na hora ao encerrar e avisa o servidor por `PUT /usuario/introducao` (idempotente); se o aviso falhar, o tutorial volta no próximo acesso. Pular, Começar, Esc e clique fora têm o mesmo efeito, e não há como rever o tutorial na v1. Os exemplos reutilizam os componentes reais (`ItemHabito`, `ItemEntrega`, `ItemEvento`, `RitmoDoMes`) com dados fictícios, em vez de imagens do protótipo |
 
 ## 17. Pontos ainda em aberto
 

@@ -6,6 +6,7 @@ import SheetNovoRegistro from '../agenda/SheetNovoRegistro'
 import type { AbaNovoRegistro } from '../agenda/SheetNovoRegistro'
 import SheetGerenciarHabitos from '../habitos/SheetGerenciarHabitos'
 import SheetHabito from '../habitos/SheetHabito'
+import IntroducaoInicial from '../introducao/IntroducaoInicial'
 import AcoesHabitos from './AcoesHabitos'
 import CabecalhoHoje from './CabecalhoHoje'
 import EstadoVazioHabitos from './EstadoVazioHabitos'
@@ -131,6 +132,8 @@ export default function PaginaInicio() {
         aoFechar={() => setRegistro(null)}
         abaInicial={registro ?? undefined}
       />
+      {/* Só com a Home carregada: o tutorial não abre sobre um erro ou um carregando. */}
+      {inicio.isSuccess && <IntroducaoInicial />}
     </>
   )
 }
