@@ -9,6 +9,11 @@ export function alterarFuso(fuso: string): Promise<Conta> {
   return requisitar<Conta>('/usuario/fuso', { metodo: 'PUT', corpo: { fuso } })
 }
 
+// Marca o tutorial de primeiro acesso como visto. Idempotente.
+export function concluirIntroducao(): Promise<Conta> {
+  return requisitar<Conta>('/usuario/introducao', { metodo: 'PUT' })
+}
+
 // Encerra todas as sessões no servidor: quem usa leva a pessoa de volta ao login.
 export function alterarSenha(
   senhaAtual: string,
